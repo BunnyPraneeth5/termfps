@@ -97,3 +97,5 @@ Template:
 - Done (code + tests): `game.RenderMode` (half-block, shade, ascii) in State, V cycles it (`input.IsCycleRenderMode`, one-shot `Input.CycleRenderMode`). `render.PresentShade` / `PresentASCII` average each cell's two pixels onto `█▓▒░ ` / `@%#*+=-:. ` with default terminal colors; brightness scaled to 0-230 so far walls stay visible. Starts in ASCII when `screen.Colors() < 1<<24` (D17; test with `TCELL_TRUECOLOR=disable` or `NO_COLOR=1`). HUD shows the mode; the half-block caution shows once for 5 s, wrapped by sentence at 80 columns. DrawFrame unchanged. README updated. 106 tests pass.
 - Side effect: with the mode name in the HUD's core part, timings no longer fit at exactly 80 columns (they show from ~90).
 - Not done: on-screen checks (same scene and proportions in all three modes, no flicker or garbage when switching, caution once).
+- Update: user confirmed with screenshots (same spot in all three modes, HUD shows the mode) and reported the caution shows once and `TCELL_TRUECOLOR=disable` starts in ASCII. T19 done.
+- Next: T20 (targets + shooting), the last stretch task, or close P0.
