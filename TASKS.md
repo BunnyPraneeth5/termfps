@@ -62,7 +62,7 @@ Status: [ ] todo, [~] in progress, [x] done
   - On screen, facing a wall shows a solid vertical band with no gaps between rows.
   - In PROGRESS.md: does truecolor look smooth in Windows Terminal (tcell turns it on by default, see CLAUDE.md), what `screen.Colors()` reports, the `builtinGlyphs` setting, and the three timings at 120x40.
 
-### [ ] T7: Input tracker + movement + turning
+### [~] T7: Input tracker + movement + turning
 - `input` package: adaptive held window per ARCHITECTURE "Input approach", produces `game.Input` each frame. Tracker takes `now` as a parameter.
 - W/S forward/back, A/D strafe, Left/Right arrows (and Q/E) turn. Speeds per second with dt. Rune keys lower-cased.
 - Acceptance:

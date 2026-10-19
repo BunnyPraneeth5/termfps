@@ -40,7 +40,7 @@ Note: `//go:embed` only sees files in the same package dir or below. We keep the
 - Reads tcell events (from a goroutine, sent over a channel).
 - Tracks which keys are held (see Input approach) and produces one `game.Input` per frame. The game package never sees tcell types.
 - The held-key tracker takes `now time.Time` as a parameter, so it can be unit-tested without a terminal or real waiting.
-- Until T7, the event goroutine (`pumpEvents`) lives in `main.go`. T7 moves it here along with the tracker.
+- `input.Pump` is the event goroutine's loop; `main.go` starts it and handles its panics. `KeyFor` maps keys: W/Up forward, S/Down back, A/D strafe, Q/Left and E/Right turn.
 
 ### render
 Two steps: draw the world into a pixel buffer, then present the buffer as terminal cells.

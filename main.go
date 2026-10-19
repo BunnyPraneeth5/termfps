@@ -5,6 +5,7 @@ import (
 	_ "embed" // the blank import (_) enables the //go:embed directive below
 	"flag"
 	"fmt"
+	"math"
 	"os"
 	"runtime/debug"
 	"sync"
@@ -13,6 +14,7 @@ import (
 	"github.com/gdamore/tcell/v2"
 
 	"github.com/BunnyPraneeth5/termfps/internal/game"
+	"github.com/BunnyPraneeth5/termfps/internal/input"
 	"github.com/BunnyPraneeth5/termfps/internal/render"
 	"github.com/BunnyPraneeth5/termfps/internal/world"
 )
@@ -98,10 +100,11 @@ func run() (exitCode int) {
 				inputPanic <- fmt.Sprintf("%v (input goroutine)\n\n%s", r, debug.Stack())
 			}
 		}()
-		pumpEvents(screen, events, panicMode == "input")
+		input.Pump(screen, events, panicMode == "input")
 	}()
 
 	state := game.NewState(arena)
+	var keys input.Tracker // which movement keys count as held (see D12)
 
 	// The Frame is reused every frame; it only changes size on resize.
 	// FrameSize(screen.Size()) passes Size's two results as the two arguments.
@@ -140,8 +143,10 @@ func run() (exitCode int) {
 					screen.Sync()
 					frame.Resize(render.FrameSize(screen.Size()))
 				case *tcell.EventKey:
-					if isQuitKey(ev) {
+					if input.IsQuit(ev) {
 						quit = true
+					} else if k, ok := input.KeyFor(ev); ok {
+						keys.Press(k, ev.When())
 					}
 				}
 			default:
@@ -159,13 +164,13 @@ func run() (exitCode int) {
 		dt := clampDT(frameStart.Sub(last).Seconds())
 		last = frameStart
 		fps.tick(frameStart)
-		_ = dt // used by game.Update from T7
+		game.Update(state, keys.Input(frameStart), dt)
 
 		t0 := time.Now()
 		render.DrawFrame(state, &frame)
 		t1 := time.Now()
 		render.PresentHalfBlock(screen, &frame)
-		drawHUD(screen, fps.value(), times)
+		drawHUD(screen, fps.value(), state.Player, times)
 		t2 := time.Now()
 		screen.Show()
 		times = frameTimes{draw: t1.Sub(t0), present: t2.Sub(t1), show: time.Since(t2)}
@@ -180,36 +185,16 @@ type frameTimes struct {
 	show    time.Duration // Show: tcell sends changed cells to the terminal
 }
 
-// pumpEvents runs on its own goroutine. It reads screen events and sends them
-// to out. It only sends; it never touches game state. It returns when the
-// screen is finalized (PollEvent returns nil).
-func pumpEvents(s tcell.Screen, out chan<- tcell.Event, panicOnKey bool) {
-	for {
-		ev := s.PollEvent()
-		if ev == nil {
-			return
-		}
-		if _, isKey := ev.(*tcell.EventKey); isKey && panicOnKey {
-			panic("forced test panic in input goroutine (TERMFPS_PANIC=input)")
-		}
-		out <- ev
-	}
-}
-
-// isQuitKey reports whether the key is Esc or Ctrl+C.
-func isQuitKey(ev *tcell.EventKey) bool {
-	return ev.Key() == tcell.KeyEscape || ev.Key() == tcell.KeyCtrlC
-}
-
 // drawHUD clears the last row and writes the stats on it. T15 replaces this
 // with render.DrawHUD.
-func drawHUD(s tcell.Screen, fps float64, t frameTimes) {
+func drawHUD(s tcell.Screen, fps float64, p game.Player, t frameTimes) {
 	w, h := s.Size()
 	for x := 0; x < w; x++ {
 		s.SetContent(x, h-1, ' ', nil, tcell.StyleDefault)
 	}
-	hud := fmt.Sprintf("FPS %4.1f | draw %.2f present %.2f show %.2f ms | colors %d",
-		fps, ms(t.draw), ms(t.present), ms(t.show), s.Colors())
+	deg := int(math.Round(p.Angle*180/math.Pi)) % 360
+	hud := fmt.Sprintf("FPS %4.1f | x %5.2f y %5.2f %3d° | draw %.2f present %.2f show %.2f ms | colors %d",
+		fps, p.X, p.Y, deg, ms(t.draw), ms(t.present), ms(t.show), s.Colors())
 	s.PutStr(0, h-1, hud)
 }
 
