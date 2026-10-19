@@ -84,3 +84,5 @@ Template:
 - Issue found: HUD showed `draw 0.00`. Measured Go's clock on this Windows machine: smallest step 0.53ms, so 0.07ms reads as 0. Fixed: HUD timings are now averaged over each 1-second FPS window (`timeAverager`, tested).
 - Still open: T10 (resize by hand), T11 (aspect by eye), T16 (VS Code terminal).
 - Update: user confirmed T10 (resize message and recovery) and T11 (proportions look right at the default 1.0). Both done. T16 still open.
+- Update: user ran the game in VS Code's terminal and reported it working fine. T16 done. No details given on gray banding or the focus label there. Legacy conhost not tried (optional per D16). Day 3-4 (T10-T17) complete.
+- Next: T18 (README + 30-second demo recording).

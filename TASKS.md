@@ -114,7 +114,7 @@ Status: [ ] todo, [~] in progress, [x] done
 - Bottom line (the row outside the Frame): FPS, X/Y, facing angle in degrees (0 = east, 90 = south).
 - Acceptance: never overlaps the minimap, updates every frame, fits at 80 columns.
 
-### [ ] T16: Terminal check
+### [x] T16: Terminal check
 - Windows Terminal (PowerShell), plus one terminal that is not Windows Terminal (e.g. VS Code's terminal).
 - Check: FPS, `▀` gaps between rows, gray quality (truecolor or downgraded).
 - Optional, 10 minutes max: a quick look in the legacy console (run `conhost.exe` directly). No requirements.
