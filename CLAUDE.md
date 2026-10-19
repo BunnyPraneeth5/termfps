@@ -57,4 +57,4 @@ Append an entry to PROGRESS.md. Log any new decision in DECISIONS.md.
 - Windows Smart App Control (on, on the user's machine) sometimes blocks a freshly built `termfps.exe` ("An Application Control policy has blocked this file"). Not a code problem; a restart has cleared it. Rebuild only when code changed. Agents can't run the exe here either.
 
 ## Current focus
-Day 3-4 (T10-T17) done. Next: T18 (README + 30-second demo recording), the last core task.
+P0 core (T1-T18) is complete. Only stretch tasks remain: T19 (render modes + V toggle), T20 (targets + shooting). Ask before starting them.

@@ -8,6 +8,10 @@ from one small binary.
 This is the **P0 prototype**: single player, one 16x16 map, walk around in
 first person. Multiplayer is planned later.
 
+[![termfps running in Windows Terminal](docs/screenshot.png)](docs/termfps-demo.mp4)
+
+▶ [Watch the 27-second demo](docs/termfps-demo.mp4) (MP4, 4.7 MB)
+
 ## Requirements
 
 - **Go 1.27.1 or newer** to build.

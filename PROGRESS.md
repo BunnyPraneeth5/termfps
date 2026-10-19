@@ -86,3 +86,9 @@ Template:
 - Update: user confirmed T10 (resize message and recovery) and T11 (proportions look right at the default 1.0). Both done. T16 still open.
 - Update: user ran the game in VS Code's terminal and reported it working fine. T16 done. No details given on gray banding or the focus label there. Legacy conhost not tried (optional per D16). Day 3-4 (T10-T17) complete.
 - Next: T18 (README + 30-second demo recording).
+
+## 2026-10-19 (T18: README + demo)
+- Done: README (build, run, controls, options, screen, troubleshooting incl. Smart App Control, code layout). User recorded a 27-second demo with Snipping Tool (1918x944, 23.9 MB, over GitHub's 10 MB attachment limit for free accounts). Re-encoded with Windows' built-in Media Foundation encoder (WinRT MediaTranscoder from PowerShell, no new tools): 1280x630, 1.5 Mbps, no audio, 4.7 MB. Added as `docs/termfps-demo.mp4` with a still frame as `docs/screenshot.png`, linked at the top of the README. `.gitattributes` marks mp4/png as binary.
+- P0 core complete: T1-T18 all done.
+- Not done: stretch tasks T19 (render modes) and T20 (targets + shooting).
+- Next: decide on stretch tasks, or wrap up P0.
