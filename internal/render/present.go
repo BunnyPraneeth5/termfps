@@ -4,7 +4,7 @@ import "github.com/gdamore/tcell/v2"
 
 // halfBlock is the upper half block. Its foreground color fills the top
 // half of the cell and its background color fills the bottom half.
-const halfBlock = '▀'
+const halfBlock = "▀"
 
 // PresentHalfBlock writes the Frame to the screen, two pixels per cell:
 // top pixel = foreground, bottom pixel = background. It only fills tcell's
@@ -18,7 +18,7 @@ func PresentHalfBlock(s tcell.Screen, f *Frame) {
 			style := tcell.StyleDefault.
 				Foreground(grayColor(top[x].Gray)).
 				Background(grayColor(bottom[x].Gray))
-			s.SetContent(x, row, halfBlock, nil, style)
+			s.Put(x, row, halfBlock, style)
 		}
 	}
 }

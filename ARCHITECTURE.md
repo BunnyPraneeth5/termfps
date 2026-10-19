@@ -187,7 +187,8 @@ For each column `x`:
 ## Performance budget
 - 30 FPS target, frame time under 33ms at 120x40.
 - Measure three numbers separately: `DrawFrame`, presenter, and `screen.Show()`. The presenter only fills tcell's in-memory buffer. `Show()` is where bytes go to the terminal and is likely the real cost (about 4,800 cells with two RGB colors each, while moving).
-- First measurement in T6, full check in T17. The HUD can show ms per frame (T2).
+- First measurement in T6, full check in T17. The HUD shows the three timings when the line has room.
+- Benchmarks at 120x40 (`go test -bench . ./internal/render`, this laptop): DrawFrame with shading ~0.07ms, 0 allocations; PresentHalfBlock ~0.75-1ms, 0 allocations since T17 switched from `SetContent` (one small allocation per cell) to `Put` with a constant string. `Show()` can only be measured in a real terminal (HUD).
 - Minimum terminal size 80x24. Smaller shows a "resize your terminal" message and skips rendering.
 
 ## Open questions

@@ -120,7 +120,7 @@ Status: [ ] todo, [~] in progress, [x] done
 - Optional, 10 minutes max: a quick look in the legacy console (run `conhost.exe` directly). No requirements.
 - Acceptance: results written in PROGRESS.md.
 
-### [ ] T17: Performance check
+### [~] T17: Performance check
 - Measure DrawFrame, presenter, and `Show()` at 120x40 in half-block mode while moving.
 - Acceptance: within budget in ARCHITECTURE.md, or the bottleneck is written down.
 
