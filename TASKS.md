@@ -71,7 +71,7 @@ Status: [ ] todo, [~] in progress, [x] done
   - Moving 3 seconds forward at `-fps 15` and at `-fps 30` covers about the same distance (check the HUD position).
   - Right arrow turns right, D strafes right.
 
-### [ ] T8: Spike: real key state on Windows (2-hour timebox)
+### [~] T8: Spike: real key state on Windows (2-hour timebox)
 - Try `GetAsyncKeyState` via standard `syscall` in `internal/input/keystate_windows.go`. No new dependencies.
 - Note the other option in ARCHITECTURE "Input approach" (Windows Terminal key-up events that tcell drops). Don't build it without asking.
 - Acceptance:

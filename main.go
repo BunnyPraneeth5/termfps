@@ -35,9 +35,21 @@ func main() {
 // exitCode is a named result so the deferred panic handler can change it.
 func run() (exitCode int) {
 	targetFPS := flag.Int("fps", 30, "target frames per second (1-240)")
+	keyMode := flag.String("keys", "events", `movement keys: "events" (terminal key events) or "async" (Windows key state, T8 spike)`)
 	flag.Parse()
 	if *targetFPS < 1 || *targetFPS > 240 {
 		fmt.Fprintf(os.Stderr, "termfps: -fps must be between 1 and 240, got %d\n", *targetFPS)
+		return 2
+	}
+	switch *keyMode {
+	case "events":
+	case "async":
+		if err := input.AsyncSupported(); err != nil {
+			fmt.Fprintln(os.Stderr, "termfps: -keys async:", err)
+			return 2
+		}
+	default:
+		fmt.Fprintf(os.Stderr, "termfps: -keys must be events or async, got %q\n", *keyMode)
 		return 2
 	}
 
@@ -106,6 +118,14 @@ func run() (exitCode int) {
 	state := game.NewState(arena)
 	var keys input.Tracker // which movement keys count as held (see D12)
 
+	// Async key state sees keys pressed in any window, so it is only used
+	// while the terminal has focus. Focus events need terminal support; if
+	// none arrive, focused stays true (the HUD shows it).
+	focused := true
+	if *keyMode == "async" {
+		screen.EnableFocus()
+	}
+
 	// The Frame is reused every frame; it only changes size on resize.
 	// FrameSize(screen.Size()) passes Size's two results as the two arguments.
 	var frame render.Frame
@@ -142,6 +162,8 @@ func run() (exitCode int) {
 				case *tcell.EventResize:
 					screen.Sync()
 					frame.Resize(render.FrameSize(screen.Size()))
+				case *tcell.EventFocus:
+					focused = ev.Focused
 				case *tcell.EventKey:
 					if input.IsQuit(ev) {
 						quit = true
@@ -164,13 +186,20 @@ func run() (exitCode int) {
 		dt := clampDT(frameStart.Sub(last).Seconds())
 		last = frameStart
 		fps.tick(frameStart)
-		game.Update(state, keys.Input(frameStart), dt)
+		var in game.Input
+		switch {
+		case *keyMode == "events":
+			in = keys.Input(frameStart)
+		case focused:
+			in = input.AsyncInput()
+		}
+		game.Update(state, in, dt)
 
 		t0 := time.Now()
 		render.DrawFrame(state, &frame)
 		t1 := time.Now()
 		render.PresentHalfBlock(screen, &frame)
-		drawHUD(screen, fps.value(), state.Player, times)
+		drawHUD(screen, fps.value(), state.Player, times, keysLabel(*keyMode, focused))
 		t2 := time.Now()
 		screen.Show()
 		times = frameTimes{draw: t1.Sub(t0), present: t2.Sub(t1), show: time.Since(t2)}
@@ -187,15 +216,26 @@ type frameTimes struct {
 
 // drawHUD clears the last row and writes the stats on it. T15 replaces this
 // with render.DrawHUD.
-func drawHUD(s tcell.Screen, fps float64, p game.Player, t frameTimes) {
+func drawHUD(s tcell.Screen, fps float64, p game.Player, t frameTimes, keys string) {
 	w, h := s.Size()
 	for x := 0; x < w; x++ {
 		s.SetContent(x, h-1, ' ', nil, tcell.StyleDefault)
 	}
 	deg := int(math.Round(p.Angle*180/math.Pi)) % 360
-	hud := fmt.Sprintf("FPS %4.1f | x %5.2f y %5.2f %3d° | draw %.2f present %.2f show %.2f ms | colors %d",
-		fps, p.X, p.Y, deg, ms(t.draw), ms(t.present), ms(t.show), s.Colors())
+	hud := fmt.Sprintf("FPS %4.1f | x %5.2f y %5.2f %3d° | draw %.2f present %.2f show %.2f ms | %s | colors %d",
+		fps, p.X, p.Y, deg, ms(t.draw), ms(t.present), ms(t.show), keys, s.Colors())
 	s.PutStr(0, h-1, hud)
+}
+
+// keysLabel names the input mode for the HUD; async also shows focus.
+func keysLabel(mode string, focused bool) string {
+	if mode != "async" {
+		return "keys events"
+	}
+	if focused {
+		return "keys async (focused)"
+	}
+	return "keys async (NOT focused)"
 }
 
 // ms converts a duration to milliseconds with fractions.
