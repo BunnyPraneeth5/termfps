@@ -87,7 +87,7 @@ Status: [ ] todo, [~] in progress, [x] done
 
 ## Day 3-4: look and feel
 
-### [ ] T10: Resize handling
+### [~] T10: Resize handling
 - Handle resize events. Resize the Frame. Under 80x24, show "resize your terminal" (clipped to the width) and skip rendering.
 - Acceptance:
   - Resizing the window mid-game, including down to a few columns and back, doesn't crash or leave garbage.

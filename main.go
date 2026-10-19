@@ -192,6 +192,14 @@ func run() (exitCode int) {
 		dt := clampDT(frameStart.Sub(last).Seconds())
 		last = frameStart
 		fps.tick(frameStart)
+
+		// Below the minimum size: show a message, skip the game this frame.
+		if render.TooSmall(screen.Size()) {
+			render.DrawTooSmall(screen)
+			screen.Show()
+			continue
+		}
+
 		var in game.Input
 		switch {
 		case *keyMode == "events":
