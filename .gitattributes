@@ -1,0 +1,4 @@
+# Go files must use LF, or gofmt -l lists every file (git autocrlf is on).
+*.go   text eol=lf
+go.mod text eol=lf
+go.sum text eol=lf

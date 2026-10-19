@@ -1,0 +1,7 @@
+# Built binaries
+*.exe
+/termfps
+
+# Go test and profiling output
+*.test
+*.out
