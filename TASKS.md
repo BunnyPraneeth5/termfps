@@ -55,7 +55,7 @@ Status: [ ] todo, [~] in progress, [x] done
 
 ## Day 2: see it, move in it
 
-### [ ] T6: Half-block presenter + terminal color check
+### [~] T6: Half-block presenter + terminal color check
 - `render.PresentHalfBlock`: `▀` with fg = top pixel, bg = bottom pixel, 24-bit gray.
 - Time DrawFrame, presenter, and `Show()` separately; show them in the HUD.
 - Acceptance:

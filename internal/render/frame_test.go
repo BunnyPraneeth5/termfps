@@ -16,7 +16,7 @@ const room = "#####\n" +
 	"#...#\n" +
 	"#####\n"
 
-func newState(t *testing.T, x, y float64) *game.State {
+func newState(t testing.TB, x, y float64) *game.State {
 	t.Helper()
 	m, err := world.Parse([]byte(room))
 	if err != nil {

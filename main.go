@@ -12,6 +12,8 @@ import (
 
 	"github.com/gdamore/tcell/v2"
 
+	"github.com/BunnyPraneeth5/termfps/internal/game"
+	"github.com/BunnyPraneeth5/termfps/internal/render"
 	"github.com/BunnyPraneeth5/termfps/internal/world"
 )
 
@@ -99,6 +101,13 @@ func run() (exitCode int) {
 		pumpEvents(screen, events, panicMode == "input")
 	}()
 
+	state := game.NewState(arena)
+
+	// The Frame is reused every frame; it only changes size on resize.
+	// FrameSize(screen.Size()) passes Size's two results as the two arguments.
+	var frame render.Frame
+	frame.Resize(render.FrameSize(screen.Size()))
+
 	interval := time.Second / time.Duration(*targetFPS)
 	ticker := time.NewTicker(interval)
 	defer ticker.Stop()
@@ -106,7 +115,7 @@ func run() (exitCode int) {
 	start := time.Now()
 	last := start
 	var fps fpsCounter
-	var frameWork time.Duration // time spent on the previous frame's work
+	var times frameTimes // measured on the previous frame, shown in the HUD
 
 	for {
 		<-ticker.C // wait for the next tick (receives from the ticker's channel)
@@ -129,6 +138,7 @@ func run() (exitCode int) {
 				switch ev := ev.(type) {
 				case *tcell.EventResize:
 					screen.Sync()
+					frame.Resize(render.FrameSize(screen.Size()))
 				case *tcell.EventKey:
 					if isQuitKey(ev) {
 						quit = true
@@ -149,10 +159,25 @@ func run() (exitCode int) {
 		dt := clampDT(frameStart.Sub(last).Seconds())
 		last = frameStart
 		fps.tick(frameStart)
+		_ = dt // used by game.Update from T7
 
-		drawScreen(screen, arena, fps.value(), dt, frameWork)
-		frameWork = time.Since(frameStart)
+		t0 := time.Now()
+		render.DrawFrame(state, &frame)
+		t1 := time.Now()
+		render.PresentHalfBlock(screen, &frame)
+		drawHUD(screen, fps.value(), times)
+		t2 := time.Now()
+		screen.Show()
+		times = frameTimes{draw: t1.Sub(t0), present: t2.Sub(t1), show: time.Since(t2)}
 	}
+}
+
+// frameTimes are the three parts of a frame measured separately (see
+// ARCHITECTURE "Performance budget").
+type frameTimes struct {
+	draw    time.Duration // DrawFrame: rays into the pixel buffer
+	present time.Duration // presenter + HUD: pixels into tcell's cell buffer
+	show    time.Duration // Show: tcell sends changed cells to the terminal
 }
 
 // pumpEvents runs on its own goroutine. It reads screen events and sends them
@@ -176,18 +201,19 @@ func isQuitKey(ev *tcell.EventKey) bool {
 	return ev.Key() == tcell.KeyEscape || ev.Key() == tcell.KeyCtrlC
 }
 
-// drawScreen draws the title in the middle and the HUD on the last row.
-// The 3D view replaces the title in T6.
-func drawScreen(s tcell.Screen, m *world.Map, fps, dt float64, work time.Duration) {
-	s.Clear()
+// drawHUD clears the last row and writes the stats on it. T15 replaces this
+// with render.DrawHUD.
+func drawHUD(s tcell.Screen, fps float64, t frameTimes) {
 	w, h := s.Size()
-	const title = "termfps"
-	hint := fmt.Sprintf("map %dx%d loaded | Esc or Ctrl+C to quit", m.W, m.H)
-	s.PutStr((w-len(title))/2, h/2, title)
-	s.PutStr((w-len(hint))/2, h/2+1, hint)
-
-	hud := fmt.Sprintf("FPS %4.1f | dt %5.1fms | frame %5.2fms",
-		fps, dt*1000, float64(work.Microseconds())/1000)
+	for x := 0; x < w; x++ {
+		s.SetContent(x, h-1, ' ', nil, tcell.StyleDefault)
+	}
+	hud := fmt.Sprintf("FPS %4.1f | draw %.2f present %.2f show %.2f ms | colors %d",
+		fps, ms(t.draw), ms(t.present), ms(t.show), s.Colors())
 	s.PutStr(0, h-1, hud)
-	s.Show()
+}
+
+// ms converts a duration to milliseconds with fractions.
+func ms(d time.Duration) float64 {
+	return float64(d.Microseconds()) / 1000
 }
