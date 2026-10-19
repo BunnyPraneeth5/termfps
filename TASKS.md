@@ -98,7 +98,7 @@ Status: [ ] todo, [~] in progress, [x] done
   - Straight walls look straight, not curved.
   - A 1x1 wall block looks roughly square at medium distance (compare with the browser mock).
 
-### [ ] T12: Wall shading
+### [~] T12: Wall shading
 - In DrawFrame: brightness falls with distance (fog). Y-side walls about 0.7x brightness. Clamp before converting to uint8.
 - Acceptance: corners and depth are clearly readable in half-block mode (compare with the browser mock).
 

@@ -49,8 +49,6 @@ func (f *Frame) Resize(w, h int) {
 const (
 	// minPerpDist keeps wall height finite when the camera touches a wall.
 	minPerpDist = 0.0001
-	// wallGray is the flat wall color until shading (T12).
-	wallGray uint8 = 200
 	// floorGray and ceilingGray are flat until T13.
 	floorGray   uint8 = 0
 	ceilingGray uint8 = 0
@@ -75,6 +73,7 @@ func DrawFrame(s *game.State, f *Frame) {
 		hit := world.CastRay(s.Map, p.X, p.Y, dirX+planeX*cameraX, dirY+planeY*cameraX)
 
 		start, end := wallSpan(f, hit.PerpDist)
+		wallGray := wallShade(hit.PerpDist, hit.Side)
 
 		for y := 0; y < f.H; y++ {
 			g := ceilingGray

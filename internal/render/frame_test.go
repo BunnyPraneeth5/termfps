@@ -89,6 +89,7 @@ func TestDrawFrameFacingWall(t *testing.T) {
 	s := newState(t, 2.0, 3.5)
 	f := newFrame(120, 40)
 	DrawFrame(s, f)
+	wallGray := wallShade(2, 0) // all columns hit the east (X-side) wall at 2
 
 	for _, x := range []int{0, f.W / 2, f.W - 1} {
 		for y := 0; y < f.H; y++ {
@@ -111,6 +112,7 @@ func TestDrawFrameTouchingWall(t *testing.T) {
 	s := newState(t, 3.99995, 3.5)
 	f := newFrame(120, 40)
 	DrawFrame(s, f)
+	wallGray := wallShade(0.00005, 0)
 	for i, p := range f.Pix {
 		if p.Gray != wallGray {
 			t.Fatalf("pixel (%d, %d) = %d, want wall %d", i%f.W, i/f.W, p.Gray, wallGray)
