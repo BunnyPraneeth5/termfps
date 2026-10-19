@@ -92,7 +92,7 @@ Status: [ ] todo, [~] in progress, [x] done
 - Acceptance:
   - Resizing the window mid-game, including down to a few columns and back, doesn't crash or leave garbage.
 
-### [ ] T11: Tune pixelAspect
+### [~] T11: Tune pixelAspect
 - Adjust `pixelAspect` by eye for the Windows Terminal font. Write the final value in PROGRESS.md.
 - Acceptance:
   - Straight walls look straight, not curved.

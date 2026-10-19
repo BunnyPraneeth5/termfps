@@ -19,7 +19,14 @@ type Pixel struct {
 type Frame struct {
 	W, H int
 	Pix  []Pixel // row-major, index = y*W + x
+	// PixelAspect is a pixel's height divided by its width; must be > 0.
+	// Usually DefaultPixelAspect; the -aspect flag overrides it for tuning.
+	PixelAspect float64
 }
+
+// DefaultPixelAspect was measured in T11 from a Windows Terminal screenshot:
+// cells are about 14x28 screen pixels, so each half-block pixel is 14x14.
+const DefaultPixelAspect = 1.0
 
 // FrameSize returns the Frame size for a terminal of cols x rows.
 // The last row is the HUD, so the view gets rows-1 cells = 2*(rows-1) pixels.
@@ -40,9 +47,6 @@ func (f *Frame) Resize(w, h int) {
 }
 
 const (
-	// pixelAspect is a Frame pixel's height divided by its width. Two pixels
-	// per terminal cell makes them about square. Tuned by eye in T11.
-	pixelAspect = 1.0
 	// minPerpDist keeps wall height finite when the camera touches a wall.
 	minPerpDist = 0.0001
 	// wallGray is the flat wall color until shading (T12).
@@ -58,23 +62,19 @@ func DrawFrame(s *game.State, f *Frame) {
 	if f.W <= 0 || f.H <= 0 {
 		return
 	}
+	if f.PixelAspect <= 0 {
+		panic("render: Frame.PixelAspect must be > 0") // a bug in the caller, not bad input
+	}
 	p := s.Player
 	dirX, dirY := p.Dir()
 	planeX, planeY := p.Plane()
-	center := float64(f.H) / 2
 
 	for x := 0; x < f.W; x++ {
 		// cameraX goes from -1 (left edge) to almost +1 (right edge).
 		cameraX := 2*float64(x)/float64(f.W) - 1
 		hit := world.CastRay(s.Map, p.X, p.Y, dirX+planeX*cameraX, dirY+planeY*cameraX)
 
-		dist := math.Max(hit.PerpDist, minPerpDist)
-		lineHeight := float64(f.W) / (2 * game.PlaneLen * pixelAspect * dist)
-
-		// Clamp in float before converting: up close lineHeight is huge, and
-		// converting an out-of-range float to int gives a garbage value.
-		start := int(clamp(math.Round(center-lineHeight/2), 0, float64(f.H)))
-		end := int(clamp(math.Round(center+lineHeight/2), 0, float64(f.H)))
+		start, end := wallSpan(f, hit.PerpDist)
 
 		for y := 0; y < f.H; y++ {
 			g := ceilingGray
@@ -87,6 +87,19 @@ func DrawFrame(s *game.State, f *Frame) {
 			f.Pix[y*f.W+x].Gray = g
 		}
 	}
+}
+
+// wallSpan returns the pixel rows [start, end) a wall at perpendicular
+// distance dist covers in f, centered vertically.
+func wallSpan(f *Frame, dist float64) (start, end int) {
+	dist = math.Max(dist, minPerpDist)
+	lineHeight := float64(f.W) / (2 * game.PlaneLen * f.PixelAspect * dist)
+	center := float64(f.H) / 2
+	// Clamp in float before converting: up close lineHeight is huge, and
+	// converting an out-of-range float to int gives a garbage value.
+	start = int(clamp(math.Round(center-lineHeight/2), 0, float64(f.H)))
+	end = int(clamp(math.Round(center+lineHeight/2), 0, float64(f.H)))
+	return start, end
 }
 
 func clamp(v, lo, hi float64) float64 {

@@ -42,7 +42,12 @@ func run() (exitCode int) {
 		defaultKeys = "async"
 	}
 	keyMode := flag.String("keys", defaultKeys, `movement keys: "async" (real key state, Windows only) or "events" (terminal key events)`)
+	aspect := flag.Float64("aspect", render.DefaultPixelAspect, "pixel height / width, for tuning wall proportions (0.5-2.0)")
 	flag.Parse()
+	if *aspect < 0.5 || *aspect > 2.0 {
+		fmt.Fprintf(os.Stderr, "termfps: -aspect must be between 0.5 and 2.0, got %v\n", *aspect)
+		return 2
+	}
 	if *targetFPS < 1 || *targetFPS > 240 {
 		fmt.Fprintf(os.Stderr, "termfps: -fps must be between 1 and 240, got %d\n", *targetFPS)
 		return 2
@@ -134,7 +139,7 @@ func run() (exitCode int) {
 
 	// The Frame is reused every frame; it only changes size on resize.
 	// FrameSize(screen.Size()) passes Size's two results as the two arguments.
-	var frame render.Frame
+	frame := render.Frame{PixelAspect: *aspect}
 	frame.Resize(render.FrameSize(screen.Size()))
 
 	interval := time.Second / time.Duration(*targetFPS)

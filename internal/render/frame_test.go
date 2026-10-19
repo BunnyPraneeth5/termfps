@@ -28,9 +28,40 @@ func newState(t testing.TB, x, y float64) *game.State {
 }
 
 func newFrame(cols, rows int) *Frame {
-	var f Frame
+	f := Frame{PixelAspect: DefaultPixelAspect}
 	f.Resize(FrameSize(cols, rows))
 	return &f
+}
+
+// Taller pixels (aspect 2) make walls half as many pixels tall.
+// At 120x78, distance 2: 120 / (2*0.66*aspect*2) = 45.45 / aspect pixels.
+func TestWallSpanPixelAspect(t *testing.T) {
+	f := newFrame(120, 40)
+	cases := []struct {
+		aspect     float64
+		start, end int
+	}{
+		{1.0, 16, 62}, // 45.45 tall around center 39
+		{2.0, 28, 50}, // 22.7 tall
+		{0.5, 0, 78},  // 90.9 tall, clamped to the frame
+	}
+	for _, c := range cases {
+		f.PixelAspect = c.aspect
+		if s, e := wallSpan(f, 2); s != c.start || e != c.end {
+			t.Errorf("aspect %v: span = [%d, %d), want [%d, %d)", c.aspect, s, e, c.start, c.end)
+		}
+	}
+}
+
+func TestDrawFrameZeroAspectPanics(t *testing.T) {
+	defer func() {
+		if recover() == nil {
+			t.Error("DrawFrame with PixelAspect 0 didn't panic")
+		}
+	}()
+	f := newFrame(80, 24)
+	f.PixelAspect = 0
+	DrawFrame(newState(t, 2.0, 3.5), f)
 }
 
 func TestFrameSize(t *testing.T) {
