@@ -30,14 +30,16 @@ func (p Player) Plane() (x, y float64) {
 
 // State is everything the game needs to update and draw one frame.
 type State struct {
-	Map    *world.Map
-	Player Player
+	Map         *world.Map
+	Player      Player
+	ShowMinimap bool
 }
 
-// NewState puts the player on the map's spawn, facing east.
+// NewState puts the player on the map's spawn, facing east, minimap on.
 func NewState(m *world.Map) *State {
 	return &State{
-		Map:    m,
-		Player: Player{X: m.SpawnX, Y: m.SpawnY, Angle: 0},
+		Map:         m,
+		Player:      Player{X: m.SpawnX, Y: m.SpawnY, Angle: 0},
+		ShowMinimap: true,
 	}
 }

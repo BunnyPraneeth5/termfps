@@ -38,6 +38,11 @@ func KeyFor(ev *tcell.EventKey) (k Key, ok bool) {
 	return 0, false
 }
 
+// IsToggleMinimap reports whether the key is M (either case).
+func IsToggleMinimap(ev *tcell.EventKey) bool {
+	return ev.Key() == tcell.KeyRune && unicode.ToLower(ev.Rune()) == 'm'
+}
+
 // IsQuit reports whether the key is Esc or Ctrl+C.
 func IsQuit(ev *tcell.EventKey) bool {
 	return ev.Key() == tcell.KeyEscape || ev.Key() == tcell.KeyCtrlC

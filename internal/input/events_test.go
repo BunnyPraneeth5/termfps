@@ -35,6 +35,17 @@ func TestKeyFor(t *testing.T) {
 	}
 }
 
+func TestIsToggleMinimap(t *testing.T) {
+	for _, r := range []rune{'m', 'M'} {
+		if !IsToggleMinimap(tcell.NewEventKey(tcell.KeyRune, r, tcell.ModNone)) {
+			t.Errorf("%q is not the minimap toggle", r)
+		}
+	}
+	if IsToggleMinimap(tcell.NewEventKey(tcell.KeyRune, 'n', tcell.ModNone)) {
+		t.Error("n counts as the minimap toggle")
+	}
+}
+
 func TestIsQuit(t *testing.T) {
 	if !IsQuit(tcell.NewEventKey(tcell.KeyEscape, 0, tcell.ModNone)) {
 		t.Error("Esc is not quit")

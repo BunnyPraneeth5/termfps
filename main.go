@@ -156,6 +156,7 @@ func run() (exitCode int) {
 		frameStart := time.Now()
 
 		quit := false
+		toggleMinimap := false
 	drain:
 		// Take every waiting event without blocking. With "default", select
 		// doesn't wait: if the channel is empty it runs default right away.
@@ -178,6 +179,8 @@ func run() (exitCode int) {
 				case *tcell.EventKey:
 					if input.IsQuit(ev) {
 						quit = true
+					} else if input.IsToggleMinimap(ev) {
+						toggleMinimap = !toggleMinimap // two presses in one frame cancel
 					} else if k, ok := input.KeyFor(ev); ok {
 						keys.Press(k, ev.When())
 					}
@@ -212,12 +215,16 @@ func run() (exitCode int) {
 		case focused:
 			in = input.AsyncInput()
 		}
+		in.ToggleMinimap = toggleMinimap
 		game.Update(state, in, dt)
 
 		t0 := time.Now()
 		render.DrawFrame(state, &frame)
 		t1 := time.Now()
 		render.PresentHalfBlock(screen, &frame)
+		if state.ShowMinimap {
+			render.DrawMinimap(screen, state) // false = didn't fit; can't happen at 80x24+ with a 16x16 map
+		}
 		drawHUD(screen, fps.value(), state.Player, times, keysLabel(*keyMode, focused))
 		t2 := time.Now()
 		screen.Show()

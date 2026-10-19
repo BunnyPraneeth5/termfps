@@ -116,6 +116,25 @@ func TestUpdateStopsAtWall(t *testing.T) {
 	}
 }
 
+func TestToggleMinimap(t *testing.T) {
+	s := newOpenState(t)
+	if !s.ShowMinimap {
+		t.Fatal("minimap off at start, want on")
+	}
+	Update(s, Input{ToggleMinimap: true}, 1.0/30)
+	if s.ShowMinimap {
+		t.Error("minimap still on after one toggle")
+	}
+	Update(s, Input{}, 1.0/30) // no toggle this frame: stays off
+	if s.ShowMinimap {
+		t.Error("minimap turned back on without a toggle")
+	}
+	Update(s, Input{ToggleMinimap: true}, 1.0/30)
+	if !s.ShowMinimap {
+		t.Error("minimap still off after the second toggle")
+	}
+}
+
 func TestOppositeKeysCancel(t *testing.T) {
 	s := newOpenState(t)
 	before := s.Player

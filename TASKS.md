@@ -106,7 +106,7 @@ Status: [ ] todo, [~] in progress, [x] done
 - Floor dark at the horizon, brighter toward the bottom. Ceiling near black.
 - Acceptance: gives a sense of ground without washing out the walls (compare with the browser mock).
 
-### [ ] T14: Minimap
+### [~] T14: Minimap
 - Top-right overlay as text cells drawn after the presenter. Player shown as an arrow for facing direction. Toggle with M (one-shot).
 - Acceptance: position and facing match the 3D view, including after turning 90° right (arrow points south).
 
