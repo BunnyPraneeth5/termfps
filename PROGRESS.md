@@ -65,3 +65,17 @@ Template:
 - Next: user runs the Day 2 checks; then log the T8 decision; then Day 3 (T10 resize).
 - Update: user reported all Day 2 checks passed (walls on screen, movement and turn directions, `-keys async` move+turn together with focus handling, collision). No numbers reported for `colors` or `show` time; T17 measures performance. T6-T9 done. T8 kept as D19: `-keys async` is now the default on Windows, `-keys events` the fallback.
 - Next: push, then Day 3 (T10 resize).
+- Pushed Day 2 (`d588b6e`).
+
+## 2026-10-19 (Day 3-4: T10-T17)
+- Done (code, tests, one commit per task):
+  - T10 `e523ca9`: `render.TooSmall`/`DrawTooSmall` (80x24 minimum); main skips update and 3D while too small.
+  - T11 `20b0e0a`: `Frame.PixelAspect` + `-aspect 0.5-2.0` flag. Default 1.0, measured from the user's screenshot (cells ~14x28 px, so half-block pixels ~14x14). `wallSpan` pulled out and tested.
+  - T12 `f8170d4`: wall fog `230/(1+0.25*dist)`, Y-side x0.7, clamped `toGray`.
+  - T13 `06fe179`: ceiling 8, floor 12 at horizon to 80 at the bottom.
+  - T14 `1b961ad`: minimap top-right (2 columns per cell, 8-direction arrow), M toggles (one-shot `Input.ToggleMinimap`), on at start.
+  - T15 `685dd89`: `render.DrawHUD`: FPS, x/y, degrees + compass letter always; timings and key mode only if they fit whole; "minimap hidden" notice if it doesn't fit. `colors` dropped from the HUD (T6 is done).
+  - T17 code part `aeed153`: presenter uses `Put` with a constant string: 0 allocations per frame (was 4680).
+  - 93 tests pass. world and game have no tcell dependency.
+- Not done / blocked: T10-T15 and T17 marked [~] for the user's on-screen checks; T16 (other terminal) and T17's `Show()` reading need the user's terminal.
+- Next: user runs the Day 3-4 checks; then T18 (demo + README).
