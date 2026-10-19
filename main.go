@@ -5,7 +5,6 @@ import (
 	_ "embed" // the blank import (_) enables the //go:embed directive below
 	"flag"
 	"fmt"
-	"math"
 	"os"
 	"runtime"
 	"runtime/debug"
@@ -222,10 +221,16 @@ func run() (exitCode int) {
 		render.DrawFrame(state, &frame)
 		t1 := time.Now()
 		render.PresentHalfBlock(screen, &frame)
-		if state.ShowMinimap {
-			render.DrawMinimap(screen, state) // false = didn't fit; can't happen at 80x24+ with a 16x16 map
-		}
-		drawHUD(screen, fps.value(), state.Player, times, keysLabel(*keyMode, focused))
+		minimapHidden := state.ShowMinimap && !render.DrawMinimap(screen, state)
+		render.DrawHUD(screen, render.HUD{
+			FPS:           fps.value(),
+			Player:        state.Player,
+			Draw:          times.draw,
+			Present:       times.present,
+			Show:          times.show,
+			Keys:          keysLabel(*keyMode, focused),
+			MinimapHidden: minimapHidden,
+		})
 		t2 := time.Now()
 		screen.Show()
 		times = frameTimes{draw: t1.Sub(t0), present: t2.Sub(t1), show: time.Since(t2)}
@@ -240,19 +245,6 @@ type frameTimes struct {
 	show    time.Duration // Show: tcell sends changed cells to the terminal
 }
 
-// drawHUD clears the last row and writes the stats on it. T15 replaces this
-// with render.DrawHUD.
-func drawHUD(s tcell.Screen, fps float64, p game.Player, t frameTimes, keys string) {
-	w, h := s.Size()
-	for x := 0; x < w; x++ {
-		s.SetContent(x, h-1, ' ', nil, tcell.StyleDefault)
-	}
-	deg := int(math.Round(p.Angle*180/math.Pi)) % 360
-	hud := fmt.Sprintf("FPS %4.1f | x %5.2f y %5.2f %3d° | draw %.2f present %.2f show %.2f ms | %s | colors %d",
-		fps, p.X, p.Y, deg, ms(t.draw), ms(t.present), ms(t.show), keys, s.Colors())
-	s.PutStr(0, h-1, hud)
-}
-
 // keysLabel names the input mode for the HUD; async also shows focus.
 func keysLabel(mode string, focused bool) string {
 	if mode != "async" {
@@ -262,9 +254,4 @@ func keysLabel(mode string, focused bool) string {
 		return "keys async (focused)"
 	}
 	return "keys async (NOT focused)"
-}
-
-// ms converts a duration to milliseconds with fractions.
-func ms(d time.Duration) float64 {
-	return float64(d.Microseconds()) / 1000
 }

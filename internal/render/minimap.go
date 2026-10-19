@@ -1,8 +1,6 @@
 package render
 
 import (
-	"math"
-
 	"github.com/gdamore/tcell/v2"
 
 	"github.com/BunnyPraneeth5/termfps/internal/game"
@@ -58,9 +56,5 @@ func DrawMinimap(s tcell.Screen, st *game.State) bool {
 
 // arrowFor picks the arrow closest to the facing angle.
 func arrowFor(angle float64) rune {
-	i := int(math.Round(angle/(math.Pi/4))) % 8
-	if i < 0 {
-		i += 8
-	}
-	return arrows[i]
+	return arrows[dirIndex(angle)]
 }

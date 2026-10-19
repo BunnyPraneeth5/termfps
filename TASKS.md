@@ -110,7 +110,7 @@ Status: [ ] todo, [~] in progress, [x] done
 - Top-right overlay as text cells drawn after the presenter. Player shown as an arrow for facing direction. Toggle with M (one-shot).
 - Acceptance: position and facing match the 3D view, including after turning 90° right (arrow points south).
 
-### [ ] T15: HUD
+### [~] T15: HUD
 - Bottom line (the row outside the Frame): FPS, X/Y, facing angle in degrees (0 = east, 90 = south).
 - Acceptance: never overlaps the minimap, updates every frame, fits at 80 columns.
 
