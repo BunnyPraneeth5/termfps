@@ -38,3 +38,16 @@ Template:
   - Ctrl+C arrives as `tcell.KeyCtrlC` in this mode.
 - Next: user checks T1 in Windows Terminal, then commit, then T2.
 - Update: user confirmed all T1 checks in Windows Terminal (Esc, Ctrl+C, clean prompt, forced panic restores and prints the stack). T1 done and committed.
+- Done (Day 1 rest):
+  - T2 code: input goroutine (`pumpEvents` in main.go, own recover) + buffered channel drained with select/default, ticker loop with `-fps N` (1-240), dt clamped to 0.1, HUD line with FPS (1-second window), dt and frame work time. `TERMFPS_PANIC=input` tests the goroutine's recover. Tests for clampDT and the FPS counter.
+  - T3: `world.Parse` with BOM, CRLF, trailing whitespace and trailing newline handling; rejects empty, <3x3, ragged, unknown chars, `T`, 0 or 2+ spawns, open border. `maps/arena.txt` 16x16, embedded in main.go and parsed before the screen opens. Tests also check every open arena cell is reachable from the spawn.
+  - T4: `world.CastRay` (DDA), `At`/`IsWall` (outside = wall). Tests: four straight directions off-center, axis-aligned ray on a grid line (no NaN), no-fisheye across the camera plane, diagonal into a corner and into a pillar, zero direction.
+  - T5: `game.Player` with Angle, `Dir()`, `Plane()`; `game.State`, `NewState`. `render.Frame` with `FrameSize` and allocation-free `Resize`, `render.DrawFrame` with flat walls and clamped draw range. Tests: facing a wall 2 away fills rows 16-61 of a 120x78 frame, touching a wall fills everything without panic, zero-height frame.
+  - Build, vet, gofmt, test all clean (45 tests). world, game and render don't depend on tcell.
+- Not done / blocked: T2's on-screen checks (FPS 28-32, `-fps 15`, idle CPU, `-fps 0`, `TERMFPS_PANIC=input`) need the user; this sandbox blocks running the .exe. T3-T5 not committed yet.
+- Issues found: two of my own test mistakes, caught by the first run (fisheye test geometry hit side walls; Resize test skipped FrameSize). Code was correct in both.
+- Next: user checks T2, commit Day 1, then T6.
+- Update: user confirmed FPS 30.0 (default) and 15.0 (`-fps 15`), frame work about 0.4-0.5ms; `-fps 0` rejected; `TERMFPS_PANIC=input` restores and prints the stack.
+- Issue found in that check: a HUD line was printed into the normal terminal before the panic message. The input goroutine restored the terminal while the main loop was still drawing (race). Fixed: the input goroutine now sends its panic to the main loop over a channel, and only the main loop restores and prints. Needs one re-run of the `TERMFPS_PANIC=input` check. Idle CPU not reported yet.
+- Update: user re-ran the input panic check (clean, no HUD text) and confirmed idle CPU under 5%. T2 done. Day 1 (T1-T5) complete and committed.
+- Next: T6 (half-block presenter, first walls on screen).

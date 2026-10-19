@@ -40,6 +40,7 @@ Note: `//go:embed` only sees files in the same package dir or below. We keep the
 - Reads tcell events (from a goroutine, sent over a channel).
 - Tracks which keys are held (see Input approach) and produces one `game.Input` per frame. The game package never sees tcell types.
 - The held-key tracker takes `now time.Time` as a parameter, so it can be unit-tested without a terminal or real waiting.
+- Until T7, the event goroutine (`pumpEvents`) lives in `main.go`. T7 moves it here along with the tracker.
 
 ### render
 Two steps: draw the world into a pixel buffer, then present the buffer as terminal cells.
@@ -119,7 +120,7 @@ Stretch-only fields and types (`RenderMode`, `Pixel.Color`, a shoot action) are 
 2. Restoring the terminal is one `restore` function wrapped in `sync.Once` (so it runs only once even if called from two places). `main` defers a function that calls `recover()`, then `restore`, then prints the panic and stack trace, then exits 1. Order matters: printing before `restore` writes into the alternate screen and the message is lost.
    - Never call `os.Exit` or `log.Fatal` after `Init()` except after `restore`. They skip deferred functions.
 3. Input goroutine: `screen.PollEvent()` in a loop -> buffered channel.
-   - `recover()` in `main` only catches panics on the main goroutine. The input goroutine needs its own deferred recover that calls the same `restore`, prints, and exits 1.
+   - `recover()` in `main` only catches panics on the main goroutine. The input goroutine has its own deferred recover, which sends the panic and its stack to the main loop over a channel (buffer 1). The main loop restores, prints, and exits 1. Only the main goroutine ever touches the screen, so a crash can't race with drawing.
    - `PollEvent()` returns nil after the screen is finalized. The goroutine exits on nil.
    - The goroutine only sends events. It never reads or writes `State`.
 4. Main loop on a 30 FPS ticker (`-fps N` flag overrides 30, for testing):

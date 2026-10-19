@@ -20,29 +20,31 @@ Status: [ ] todo, [~] in progress, [x] done
   - With `TERMFPS_PANIC=1`, the terminal is restored and the panic message + stack trace are readable in PowerShell.
   - The `Init()` error is checked: on failure it prints the error and exits 1. (Hard to force on Windows; check by reading the code.)
 
-### [ ] T2: Game loop at 30 FPS
+### [x] T2: Game loop at 30 FPS
 - Input goroutine + buffered channel, drained with `select`/`default`. Goroutine exits when `PollEvent()` returns nil, and has its own recover.
 - 30 FPS ticker, `-fps N` flag, dt in seconds clamped to 0.1.
 - HUD shows FPS (frames counted over the last 1 second) and ms per frame.
 - Acceptance:
   - FPS reads 28-32 in Windows Terminal. `-fps 15` reads 14-16.
   - Idle CPU under 5% in Task Manager.
+  - `-fps 0` prints an error and exits without opening the screen.
+  - `TERMFPS_PANIC=input` + any key: terminal restored, panic printed (tests the input goroutine's recover).
 
-### [ ] T3: Map loader + tests
+### [x] T3: Map loader + tests
 - `world.Parse` per ARCHITECTURE map format. Create `maps/arena.txt` (16x16).
 - Acceptance:
   - Tests cover: valid map, ragged rows, unknown char, `T` rejected, no P, two P, open border, `\r\n` endings, UTF-8 BOM, trailing newline(s), trailing spaces, empty file, smaller than 3x3.
   - A test parses the real embedded `maps/arena.txt`.
   - All tests pass.
 
-### [ ] T4: Raycaster (world.CastRay) + tests
+### [x] T4: Raycaster (world.CastRay) + tests
 - `world.CastRay` with DDA, float64 math, step cap.
 - Acceptance:
   - Unit tests: ray straight at a wall (east, west, north, south) returns the expected PerpDist and Side.
   - Unit test: an axis-aligned ray (one direction component exactly 0) works.
   - Unit test: a diagonal ray toward a corner returns a sane hit.
 
-### [ ] T5: Frame + DrawFrame (flat walls) + tests
+### [x] T5: Frame + DrawFrame (flat walls) + tests
 - `render.Frame` sized `W x 2*(rows-1)`, reused between frames.
 - `render.DrawFrame`: walls one flat gray, floor and ceiling black. Uses the wall-height formula with `pixelAspect` from ARCHITECTURE. Clamps drawStart/drawEnd.
 - `Player.Angle` with `Dir()` and `Plane()` methods per ARCHITECTURE "Coordinates".

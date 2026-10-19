@@ -40,7 +40,7 @@ Append an entry to PROGRESS.md. Log any new decision in DECISIONS.md.
 - Ctrl+C arrives as a tcell key event (`tcell.KeyCtrlC`). Handle it, or the game won't quit.
 - Restore order on panic: call `restore` (tcell `Fini`) first, then print the panic and stack. Printing first writes into the alternate screen and the message is lost.
 - Never `os.Exit` or `log.Fatal` after screen `Init()` except right after `restore`. They skip deferred functions, so the terminal stays broken.
-- `recover()` only works for panics on the same goroutine. The input goroutine needs its own.
+- `recover()` only works for panics on the same goroutine. The input goroutine needs its own, and it hands the panic to the main loop over a channel instead of restoring the terminal itself. Only the main goroutine touches the screen; otherwise the main loop can draw after restore and leave HUD text in the user's terminal (seen in T2).
 - `PollEvent()` returns nil after `Fini`. The input goroutine must exit on nil.
 - Map files may have `\r\n` line endings, a UTF-8 BOM, and trailing newlines on Windows.
 - Go files must have LF line endings, or `gofmt -l` lists every file. `.gitattributes` handles this (T1).
@@ -55,4 +55,4 @@ Append an entry to PROGRESS.md. Log any new decision in DECISIONS.md.
 - Reuse the Frame between frames. Don't allocate a new one every tick.
 
 ## Current focus
-T2: game loop at 30 FPS (input goroutine + channel, ticker, dt, FPS in HUD).
+T6: half-block presenter + terminal color check (first walls on screen). Day 1 (T1-T5) is done.
