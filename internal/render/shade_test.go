@@ -45,6 +45,32 @@ func TestToGrayClamps(t *testing.T) {
 	}
 }
 
+func TestBackgroundShade(t *testing.T) {
+	const h = 78
+	for y := 0; y < h/2; y++ {
+		if g := backgroundShade(y, h); g != ceilingGray {
+			t.Errorf("row %d (top half) = %d, want ceiling %d", y, g, ceilingGray)
+		}
+	}
+	// Floor gets brighter toward the bottom, never darker.
+	prev := backgroundShade(h/2, h)
+	for y := h/2 + 1; y < h; y++ {
+		g := backgroundShade(y, h)
+		if g < prev {
+			t.Errorf("floor row %d = %d, darker than the row above (%d)", y, g, prev)
+		}
+		prev = g
+	}
+	top, bottom := backgroundShade(h/2, h), backgroundShade(h-1, h)
+	if top > 15 || bottom < 75 || bottom > 80 {
+		t.Errorf("floor: horizon %d (want ~12), bottom %d (want ~80)", top, bottom)
+	}
+	// The floor never outshines a wall up close.
+	if bottom >= wallShade(1, 1) {
+		t.Errorf("floor bottom %d is as bright as a close side wall %d", bottom, wallShade(1, 1))
+	}
+}
+
 func absDiff(a, b uint8) uint8 {
 	if a > b {
 		return a - b

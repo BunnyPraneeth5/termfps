@@ -93,11 +93,9 @@ func TestDrawFrameFacingWall(t *testing.T) {
 
 	for _, x := range []int{0, f.W / 2, f.W - 1} {
 		for y := 0; y < f.H; y++ {
-			want := ceilingGray
+			want := backgroundShade(y, f.H)
 			if y >= 16 && y < 62 {
 				want = wallGray
-			} else if y >= 62 {
-				want = floorGray
 			}
 			if got := f.Pix[y*f.W+x].Gray; got != want {
 				t.Errorf("pixel (%d, %d) = %d, want %d", x, y, got, want)

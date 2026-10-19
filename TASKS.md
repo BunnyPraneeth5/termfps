@@ -102,7 +102,7 @@ Status: [ ] todo, [~] in progress, [x] done
 - In DrawFrame: brightness falls with distance (fog). Y-side walls about 0.7x brightness. Clamp before converting to uint8.
 - Acceptance: corners and depth are clearly readable in half-block mode (compare with the browser mock).
 
-### [ ] T13: Floor and ceiling
+### [~] T13: Floor and ceiling
 - Floor dark at the horizon, brighter toward the bottom. Ceiling near black.
 - Acceptance: gives a sense of ground without washing out the walls (compare with the browser mock).
 

@@ -49,9 +49,6 @@ func (f *Frame) Resize(w, h int) {
 const (
 	// minPerpDist keeps wall height finite when the camera touches a wall.
 	minPerpDist = 0.0001
-	// floorGray and ceilingGray are flat until T13.
-	floorGray   uint8 = 0
-	ceilingGray uint8 = 0
 )
 
 // DrawFrame casts one ray per column and fills f with ceiling, wall and floor.
@@ -76,12 +73,9 @@ func DrawFrame(s *game.State, f *Frame) {
 		wallGray := wallShade(hit.PerpDist, hit.Side)
 
 		for y := 0; y < f.H; y++ {
-			g := ceilingGray
-			switch {
-			case y >= end:
-				g = floorGray
-			case y >= start:
-				g = wallGray
+			g := wallGray
+			if y < start || y >= end {
+				g = backgroundShade(y, f.H) // ceiling above, floor below
 			}
 			f.Pix[y*f.W+x].Gray = g
 		}

@@ -11,7 +11,27 @@ const (
 	fogK = 0.25
 	// sideFactor darkens Y-side (north/south) faces so corners read clearly.
 	sideFactor = 0.7
+
+	// ceilingGray is a flat near-black ceiling.
+	ceilingGray uint8 = 8
+	// The floor fades from floorHorizon (far away, at the screen's middle)
+	// to floorNear (at the bottom). floorNear stays well below a close wall
+	// (230) so the floor doesn't wash the walls out.
+	floorHorizon = 12.0
+	floorNear    = 80.0
 )
+
+// backgroundShade returns the ceiling or floor gray for pixel row y of a
+// frame h pixels tall. The top half is ceiling, the bottom half is floor.
+func backgroundShade(y, h int) uint8 {
+	center := float64(h) / 2
+	row := float64(y) + 0.5 // middle of the pixel
+	if row < center {
+		return ceilingGray
+	}
+	t := (row - center) / center // 0 at the horizon, 1 at the bottom edge
+	return toGray(floorHorizon + (floorNear-floorHorizon)*t)
+}
 
 // wallShade returns the gray for a wall at perpendicular distance dist.
 // side is world.Hit.Side: 0 = X-side face, 1 = Y-side face.
