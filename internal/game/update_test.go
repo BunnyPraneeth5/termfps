@@ -59,19 +59,20 @@ func TestTurnDirection(t *testing.T) {
 	}
 }
 
-// The same 3 seconds of walking covers the same distance at 15 and 30 FPS.
+// The same 2 seconds of walking covers the same distance at 15 and 30 FPS.
+// (6 cells east from x=10.5 stays clear of the east wall at x=19.)
 func TestMoveFrameRateIndependent(t *testing.T) {
 	distance := func(fps int) float64 {
 		s := newOpenState(t)
 		startX := s.Player.X
-		for range 3 * fps {
+		for range 2 * fps {
 			Update(s, Input{Forward: true}, 1/float64(fps))
 		}
 		return s.Player.X - startX
 	}
 	d15, d30 := distance(15), distance(30)
-	if math.Abs(d15-d30) > 1e-9 || math.Abs(d30-3*MoveSpeed) > 1e-9 {
-		t.Errorf("distance at 15 FPS = %v, at 30 FPS = %v, want both %v", d15, d30, 3*MoveSpeed)
+	if math.Abs(d15-d30) > 1e-9 || math.Abs(d30-2*MoveSpeed) > 1e-9 {
+		t.Errorf("distance at 15 FPS = %v, at 30 FPS = %v, want both %v", d15, d30, 2*MoveSpeed)
 	}
 }
 
@@ -98,6 +99,20 @@ func TestDiagonalNotFaster(t *testing.T) {
 	got := math.Hypot(s.Player.X-x0, s.Player.Y-y0)
 	if want := MoveSpeed * 0.1; math.Abs(got-want) > 1e-9 {
 		t.Errorf("diagonal step = %v, want %v", got, want)
+	}
+}
+
+// Walking forward for 10 seconds into the east wall stops at the wall.
+func TestUpdateStopsAtWall(t *testing.T) {
+	s := newOpenState(t) // facing east, east wall face at x=19
+	for range 300 {
+		Update(s, Input{Forward: true}, 1.0/30)
+	}
+	if s.Player.X+Radius > 19 {
+		t.Errorf("player box edge at %v, inside the east wall (face at 19)", s.Player.X+Radius)
+	}
+	if s.Player.X < 18.5 {
+		t.Errorf("player stopped at x=%v, want near the wall", s.Player.X)
 	}
 }
 

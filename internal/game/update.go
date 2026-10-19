@@ -1,12 +1,18 @@
 package game
 
-import "math"
+import (
+	"math"
+
+	"github.com/BunnyPraneeth5/termfps/internal/world"
+)
 
 const (
 	// MoveSpeed is in map cells per second.
 	MoveSpeed = 3.0
 	// TurnSpeed is in radians per second (pi = 180 degrees per second).
 	TurnSpeed = math.Pi
+	// Radius is the player's collision half-size, in map cells.
+	Radius = 0.2
 )
 
 // Input is what the player is doing this frame. The input package fills it;
@@ -36,8 +42,9 @@ func Update(s *State, in Input, dt float64) {
 	moveY := dirY*forward + rightY*strafe
 	// Forward + strafe together would be sqrt(2) times faster; normalize.
 	length := math.Hypot(moveX, moveY)
-	p.X += moveX / length * MoveSpeed * dt
-	p.Y += moveY / length * MoveSpeed * dt
+	dx := moveX / length * MoveSpeed * dt
+	dy := moveY / length * MoveSpeed * dt
+	p.X, p.Y = world.TryMove(s.Map, p.X, p.Y, dx, dy, Radius)
 }
 
 // axis turns a pair of opposite keys into +1, -1 or 0 (both or neither).

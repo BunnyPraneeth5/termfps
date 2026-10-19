@@ -79,7 +79,7 @@ Status: [ ] todo, [~] in progress, [x] done
   - Does it react to keys pressed in another window? Is there a fix?
   - Keep or drop. Log the result as a decision in DECISIONS.md. If dropped, the T7 baseline stays.
 
-### [ ] T9: Collision with sliding
+### [~] T9: Collision with sliding
 - `world.TryMove` with a small radius (about 0.2), checking the full box on each axis.
 - Acceptance:
   - Unit tests: blocked by a wall head-on, slides when moving diagonally along a wall, can't enter a wall diagonally at an outside corner.
