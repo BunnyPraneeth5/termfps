@@ -148,7 +148,7 @@ func run() (exitCode int) {
 	start := time.Now()
 	last := start
 	var fps fpsCounter
-	var times frameTimes // measured on the previous frame, shown in the HUD
+	var times timeAverager // frame timings, averaged over each FPS window for the HUD
 
 	for {
 		<-ticker.C // wait for the next tick (receives from the ticker's channel)
@@ -198,7 +198,9 @@ func run() (exitCode int) {
 
 		dt := clampDT(frameStart.Sub(last).Seconds())
 		last = frameStart
-		fps.tick(frameStart)
+		if fps.tick(frameStart) {
+			times.roll()
+		}
 
 		// Below the minimum size: show a message, skip the game this frame.
 		if render.TooSmall(screen.Size()) {
@@ -225,24 +227,16 @@ func run() (exitCode int) {
 		render.DrawHUD(screen, render.HUD{
 			FPS:           fps.value(),
 			Player:        state.Player,
-			Draw:          times.draw,
-			Present:       times.present,
-			Show:          times.show,
+			Draw:          times.avg.draw,
+			Present:       times.avg.present,
+			Show:          times.avg.show,
 			Keys:          keysLabel(*keyMode, focused),
 			MinimapHidden: minimapHidden,
 		})
 		t2 := time.Now()
 		screen.Show()
-		times = frameTimes{draw: t1.Sub(t0), present: t2.Sub(t1), show: time.Since(t2)}
+		times.add(frameTimes{draw: t1.Sub(t0), present: t2.Sub(t1), show: time.Since(t2)})
 	}
-}
-
-// frameTimes are the three parts of a frame measured separately (see
-// ARCHITECTURE "Performance budget").
-type frameTimes struct {
-	draw    time.Duration // DrawFrame: rays into the pixel buffer
-	present time.Duration // presenter + HUD: pixels into tcell's cell buffer
-	show    time.Duration // Show: tcell sends changed cells to the terminal
 }
 
 // keysLabel names the input mode for the HUD; async also shows focus.

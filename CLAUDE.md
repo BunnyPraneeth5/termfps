@@ -53,6 +53,8 @@ Append an entry to PROGRESS.md. Log any new decision in DECISIONS.md.
 - Compare rune keys lower-cased, so Shift and Caps Lock don't break W/A/S/D/Q/E/M.
 - Truecolor on Windows (checked in tcell v2.13.10 source): tcell uses its VT screen with built-in `xterm-truecolor`, so truecolor is always on. `COLORTERM` and `WT_SESSION` are not used. `TCELL_TRUECOLOR=disable` turns it off. If grays look banded, the terminal itself is downgrading.
 - Reuse the Frame between frames. Don't allocate a new one every tick.
+- On Windows, Go's `time.Now()` moves in steps of about 0.5ms (measured). A single sub-millisecond timing often reads 0; average over many frames (the HUD does, per FPS window) or use `go test -bench`.
+- Windows Smart App Control (on, on the user's machine) sometimes blocks a freshly built `termfps.exe` ("An Application Control policy has blocked this file"). Not a code problem; a restart has cleared it. Rebuild only when code changed. Agents can't run the exe here either.
 
 ## Current focus
-Day 3-4 (T10-T17) code committed; waiting for the user's on-screen checks, the T16 other-terminal check, and T17's Show() time. Next: T18 (demo recording + README).
+Day 3-4: T12-T15 and T17 done (user screenshots). Still open: T10 resize by hand, T11 aspect by eye, T16 VS Code terminal. Next: T18 (demo recording + README).

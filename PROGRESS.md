@@ -79,3 +79,7 @@ Template:
   - 93 tests pass. world and game have no tcell dependency.
 - Not done / blocked: T10-T15 and T17 marked [~] for the user's on-screen checks; T16 (other terminal) and T17's `Show()` reading need the user's terminal.
 - Next: user runs the Day 3-4 checks; then T18 (demo + README).
+- Windows Smart App Control (on) blocked the rebuilt exe ("Application Control policy"; Code Integrity events 3077/3033). Confirmed via registry and event log. A restart cleared it. The user kept Smart App Control on.
+- User screenshots (Windows Terminal, ~133x33 cells): shading, fog, side faces, floor/ceiling, minimap (arrow cell and direction match x/y/angle at 300° NE and 198° W), HUD all look right. show 0.51-1.13ms, present ~0.6ms, 30 FPS. T12, T13, T14, T15, T17 done.
+- Issue found: HUD showed `draw 0.00`. Measured Go's clock on this Windows machine: smallest step 0.53ms, so 0.07ms reads as 0. Fixed: HUD timings are now averaged over each 1-second FPS window (`timeAverager`, tested).
+- Still open: T10 (resize by hand), T11 (aspect by eye), T16 (VS Code terminal).

@@ -98,19 +98,19 @@ Status: [ ] todo, [~] in progress, [x] done
   - Straight walls look straight, not curved.
   - A 1x1 wall block looks roughly square at medium distance (compare with the browser mock).
 
-### [~] T12: Wall shading
+### [x] T12: Wall shading
 - In DrawFrame: brightness falls with distance (fog). Y-side walls about 0.7x brightness. Clamp before converting to uint8.
 - Acceptance: corners and depth are clearly readable in half-block mode (compare with the browser mock).
 
-### [~] T13: Floor and ceiling
+### [x] T13: Floor and ceiling
 - Floor dark at the horizon, brighter toward the bottom. Ceiling near black.
 - Acceptance: gives a sense of ground without washing out the walls (compare with the browser mock).
 
-### [~] T14: Minimap
+### [x] T14: Minimap
 - Top-right overlay as text cells drawn after the presenter. Player shown as an arrow for facing direction. Toggle with M (one-shot).
 - Acceptance: position and facing match the 3D view, including after turning 90° right (arrow points south).
 
-### [~] T15: HUD
+### [x] T15: HUD
 - Bottom line (the row outside the Frame): FPS, X/Y, facing angle in degrees (0 = east, 90 = south).
 - Acceptance: never overlaps the minimap, updates every frame, fits at 80 columns.
 
@@ -120,7 +120,7 @@ Status: [ ] todo, [~] in progress, [x] done
 - Optional, 10 minutes max: a quick look in the legacy console (run `conhost.exe` directly). No requirements.
 - Acceptance: results written in PROGRESS.md.
 
-### [~] T17: Performance check
+### [x] T17: Performance check
 - Measure DrawFrame, presenter, and `Show()` at 120x40 in half-block mode while moving.
 - Acceptance: within budget in ARCHITECTURE.md, or the bottleneck is written down.
 

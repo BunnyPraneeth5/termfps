@@ -189,6 +189,8 @@ For each column `x`:
 - Measure three numbers separately: `DrawFrame`, presenter, and `screen.Show()`. The presenter only fills tcell's in-memory buffer. `Show()` is where bytes go to the terminal and is likely the real cost (about 4,800 cells with two RGB colors each, while moving).
 - First measurement in T6, full check in T17. The HUD shows the three timings when the line has room.
 - Benchmarks at 120x40 (`go test -bench . ./internal/render`, this laptop): DrawFrame with shading ~0.07ms, 0 allocations; PresentHalfBlock ~0.75-1ms, 0 allocations since T17 switched from `SetContent` (one small allocation per cell) to `Put` with a constant string. `Show()` can only be measured in a real terminal (HUD).
+- Measured in Windows Terminal (T17, ~133x33 cells while moving): show 0.5-1.1ms, present ~0.6ms, 30 FPS steady. About 2ms of the 33ms frame budget.
+- HUD timings are averages over each 1-second FPS window, because Go's clock on Windows moves in ~0.5ms steps (measured: smallest step 0.53ms).
 - Minimum terminal size 80x24. Smaller shows a "resize your terminal" message and skips rendering.
 
 ## Open questions
