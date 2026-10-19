@@ -126,7 +126,7 @@ Status: [ ] todo, [~] in progress, [x] done
 
 ## Day 5: ship
 
-### [ ] T18: Demo recording + README
+### [~] T18: Demo recording + README
 - README: what it is, how to build and run, controls, the caution "Half-block needs a truecolor terminal and more bandwidth. Use ASCII over slow SSH."
 - 30-second screen recording walking the map in half-block mode.
 - Acceptance: good enough to show friends and the team.
