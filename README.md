@@ -85,6 +85,15 @@ Example: `.\termfps.exe -fps 60 -aspect 0.9`
   restores the terminal on exit and on crashes. If you ever see it, please
   open an issue with the printed error.
 
+## Roadmap
+
+The prototype (P0) is done. Planned next, in order (details in [PRD.md](PRD.md)):
+
+1. **Single-player game:** shooting, enemies that move, sprites, a weapon on screen, wall textures, menus, more maps, saving. Sound and mouse are still being decided.
+2. **Server / client split** inside the game, needed for the next two.
+3. **You vs an AI agent:** play against Claude Code, Codex, opencode or another CLI agent, in modes like hide and seek or a face-to-face duel.
+4. **Multiplayer:** team deathmatch over LAN, then over SSH.
+
 ## Development
 
 ```powershell

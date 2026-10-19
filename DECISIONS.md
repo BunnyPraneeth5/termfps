@@ -26,7 +26,7 @@ Format: what, why, trade-off, revisit when.
 ## D5: Native Windows for the prototype (2026-10-14)
 - Why: simpler setup, Windows Terminal is my daily terminal, and the main test target.
 - Trade-off: future server will run on Linux, so Linux testing comes later.
-- Revisit when: starting multiplayer (P2/P3).
+- Revisit when: starting the server split (P2) or multiplayer (P4), per the D20 roadmap.
 
 ## D6: Per-event input first (2026-10-14)
 - Status: superseded by D12 (2026-10-18). Per-event steps break the "movement uses dt" rule and stutter.
@@ -45,6 +45,7 @@ Format: what, why, trade-off, revisit when.
 - Revisit when: never. This is the foundation for P2.
 
 ## D9: Agent arena deferred (2026-10-14)
+- Status: superseded by D20 (2026-10-19). AI-agent opponents are now phase P3, before multiplayer, as a player-vs-agent game rather than a benchmark.
 - Why: with LLM players it becomes a benchmark more than a game. Prototype first, decide later.
 - Trade-off: none right now.
 - Revisit when: multiplayer works.
@@ -60,7 +61,7 @@ Format: what, why, trade-off, revisit when.
 - Why: half-block doubles vertical resolution and gives smooth fog and shading. Browser mocks of all three modes (mine, plus Claude, Gemini, and ChatGPT versions) made half-block clearly the best looking. Keeping a Frame buffer means ASCII stays cheap to add, which keeps the SSH path open.
 - Trade-off: two colors per cell means more bytes per frame than ASCII. Heavier over SSH. Some terminals and fonts render `▀` with gaps or poor color. Render code has one more layer.
 - User caution (shown in docs and when switching modes): "Half-block needs a truecolor terminal and more bandwidth. Use ASCII over slow SSH."
-- Revisit when: T16 shows terminals outside Windows Terminal can't handle it, T17 misses the performance budget, or SSH play starts (P3).
+- Revisit when: T16 shows terminals outside Windows Terminal can't handle it, T17 misses the performance budget, or SSH play starts (P4 in the D20 roadmap).
 
 ## D12: Held-key input with dt, real key state as a spike (2026-10-18)
 - What: the input package tracks held keys with an adaptive timeout (about 550ms after the first press, about 100ms once repeats arrive) and gives game one `game.Input` per frame. Update moves `speed * dt` for each held key. T8 spikes Win32 `GetAsyncKeyState` through the standard `syscall` package in a Windows-only file.
@@ -113,5 +114,15 @@ Format: what, why, trade-off, revisit when.
 ## D19: Keep real key state (T8 spike), default on Windows (2026-10-19)
 - What: `-keys async` (Win32 `GetAsyncKeyState` via standard `syscall`) is kept and is the default on Windows. `-keys events` (the D12 held-window tracker) stays as the fallback and the default on other systems.
 - Why: the user's T8 check passed: moving and turning at the same time works, movement stops on release, and keys typed in another window are ignored (tcell focus events work in Windows Terminal; the HUD showed "NOT focused"). That removes the main input limit of D12.
-- Trade-off: Windows-only code path. If a terminal doesn't send focus events, keys from other windows would move the player; the HUD's focus label makes that visible. Won't work over SSH (P3), where the events tracker is the only option.
+- Trade-off: Windows-only code path. If a terminal doesn't send focus events, keys from other windows would move the player; the HUD's focus label makes that visible. Won't work over SSH (P4 in the D20 roadmap), where the events tracker is the only option.
 - Revisit when: SSH play starts, or a terminal shows focus problems.
+
+## D20: Roadmap after P0 (2026-10-19)
+- What: four phases after P0, each planned (scope, design, tasks) before any code. Details in PRD "Roadmap".
+  - P1, single-player game: enemies/bots that move, sprites, weapon graphics, wall textures, menus, multiple maps, saving. Sound and mouse input are undecided (sound leaning toward necessary); decide when planning P1. P0's T20 (targets + shooting) is the bridge into P1.
+  - P2, server / client split: game logic as a server, the screen as a client.
+  - P3, AI-agent opponents: the player vs a CLI AI agent (Claude Code, Codex, opencode, ...), likely through an MCP server with game-only tools. Several game modes (ideas: hide and seek, face-to-face duel), decided when building P3.
+  - P4, multiplayer: team deathmatch over LAN, then SSH.
+- Why: the user's direction after P0. A real single-player game first makes the AI and multiplayer phases worth playing. AI opponents come before multiplayer because they're the project's unique hook and don't need networking, only the P2 split. This supersedes D9.
+- Trade-off: P1 grows the scope a lot (several weekends, not one). Sound would need a new dependency and only works locally. AI opponents bring open problems (decision speed vs 30 FPS, token cost, fairness, safety) that P3 must solve.
+- Revisit when: planning each phase.

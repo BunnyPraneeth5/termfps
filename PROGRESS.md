@@ -99,3 +99,10 @@ Template:
 - Not done: on-screen checks (same scene and proportions in all three modes, no flicker or garbage when switching, caution once).
 - Update: user confirmed with screenshots (same spot in all three modes, HUD shows the mode) and reported the caution shows once and `TCELL_TRUECOLOR=disable` starts in ASCII. T19 done.
 - Next: T20 (targets + shooting), the last stretch task, or close P0.
+
+## 2026-10-19 (future scope discussion)
+- Done: discussed and wrote down the roadmap after P0 (docs only, no code): PRD "Roadmap" section, DECISIONS D20 (supersedes D9; old P2/P3 phase references updated), README "Roadmap", TASKS "After P0" note, ARCHITECTURE boundary note.
+  - P1 single-player game: enemies, sprites, weapon graphics, wall textures, menus, multiple maps, saving. Sound and mouse undecided (sound leaning necessary).
+  - P2 server/client split. P3 you vs CLI AI agents (Claude Code, Codex, opencode...) likely via MCP, with modes like hide and seek and face-to-face, details decided when building P3. P4 multiplayer over LAN, then SSH.
+- Not done: nothing built for the roadmap yet, by the user's choice. T20 still open.
+- Next: when the user is ready, T20, then plan P1 (scope, design, tasks) before coding.

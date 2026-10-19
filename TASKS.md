@@ -147,3 +147,8 @@ Status: [ ] todo, [~] in progress, [x] done
 - Parse accepts `T` (solid, like a wall, for collision and rays). Add `Pixel.Color`; `T` cells set `Color = 1` and render red in every mode.
 - Space (one-shot) casts the center ray with `world.CastRay`. If it hits a `T`, that cell becomes empty.
 - Acceptance: shooting a visible target removes it. Shooting a wall does nothing. Unit test for the shot on a small test map.
+
+## After P0
+
+T20 above is still open and is also the first step of P1 (enemies need shooting).
+The phases after P0 (P1 single-player game, P2 server/client split, P3 AI-agent opponents, P4 multiplayer) are in PRD.md "Roadmap" and DECISIONS.md D20. Their tasks get written when each phase is planned. Don't start them from here.

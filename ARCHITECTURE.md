@@ -179,7 +179,7 @@ For each column `x`:
 - Rune keys (W/A/S/D/Q/E/M) are compared lower-cased, so Shift or Caps Lock doesn't break them.
 
 ## Boundaries
-- `world` and `game` must not import tcell. This keeps the game logic reusable for the future multiplayer server.
+- `world` and `game` must not import tcell. This keeps the game logic reusable for the future server (P2), which AI opponents (P3) and multiplayer (P4) build on.
 - `render` only reads state. It never changes it.
 - `DrawFrame` must not import or call tcell. Only presenters, minimap, and HUD touch the screen.
 - The input goroutine only sends events over its channel. All state changes happen on the main goroutine.

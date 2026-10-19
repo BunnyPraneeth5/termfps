@@ -1,7 +1,7 @@
 # PRD: termfps (working title)
 
 ## Problem
-Retro FPS games need a GPU and a game client. I want a first-person shooter that runs entirely inside a terminal, mostly monochrome, as a single small binary. Later it becomes multiplayer TDM over LAN and SSH.
+Retro FPS games need a GPU and a game client. I want a first-person shooter that runs entirely inside a terminal, mostly monochrome, as a single small binary. Later it becomes a full single-player game, then you vs AI agents (Claude Code, Codex, opencode...), then multiplayer TDM over LAN and SSH. See "Roadmap" below.
 
 ## Who it's for
 - Me first. Learning Go, realtime rendering, and later game networking.
@@ -33,6 +33,7 @@ Stretch (only if 1-11 are done, in this order):
 - Target blocks (red) on the map. Space shoots straight ahead. A hit target disappears.
 
 ## Out of scope for P0
+These are planned for later phases; see "Roadmap".
 - Multiplayer (LAN, SSH, online)
 - Enemies or bots that move
 - Sprites, weapons graphics, sound
@@ -54,3 +55,41 @@ Stretch (only if 1-11 are done, in this order):
 - Default look is half-block pixels. Shade blocks and ASCII are alternatives (stretch).
 - Color only for rare important things (targets now, players/enemies later).
 - User caution: "Half-block needs a truecolor terminal and more bandwidth. Use ASCII over slow SSH."
+
+## Roadmap (after P0)
+Agreed 2026-10-19 (DECISIONS D20). Nothing here is built yet. Each phase gets its own plan (scope, design, tasks) before any code, the same way P0 did.
+
+P0 status: core (T1-T18) and stretch T19 are done. Stretch T20 (red targets, Space to shoot) is still open and doubles as the first step of P1, because enemies need shooting.
+
+### P1: a real single-player game
+In scope:
+- **Enemies / bots that move:** patrol, chase when they see you (line of sight with the existing raycaster), health and damage.
+- **Sprites:** enemies drawn as billboard images in the 3D view, hidden correctly behind walls. Enemies get color (Style: color only for important things).
+- **Weapon graphics:** a gun at the bottom center, with a muzzle flash when firing.
+- **Wall textures:** simple patterns (for example bricks). They'll be coarse at terminal resolution and mostly lost in ASCII mode.
+- **Menus:** title screen, pause menu, settings.
+- **Multiple maps:** a map select screen.
+- **Saving:** settings and progress. What exactly to save is decided when planning P1.
+
+Undecided, decide when planning P1:
+- **Sound:** leaning toward necessary. Terminals can't play sound, so it needs an audio library (a new dependency, needs approval). Works only when playing locally; over SSH there's only the terminal bell.
+- **Mouse input:** terminals report clicks and which cell the mouse is over, but can't lock the mouse, so smooth mouse-look isn't possible. Click to shoot is.
+
+Suggested order: T20 -> enemies + sprites -> weapon graphics -> menus + multiple maps -> wall textures -> saving -> mouse and sound (if chosen).
+
+### P2: server / client split
+The game logic runs as a server and the screen is a client. Both AI opponents (P3) and multiplayer (P4) need this. `world` and `game` already have no terminal code (D8), which is what makes the split possible.
+
+### P3: AI-agent opponents (you vs an AI agent)
+The player plays against an AI agent they already use in the terminal: Claude Code, Codex, opencode, or others.
+- **Likely connection:** the game exposes an MCP server with game-only tools (look, move, turn, shoot). Most CLI agents support MCP, so one server works for all of them.
+- **Game modes:** several, decided when building P3. Ideas so far: hide and seek, face-to-face duel.
+- **Open questions for P3:**
+  - Speed: agents take seconds per decision while the game runs at 30 FPS. Options: turn-based play, high-level commands ("hold the north room") carried out by a built-in bot, or the agent writes a bot script before the match. Different modes may use different options.
+  - Cost: every agent decision uses the user's tokens, so matches need limits.
+  - Fairness: the agent only sees what its bot can see (line of sight), not the whole map.
+  - Safety: the agent gets game tools only, never anything that reads files or runs commands.
+  - An MCP library for Go would be a new dependency (needs approval).
+
+### P4: multiplayer
+Team deathmatch over LAN first, then over SSH (ASCII mode for low bandwidth, Linux server).
