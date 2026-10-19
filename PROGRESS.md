@@ -83,3 +83,4 @@ Template:
 - User screenshots (Windows Terminal, ~133x33 cells): shading, fog, side faces, floor/ceiling, minimap (arrow cell and direction match x/y/angle at 300° NE and 198° W), HUD all look right. show 0.51-1.13ms, present ~0.6ms, 30 FPS. T12, T13, T14, T15, T17 done.
 - Issue found: HUD showed `draw 0.00`. Measured Go's clock on this Windows machine: smallest step 0.53ms, so 0.07ms reads as 0. Fixed: HUD timings are now averaged over each 1-second FPS window (`timeAverager`, tested).
 - Still open: T10 (resize by hand), T11 (aspect by eye), T16 (VS Code terminal).
+- Update: user confirmed T10 (resize message and recovery) and T11 (proportions look right at the default 1.0). Both done. T16 still open.

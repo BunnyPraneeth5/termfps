@@ -57,4 +57,4 @@ Append an entry to PROGRESS.md. Log any new decision in DECISIONS.md.
 - Windows Smart App Control (on, on the user's machine) sometimes blocks a freshly built `termfps.exe` ("An Application Control policy has blocked this file"). Not a code problem; a restart has cleared it. Rebuild only when code changed. Agents can't run the exe here either.
 
 ## Current focus
-Day 3-4: T12-T15 and T17 done (user screenshots). Still open: T10 resize by hand, T11 aspect by eye, T16 VS Code terminal. Next: T18 (demo recording + README).
+Day 3-4: T10-T15 and T17 done. Still open: T16 (run once in a terminal other than Windows Terminal). Next: T18 (demo recording + README).

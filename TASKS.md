@@ -87,12 +87,12 @@ Status: [ ] todo, [~] in progress, [x] done
 
 ## Day 3-4: look and feel
 
-### [~] T10: Resize handling
+### [x] T10: Resize handling
 - Handle resize events. Resize the Frame. Under 80x24, show "resize your terminal" (clipped to the width) and skip rendering.
 - Acceptance:
   - Resizing the window mid-game, including down to a few columns and back, doesn't crash or leave garbage.
 
-### [~] T11: Tune pixelAspect
+### [x] T11: Tune pixelAspect
 - Adjust `pixelAspect` by eye for the Windows Terminal font. Write the final value in PROGRESS.md.
 - Acceptance:
   - Straight walls look straight, not curved.
