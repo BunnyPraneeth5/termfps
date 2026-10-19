@@ -43,6 +43,11 @@ func IsToggleMinimap(ev *tcell.EventKey) bool {
 	return ev.Key() == tcell.KeyRune && unicode.ToLower(ev.Rune()) == 'm'
 }
 
+// IsCycleRenderMode reports whether the key is V (either case).
+func IsCycleRenderMode(ev *tcell.EventKey) bool {
+	return ev.Key() == tcell.KeyRune && unicode.ToLower(ev.Rune()) == 'v'
+}
+
 // IsQuit reports whether the key is Esc or Ctrl+C.
 func IsQuit(ev *tcell.EventKey) bool {
 	return ev.Key() == tcell.KeyEscape || ev.Key() == tcell.KeyCtrlC

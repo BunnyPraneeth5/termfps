@@ -126,6 +126,16 @@ func run() (exitCode int) {
 	}()
 
 	state := game.NewState(arena)
+	// Half-block needs 24-bit color (D17). tcell reports 1<<24 colors when it
+	// has truecolor, and fewer with TCELL_TRUECOLOR=disable or NO_COLOR.
+	if screen.Colors() < 1<<24 {
+		state.Mode = game.ModeASCII
+	}
+	// The half-block caution shows once, the first time V switches back to
+	// half-block, for cautionFor.
+	const cautionFor = 5 * time.Second
+	var cautionShown bool
+	var cautionUntil time.Time
 	var keys input.Tracker // which movement keys count as held (see D12)
 
 	// Async key state sees keys pressed in any window, so it is only used
@@ -156,6 +166,7 @@ func run() (exitCode int) {
 
 		quit := false
 		toggleMinimap := false
+		cycleMode := false
 	drain:
 		// Take every waiting event without blocking. With "default", select
 		// doesn't wait: if the channel is empty it runs default right away.
@@ -180,6 +191,8 @@ func run() (exitCode int) {
 						quit = true
 					} else if input.IsToggleMinimap(ev) {
 						toggleMinimap = !toggleMinimap // two presses in one frame cancel
+					} else if input.IsCycleRenderMode(ev) {
+						cycleMode = true
 					} else if k, ok := input.KeyFor(ev); ok {
 						keys.Press(k, ev.When())
 					}
@@ -217,12 +230,31 @@ func run() (exitCode int) {
 			in = input.AsyncInput()
 		}
 		in.ToggleMinimap = toggleMinimap
+		in.CycleRenderMode = cycleMode
+		modeBefore := state.Mode
 		game.Update(state, in, dt)
+		if state.Mode == game.ModeHalfBlock && modeBefore != game.ModeHalfBlock && !cautionShown {
+			cautionShown = true
+			cautionUntil = frameStart.Add(cautionFor)
+		}
+		notice := ""
+		if frameStart.Before(cautionUntil) {
+			notice = "Half-block needs a truecolor terminal and more bandwidth. Use ASCII over slow SSH."
+		}
 
 		t0 := time.Now()
 		render.DrawFrame(state, &frame)
 		t1 := time.Now()
-		render.PresentHalfBlock(screen, &frame)
+		switch state.Mode {
+		case game.ModeHalfBlock:
+			render.PresentHalfBlock(screen, &frame)
+		case game.ModeShade:
+			render.PresentShade(screen, &frame)
+		case game.ModeASCII:
+			render.PresentASCII(screen, &frame)
+		default:
+			panic(fmt.Sprintf("unknown render mode %d", state.Mode))
+		}
 		minimapHidden := state.ShowMinimap && !render.DrawMinimap(screen, state)
 		render.DrawHUD(screen, render.HUD{
 			FPS:           fps.value(),
@@ -232,6 +264,8 @@ func run() (exitCode int) {
 			Show:          times.avg.show,
 			Keys:          keysLabel(*keyMode, focused),
 			MinimapHidden: minimapHidden,
+			Mode:          state.Mode,
+			Notice:        notice,
 		})
 		t2 := time.Now()
 		screen.Show()

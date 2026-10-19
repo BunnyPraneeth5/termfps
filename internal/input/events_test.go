@@ -46,6 +46,17 @@ func TestIsToggleMinimap(t *testing.T) {
 	}
 }
 
+func TestIsCycleRenderMode(t *testing.T) {
+	for _, r := range []rune{'v', 'V'} {
+		if !IsCycleRenderMode(tcell.NewEventKey(tcell.KeyRune, r, tcell.ModNone)) {
+			t.Errorf("%q is not the render mode key", r)
+		}
+	}
+	if IsCycleRenderMode(tcell.NewEventKey(tcell.KeyRune, 'm', tcell.ModNone)) {
+		t.Error("m counts as the render mode key")
+	}
+}
+
 func TestIsQuit(t *testing.T) {
 	if !IsQuit(tcell.NewEventKey(tcell.KeyEscape, 0, tcell.ModNone)) {
 		t.Error("Esc is not quit")

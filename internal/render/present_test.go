@@ -64,6 +64,69 @@ func TestPresentHalfBlockLeavesHUDRow(t *testing.T) {
 	}
 }
 
+func TestRampIndex(t *testing.T) {
+	cases := []struct {
+		g    uint8
+		n    int
+		want int
+	}{
+		{230, 5, 0}, // close wall: brightest block
+		{255, 5, 0}, // above the scale: clamped
+		{0, 5, 4},   // black: blank
+		{8, 5, 4},   // ceiling: blank
+		{50, 5, 3},  // far wall: still visible (░)
+		{230, 10, 0},
+		{0, 10, 9},
+		{50, 10, 7}, // far wall in ASCII: ':' not blank
+	}
+	for _, c := range cases {
+		if got := rampIndex(c.g, c.n); got != c.want {
+			t.Errorf("rampIndex(%d, %d) = %d, want %d", c.g, c.n, got, c.want)
+		}
+	}
+}
+
+// Each text presenter averages the two pixels of a cell and uses the
+// terminal's default style (no 24-bit colors).
+func TestTextPresenters(t *testing.T) {
+	cases := []struct {
+		name    string
+		present func(tcell.Screen, *Frame)
+		bright  string // character for a close wall
+		dark    string // character for black
+	}{
+		{"shade", PresentShade, "█", " "},
+		{"ascii", PresentASCII, "@", " "},
+	}
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			s := newSimScreen(t, 4, 3)
+			f := newFrame(4, 3)
+			for x := 0; x < f.W; x++ {
+				f.Pix[0*f.W+x].Gray = 230 // row 0: both pixels bright
+				f.Pix[1*f.W+x].Gray = 230
+				f.Pix[2*f.W+x].Gray = 0 // row 1: both pixels black
+				f.Pix[3*f.W+x].Gray = 0
+			}
+			f.Pix[0*f.W+3].Gray = 0 // cell (3, 0): bright over black averages to the middle
+			c.present(s, f)
+
+			if str, style, _ := s.Get(1, 0); str != c.bright || style != tcell.StyleDefault {
+				t.Errorf("bright cell = %q (style %v), want %q with default style", str, style, c.bright)
+			}
+			if str, _, _ := s.Get(1, 1); str != c.dark {
+				t.Errorf("dark cell = %q, want %q", str, c.dark)
+			}
+			if str, _, _ := s.Get(3, 0); str == c.bright || str == c.dark {
+				t.Errorf("mixed cell = %q, want a middle character", str)
+			}
+			if str, _, _ := s.Get(0, 2); str == c.bright {
+				t.Error("presenter drew on the HUD row")
+			}
+		})
+	}
+}
+
 // Benchmarks for the T6/T17 budget at 120x40. Run with:
 // go test -bench . ./internal/render
 func BenchmarkDrawFrame120x40(b *testing.B) {

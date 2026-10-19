@@ -3,6 +3,7 @@ package render
 import (
 	"fmt"
 	"math"
+	"strings"
 	"time"
 
 	"github.com/gdamore/tcell/v2"
@@ -17,15 +18,20 @@ type HUD struct {
 	Draw, Present, Show time.Duration // previous frame's timings
 	Keys                string        // input mode label, e.g. "keys async (focused)"
 	MinimapHidden       bool          // minimap is on but didn't fit on screen
+	Mode                game.RenderMode
+	// Notice is a temporary message shown just above the HUD row (empty =
+	// none). Too wide for the screen, it wraps at sentence ends.
+	Notice string
 }
 
 // compass names the 8 directions in the same order as the minimap arrows.
 var compass = [8]string{"E", "SE", "S", "SW", "W", "NW", "N", "NE"}
 
 // DrawHUD writes the HUD on the last row. The first part (FPS, position,
-// facing) always shows; the extras are added in order only while they fit
-// whole, so nothing is cut off mid-word at 80 columns. It only touches the
-// last row, so it never overlaps the minimap.
+// facing, render mode) always shows; the extras are added in order only
+// while they fit whole, so nothing is cut off mid-word at 80 columns. A
+// Notice goes on the row(s) just above, over the bottom of the 3D view,
+// never over the minimap (which sits at the top).
 func DrawHUD(s tcell.Screen, h HUD) {
 	w, rows := s.Size()
 	y := rows - 1
@@ -35,8 +41,8 @@ func DrawHUD(s tcell.Screen, h HUD) {
 
 	p := h.Player
 	deg := int(math.Round(p.Angle*180/math.Pi)) % 360
-	line := fmt.Sprintf("FPS %4.1f | x %5.2f y %5.2f | %3d° %-2s",
-		h.FPS, p.X, p.Y, deg, compass[dirIndex(p.Angle)])
+	line := fmt.Sprintf("FPS %4.1f | x %5.2f y %5.2f | %3d° %-2s | %s",
+		h.FPS, p.X, p.Y, deg, compass[dirIndex(p.Angle)], h.Mode)
 
 	var extras []string
 	if h.MinimapHidden {
@@ -53,6 +59,35 @@ func DrawHUD(s tcell.Screen, h HUD) {
 		line += e
 	}
 	s.PutStr(0, y, line)
+
+	if h.Notice != "" {
+		lines := wrapSentences(h.Notice, w-2) // one space of padding each side
+		for i, l := range lines {
+			row := y - len(lines) + i
+			if row < 0 {
+				continue
+			}
+			s.PutStrStyled(0, row, " "+l+" ", noticeStyle)
+		}
+	}
+}
+
+// noticeStyle is reversed (swapped colors) so it stands out in every
+// render mode, with or without truecolor.
+var noticeStyle = tcell.StyleDefault.Reverse(true)
+
+// wrapSentences returns text as one line if it fits in width, otherwise
+// one line per sentence (split after ". "). A sentence still too long is
+// left whole; PutStr clips it at the screen edge.
+func wrapSentences(text string, width int) []string {
+	if len([]rune(text)) <= width {
+		return []string{text}
+	}
+	parts := strings.SplitAfter(text, ". ")
+	for i := range parts {
+		parts[i] = strings.TrimSpace(parts[i])
+	}
+	return parts
 }
 
 // dirIndex returns the nearest of 8 directions (0 = east, clockwise).

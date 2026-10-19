@@ -21,7 +21,8 @@ first person. Multiplayer is planned later.
   message until you resize. About 120x40 looks best.
 
 > Half-block mode needs a truecolor terminal and more bandwidth than plain
-> text. An ASCII mode for slow connections (like SSH) is planned.
+> text. Press `V` for shade-block or ASCII mode, which use plain characters
+> and the terminal's own colors. Without truecolor, the game starts in ASCII.
 
 ## Build and run
 
@@ -45,6 +46,7 @@ they haven't been tested yet.
 | `Q` / `←` | Turn left |
 | `E` / `→` | Turn right |
 | `M` | Show / hide the minimap |
+| `V` | Switch render mode: half-block → shade → ASCII |
 | `Esc` / `Ctrl+C` | Quit |
 
 On Windows you can move and turn at the same time.
@@ -63,6 +65,8 @@ Example: `.\termfps.exe -fps 60 -aspect 0.9`
 
 - **3D view:** walls fade with distance, and north/south faces are drawn
   darker so corners stand out. Ceiling near black, floor brightening toward you.
+  Three looks, switched with `V`: half-block pixels (24-bit gray, the default),
+  shade blocks (`█▓▒░`), and ASCII (`@%#*+=-:.`).
 - **Minimap** (top right): walls, floor, and an arrow showing where you are
   and which way you face.
 - **HUD** (bottom line): FPS, position, facing angle and compass direction.
@@ -76,7 +80,7 @@ Example: `.\termfps.exe -fps 60 -aspect 0.9`
   Control off fixes it for good. Note that Windows can't turn Smart App
   Control back on without a reinstall.
 - **Grays look banded.** The terminal is reducing colors. Use Windows
-  Terminal, or another terminal with 24-bit color.
+  Terminal, or another terminal with 24-bit color, or press `V` for ASCII.
 - **The terminal looks broken after a crash.** It shouldn't: the game
   restores the terminal on exit and on crashes. If you ever see it, please
   open an issue with the printed error.
@@ -96,7 +100,7 @@ Code layout:
 | `internal/world` | Map parsing, raycasting (DDA), collision |
 | `internal/game` | Player, movement and turning (no terminal code) |
 | `internal/input` | Keys to game input, real key state on Windows |
-| `internal/render` | Pixel frame, shading, half-block presenter, minimap, HUD |
+| `internal/render` | Pixel frame, shading, presenters (half-block, shade, ASCII), minimap, HUD |
 | `maps/arena.txt` | The map, built into the binary |
 
 Map files use `#` for walls, `.` for floor, and exactly one `P` for the start.

@@ -133,7 +133,7 @@ Status: [ ] todo, [~] in progress, [x] done
 
 ## Stretch (only if T1-T18 are done, in this order)
 
-### [ ] T19: Render modes (shade + ASCII) + V toggle
+### [~] T19: Render modes (shade + ASCII) + V toggle
 - Add `RenderMode` to State. `PresentShade` and `PresentASCII` from the same Frame (average the two pixels per cell).
 - V cycles half-block -> shade -> ASCII. HUD shows the current mode.
 - If the terminal doesn't have truecolor (per the T6 findings), start in ASCII.

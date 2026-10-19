@@ -33,6 +33,7 @@ type State struct {
 	Map         *world.Map
 	Player      Player
 	ShowMinimap bool
+	Mode        RenderMode
 }
 
 // NewState puts the player on the map's spawn, facing east, minimap on.

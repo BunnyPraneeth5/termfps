@@ -22,6 +22,7 @@ type Input struct {
 	StrafeLeft, StrafeRight bool
 	TurnLeft, TurnRight     bool
 	ToggleMinimap           bool // one-shot: true only on the frame M was pressed
+	CycleRenderMode         bool // one-shot: true only on the frame V was pressed
 }
 
 // Update advances the game by dt seconds. All speeds are per second, so the
@@ -29,6 +30,9 @@ type Input struct {
 func Update(s *State, in Input, dt float64) {
 	if in.ToggleMinimap {
 		s.ShowMinimap = !s.ShowMinimap
+	}
+	if in.CycleRenderMode {
+		s.Mode = s.Mode.Next()
 	}
 
 	p := &s.Player // pointer: changes below modify s.Player itself, not a copy

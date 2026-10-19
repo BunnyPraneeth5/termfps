@@ -157,8 +157,10 @@ For each column `x`:
 
 ## Presenters
 - Half-block: for each cell (x, row), top = Pix[(2*row)*W + x], bottom = Pix[(2*row+1)*W + x]. Draw `▀` with foreground = top gray, background = bottom gray, using `tcell.NewRGBColor`.
-- Shade (stretch): average the two pixels, map to `█▓▒░ ` (bright to dark).
-- ASCII (stretch): average the two pixels, map to `@ % # * + = - : . ` (bright to dark).
+- Shade (stretch, T19): average the two pixels, map to `█▓▒░ ` (bright to dark), default terminal colors.
+- ASCII (stretch, T19): average the two pixels, map to `@%#*+=-:. ` (bright to dark), default terminal colors.
+- The text ramps scale brightness 0-230 (`wallBase`, the brightest gray DrawFrame makes) onto the ramp, so dim far walls keep a visible character instead of becoming blank.
+- `game.State.Mode` (`game.RenderMode`) picks the presenter; V cycles it via the one-shot `Input.CycleRenderMode`. The HUD shows the mode. The first time V switches back to half-block, the caution shows for 5 seconds on the row(s) above the HUD (wrapped by sentence below 84 columns).
 - Truecolor: half-block assumes 24-bit color. Checked in the tcell v2.13.10 source: on Windows, `tcell.NewScreen()` uses the VT screen with a built-in `xterm-truecolor` definition, so truecolor is always on (`COLORTERM` and `WT_SESSION` are not consulted). `TCELL_TRUECOLOR=disable` turns it off. The legacy console driver is only a fallback if the VT screen can't start. T6 still confirms on screen.
 - Without truecolor, tcell downgrades gray to the nearest palette color. At 16 colors that is about 4 grays, so fog becomes hard bands. P0 accepts this outside Windows Terminal. Stretch T19 starts in ASCII when truecolor is not available.
 

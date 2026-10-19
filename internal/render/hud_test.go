@@ -29,17 +29,59 @@ func hudLine(t *testing.T, cols int, h HUD) string {
 
 func TestHUDCoreAt80Columns(t *testing.T) {
 	line := hudLine(t, 80, sampleHUD())
-	for _, want := range []string{"FPS 30.0", "x 12.34 y  5.67", "270° N"} {
+	for _, want := range []string{"FPS 30.0", "x 12.34 y  5.67", "270° N", "| half-block"} {
 		if !strings.Contains(line, want) {
 			t.Errorf("HUD %q missing %q", line, want)
 		}
 	}
-	// Timings fit at 80; the keys label doesn't and must be left out whole.
-	if !strings.Contains(line, "show 2.00 ms") {
-		t.Errorf("HUD %q missing timings at 80 columns", line)
+	// The timings don't fit after the core part at 80 and are left out whole.
+	if strings.Contains(line, "draw") || strings.Contains(line, "keys") {
+		t.Errorf("HUD %q includes extras that don't fit at 80", line)
 	}
-	if strings.Contains(line, "keys") {
-		t.Errorf("HUD %q includes keys label that doesn't fit at 80", line)
+}
+
+func TestHUDTimingsAt100Columns(t *testing.T) {
+	if line := hudLine(t, 100, sampleHUD()); !strings.Contains(line, "show 2.00 ms") {
+		t.Errorf("HUD %q missing timings at 100 columns", line)
+	}
+}
+
+func TestHUDShowsMode(t *testing.T) {
+	h := sampleHUD()
+	h.Mode = game.ModeASCII
+	if line := hudLine(t, 80, h); !strings.Contains(line, "| ascii") {
+		t.Errorf("HUD %q doesn't show the ascii mode", line)
+	}
+}
+
+// The half-block caution (82 characters) wraps into two sentence lines at
+// 80 columns, on the rows just above the HUD.
+func TestHUDNoticeWrapsAbove(t *testing.T) {
+	h := sampleHUD()
+	h.Notice = "Half-block needs a truecolor terminal and more bandwidth. Use ASCII over slow SSH."
+	s := newSimScreen(t, 80, 24)
+	DrawHUD(s, h)
+	if got := strings.TrimSpace(rowText(s, 80, 21)); got != "Half-block needs a truecolor terminal and more bandwidth." {
+		t.Errorf("row 21 = %q, want the first sentence", got)
+	}
+	if got := strings.TrimSpace(rowText(s, 80, 22)); got != "Use ASCII over slow SSH." {
+		t.Errorf("row 22 = %q, want the second sentence", got)
+	}
+	if got := strings.TrimSpace(rowText(s, 80, 20)); got != "" {
+		t.Errorf("row 20 = %q, want untouched", got)
+	}
+}
+
+func TestHUDNoticeOneLineWhenWide(t *testing.T) {
+	h := sampleHUD()
+	h.Notice = "Half-block needs a truecolor terminal and more bandwidth. Use ASCII over slow SSH."
+	s := newSimScreen(t, 120, 24)
+	DrawHUD(s, h)
+	if got := strings.TrimSpace(rowText(s, 120, 22)); got != h.Notice {
+		t.Errorf("row 22 = %q, want the whole notice on one line", got)
+	}
+	if got := strings.TrimSpace(rowText(s, 120, 21)); got != "" {
+		t.Errorf("row 21 = %q, want untouched", got)
 	}
 }
 
@@ -49,7 +91,7 @@ func TestHUDNoPartialExtras(t *testing.T) {
 	if strings.Contains(line, "draw") || strings.Contains(line, "|  ") {
 		t.Errorf("HUD %q shows a partial extra at 50 columns", line)
 	}
-	if !strings.HasSuffix(line, "270° N") {
+	if !strings.HasSuffix(line, "| half-block") {
 		t.Errorf("HUD %q, want it to end with the core part", line)
 	}
 }
