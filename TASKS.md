@@ -55,14 +55,14 @@ Status: [ ] todo, [~] in progress, [x] done
 
 ## Day 2: see it, move in it
 
-### [~] T6: Half-block presenter + terminal color check
+### [x] T6: Half-block presenter + terminal color check
 - `render.PresentHalfBlock`: `▀` with fg = top pixel, bg = bottom pixel, 24-bit gray.
 - Time DrawFrame, presenter, and `Show()` separately; show them in the HUD.
 - Acceptance:
   - On screen, facing a wall shows a solid vertical band with no gaps between rows.
   - In PROGRESS.md: does truecolor look smooth in Windows Terminal (tcell turns it on by default, see CLAUDE.md), what `screen.Colors()` reports, the `builtinGlyphs` setting, and the three timings at 120x40.
 
-### [~] T7: Input tracker + movement + turning
+### [x] T7: Input tracker + movement + turning
 - `input` package: adaptive held window per ARCHITECTURE "Input approach", produces `game.Input` each frame. Tracker takes `now` as a parameter.
 - W/S forward/back, A/D strafe, Left/Right arrows (and Q/E) turn. Speeds per second with dt. Rune keys lower-cased.
 - Acceptance:
@@ -71,7 +71,7 @@ Status: [ ] todo, [~] in progress, [x] done
   - Moving 3 seconds forward at `-fps 15` and at `-fps 30` covers about the same distance (check the HUD position).
   - Right arrow turns right, D strafes right.
 
-### [~] T8: Spike: real key state on Windows (2-hour timebox)
+### [x] T8: Spike: real key state on Windows (2-hour timebox)
 - Try `GetAsyncKeyState` via standard `syscall` in `internal/input/keystate_windows.go`. No new dependencies.
 - Note the other option in ARCHITECTURE "Input approach" (Windows Terminal key-up events that tcell drops). Don't build it without asking.
 - Acceptance:
@@ -79,7 +79,7 @@ Status: [ ] todo, [~] in progress, [x] done
   - Does it react to keys pressed in another window? Is there a fix?
   - Keep or drop. Log the result as a decision in DECISIONS.md. If dropped, the T7 baseline stays.
 
-### [~] T9: Collision with sliding
+### [x] T9: Collision with sliding
 - `world.TryMove` with a small radius (about 0.2), checking the full box on each axis.
 - Acceptance:
   - Unit tests: blocked by a wall head-on, slides when moving diagonally along a wall, can't enter a wall diagonally at an outside corner.

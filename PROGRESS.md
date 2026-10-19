@@ -63,3 +63,5 @@ Template:
 - Not done / blocked: T6-T9 are marked [~]. Their on-screen and feel checks need the user. The T8 keep/drop decision needs the user's hands-on result before it's logged in DECISIONS.md.
 - Issues found: one test of mine (frame-rate distance) walked through where a wall is; it started failing once T9 added collision, as it should. Shortened to stay in open space.
 - Next: user runs the Day 2 checks; then log the T8 decision; then Day 3 (T10 resize).
+- Update: user reported all Day 2 checks passed (walls on screen, movement and turn directions, `-keys async` move+turn together with focus handling, collision). No numbers reported for `colors` or `show` time; T17 measures performance. T6-T9 done. T8 kept as D19: `-keys async` is now the default on Windows, `-keys events` the fallback.
+- Next: push, then Day 3 (T10 resize).

@@ -170,6 +170,7 @@ For each column `x`:
   - once repeats are arriving, the timeout drops to about 100ms (stops soon after release)
   - Update moves `speed * dt` per frame for every held key. Movement is smooth and FPS independent.
 - Known limit: holding W and then pressing Left stops W's repeats, so W times out. You can't move and turn at the same time with the baseline.
+- Result (D19): the spike below worked and is the default on Windows (`-keys async`). The held window above is the fallback (`-keys events`) and the default elsewhere.
 - Spike T8 (2-hour timebox): read real key state with Win32 `GetAsyncKeyState` through Go's standard `syscall` package (no new dependency), in a Windows-only file (`keystate_windows.go`; Go builds `_windows.go` files only on Windows). Catch: it reads keys even when another window has focus. Keep the spike only if it works and the focus problem is solvable, and log the result as a decision.
 - Second option for T8 (found in tcell v2.13.10 source): tcell turns on Windows Terminal's win32-input-mode, which does send key-up events, and tcell throws them away (`handleWinKey` in tcell's `input.go`). Getting them would mean patching or forking tcell, or parsing that input ourselves. That's a dependency change, so ask before going this way.
 - Toggle and quit keys are one-shot: they fire on the press event, not while held.

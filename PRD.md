@@ -26,7 +26,7 @@ Time budget: 4-5 days (2 weekends).
 10. Handles terminal resize without breaking.
 11. A 30-second demo recording and a short README (build, run, controls, caution).
 
-Known P0 limit: with tcell's key events you may not be able to move and turn at the same time. Spike T8 tries real key state; see DECISIONS D12.
+Input: on Windows the game reads real key state, so moving and turning at the same time works (DECISIONS D19). Elsewhere it falls back to terminal key events, where that may not work (D12).
 
 Stretch (only if 1-11 are done, in this order):
 - Render mode toggle with V: half-block, shade blocks (`█▓▒░`), ASCII. Default to ASCII if the terminal doesn't support truecolor.

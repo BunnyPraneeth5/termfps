@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"math"
 	"os"
+	"runtime"
 	"runtime/debug"
 	"sync"
 	"time"
@@ -35,7 +36,12 @@ func main() {
 // exitCode is a named result so the deferred panic handler can change it.
 func run() (exitCode int) {
 	targetFPS := flag.Int("fps", 30, "target frames per second (1-240)")
-	keyMode := flag.String("keys", "events", `movement keys: "events" (terminal key events) or "async" (Windows key state, T8 spike)`)
+	// Real key state (async) is the default on Windows, where it exists (D19).
+	defaultKeys := "events"
+	if runtime.GOOS == "windows" {
+		defaultKeys = "async"
+	}
+	keyMode := flag.String("keys", defaultKeys, `movement keys: "async" (real key state, Windows only) or "events" (terminal key events)`)
 	flag.Parse()
 	if *targetFPS < 1 || *targetFPS > 240 {
 		fmt.Fprintf(os.Stderr, "termfps: -fps must be between 1 and 240, got %d\n", *targetFPS)

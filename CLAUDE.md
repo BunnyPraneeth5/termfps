@@ -55,4 +55,4 @@ Append an entry to PROGRESS.md. Log any new decision in DECISIONS.md.
 - Reuse the Frame between frames. Don't allocate a new one every tick.
 
 ## Current focus
-Day 2 (T6-T9) code is committed and waiting for the user's on-screen checks and the T8 keep/drop decision. Next: T10 (resize handling).
+Day 2 (T6-T9) done; real key state is the Windows default (D19). Next: T10 (resize handling).

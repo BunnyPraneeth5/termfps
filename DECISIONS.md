@@ -67,6 +67,7 @@ Format: what, why, trade-off, revisit when.
 - Why: per-event steps (D6) tie speed to the OS repeat rate, not dt, and stutter against the frame rate. A plain short window doesn't cover Windows' ~500ms repeat delay.
 - Trade-off: a quick tap moves for up to about half a second. Windows only repeats the last key pressed, so moving and turning at the same time doesn't work with the baseline. GetAsyncKeyState fixes that but reads keys even when another window has focus, and is Windows-only.
 - Revisit when: T8 results are in (log them here as a new decision), or when SSH play starts (no key state over SSH).
+- Update 2026-10-19: T8 results are in, see D19. This tracker is now the fallback (`-keys events`).
 
 ## D13: Player stores an angle (2026-10-18)
 - What: `Player` has `Angle` (radians). `Dir()` and `Plane()` are computed from it every frame. y points down, angle 0 = east, 90° = south, Right arrow increases the angle. Spawn faces east.
@@ -108,3 +109,9 @@ Format: what, why, trade-off, revisit when.
 - Why: the module path goes into every import, so it's set to the planned GitHub path now. Pinning keeps tcell's behavior (truecolor default, key handling) the same as what was checked in its source.
 - Trade-off: no automatic tcell fixes. Upgrades are a deliberate step.
 - Revisit when: a tcell bug blocks a task, or before publishing.
+
+## D19: Keep real key state (T8 spike), default on Windows (2026-10-19)
+- What: `-keys async` (Win32 `GetAsyncKeyState` via standard `syscall`) is kept and is the default on Windows. `-keys events` (the D12 held-window tracker) stays as the fallback and the default on other systems.
+- Why: the user's T8 check passed: moving and turning at the same time works, movement stops on release, and keys typed in another window are ignored (tcell focus events work in Windows Terminal; the HUD showed "NOT focused"). That removes the main input limit of D12.
+- Trade-off: Windows-only code path. If a terminal doesn't send focus events, keys from other windows would move the player; the HUD's focus label makes that visible. Won't work over SSH (P3), where the events tracker is the only option.
+- Revisit when: SSH play starts, or a terminal shows focus problems.
