@@ -51,3 +51,15 @@ Template:
 - Issue found in that check: a HUD line was printed into the normal terminal before the panic message. The input goroutine restored the terminal while the main loop was still drawing (race). Fixed: the input goroutine now sends its panic to the main loop over a channel, and only the main loop restores and prints. Needs one re-run of the `TERMFPS_PANIC=input` check. Idle CPU not reported yet.
 - Update: user re-ran the input panic check (clean, no HUD text) and confirmed idle CPU under 5%. T2 done. Day 1 (T1-T5) complete and committed.
 - Next: T6 (half-block presenter, first walls on screen).
+- Repo pushed to GitHub by the user (`gh repo create`), remote `origin`.
+
+## 2026-10-19 (Day 2: T6-T9)
+- Done (code, tests, one commit per task):
+  - T6 `79859ca`: `render.PresentHalfBlock` (top pixel = fg, bottom = bg of `▀`), main loop draws the 3D view, HUD shows draw/present/show times and `screen.Colors()`. Tests on tcell's simulation screen. Benchmarks at 120x40: DrawFrame ~0.03ms with 0 allocations, PresentHalfBlock ~1.1ms (4680 small allocations inside tcell's SetContent; fine for now, revisit in T17 if Show is slow).
+  - T7 `f42fa6d`: `input.Tracker` (550ms first window, 100ms repeat window), `input.KeyFor`/`IsQuit`/`Pump` (goroutine moved out of main), `game.Input` + `game.Update` with dt, angle wrap, diagonal normalization. HUD shows x, y, angle. Up/Down arrows also move forward/back (small addition beyond the PRD's W/S).
+  - T8 `07d486e`: `-keys async` reads real key state via GetAsyncKeyState (standard `syscall`, Windows-only file). Ignored when tcell reports lost focus; HUD shows mode and focus. Default stays `-keys events`.
+  - T9 `4c15114`: `world.TryMove` (per-axis box collision, touching is not a hit), used by `game.Update` with radius 0.2. Tests include 20000 random moves never ending inside a wall.
+  - 73 tests pass. world and game have no tcell dependency.
+- Not done / blocked: T6-T9 are marked [~]. Their on-screen and feel checks need the user. The T8 keep/drop decision needs the user's hands-on result before it's logged in DECISIONS.md.
+- Issues found: one test of mine (frame-rate distance) walked through where a wall is; it started failing once T9 added collision, as it should. Shortened to stay in open space.
+- Next: user runs the Day 2 checks; then log the T8 decision; then Day 3 (T10 resize).

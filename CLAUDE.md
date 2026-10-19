@@ -55,4 +55,4 @@ Append an entry to PROGRESS.md. Log any new decision in DECISIONS.md.
 - Reuse the Frame between frames. Don't allocate a new one every tick.
 
 ## Current focus
-T6: half-block presenter + terminal color check (first walls on screen). Day 1 (T1-T5) is done.
+Day 2 (T6-T9) code is committed and waiting for the user's on-screen checks and the T8 keep/drop decision. Next: T10 (resize handling).
