@@ -92,14 +92,20 @@ func startReload(s *State) {
 	s.Events = append(s.Events, EventReloadStarted)
 }
 
-// shoot casts the center ray. The first solid cell stops the shot; a red
-// target block there is destroyed. Enemies join this in P1-06.
+// shoot casts the center ray. The nearest enemy in front of the first
+// solid cell takes the hit; otherwise a red target block there is
+// destroyed.
 func shoot(s *State) {
 	p := s.Player
 	dirX, dirY := p.Dir()
-	hit := world.CastRay(s.Map, p.X, p.Y, dirX, dirY)
+	hit := world.CastRay(s.Map, p.X, p.Y, dirX, dirY) // unit dir: PerpDist = distance
+	if i := shotHitsEnemy(s, dirX, dirY, hit.PerpDist); i >= 0 {
+		damageEnemy(s, i, BulletDamage)
+		return
+	}
 	if hit.Cell == world.Target {
 		s.Map.Set(hit.MapX, hit.MapY, world.Empty)
+		s.distCell = -1 // the map opened up: enemies need a fresh distance field
 		s.Events = append(s.Events, EventTargetDestroyed)
 	}
 }

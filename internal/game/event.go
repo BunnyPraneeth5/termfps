@@ -13,6 +13,10 @@ const (
 	EventReloadStarted                      // a reload began (by R or automatically)
 	EventReloaded                           // a reload finished; rounds moved into the gun
 	EventTargetDestroyed                    // a shot removed a red target block
+	EventEnemyHit                           // a shot hit an enemy
+	EventEnemyKilled                        // an enemy's HP reached 0
+	EventPlayerHurt                         // the player lost HP
+	EventPlayerDied                         // the player's HP reached 0
 )
 
 // HasEvent reports whether e happened in the last Update.

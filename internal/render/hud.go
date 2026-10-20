@@ -27,11 +27,11 @@ type HUD struct {
 // compass names the 8 directions in the same order as the minimap arrows.
 var compass = [8]string{"E", "SE", "S", "SW", "W", "NW", "N", "NE"}
 
-// DrawHUD writes the HUD on the last row. The first part (FPS, ammo,
-// position, facing, render mode) always shows; the extras are added in order only
-// while they fit whole, so nothing is cut off mid-word at 80 columns. A
-// Notice goes on the row(s) just above, over the bottom of the 3D view,
-// never over the minimap (which sits at the top).
+// DrawHUD writes the HUD on the last row. The first part (health, ammo,
+// facing) always shows. The extras (FPS, render mode, position, timings,
+// key mode) are added in order only while they fit whole, so nothing is cut
+// off mid-word at 80 columns. A Notice goes on the row(s) just above, over
+// the bottom of the 3D view, never over the minimap (which sits at the top).
 func DrawHUD(s tcell.Screen, h HUD) {
 	w, rows := s.Size()
 	y := rows - 1
@@ -41,14 +41,17 @@ func DrawHUD(s tcell.Screen, h HUD) {
 
 	p := h.Player
 	deg := int(math.Round(p.Angle*180/math.Pi)) % 360
-	line := fmt.Sprintf("FPS %4.1f | %s | x %5.2f y %5.2f | %3d° %-2s | %s",
-		h.FPS, ammoText(p.Weapon), p.X, p.Y, deg, compass[dirIndex(p.Angle)], h.Mode)
+	line := fmt.Sprintf("HP %3d | %s | %3d° %-2s",
+		p.HP, ammoText(p.Weapon), deg, compass[dirIndex(p.Angle)])
 
 	var extras []string
 	if h.MinimapHidden {
 		extras = append(extras, " | minimap hidden: screen too small")
 	}
 	extras = append(extras,
+		fmt.Sprintf(" | FPS %4.1f", h.FPS),
+		" | "+h.Mode.String(),
+		fmt.Sprintf(" | x %5.2f y %5.2f", p.X, p.Y),
 		fmt.Sprintf(" | draw %.2f present %.2f show %.2f ms", ms(h.Draw), ms(h.Present), ms(h.Show)),
 		" | "+h.Keys,
 	)
@@ -88,6 +91,28 @@ func wrapSentences(text string, width int) []string {
 		parts[i] = strings.TrimSpace(parts[i])
 	}
 	return parts
+}
+
+// DrawMessage draws lines in a centered box with swapped colors (so it
+// stands out in every render mode), over whatever is on screen. Used for
+// Game over now, menus later.
+func DrawMessage(s tcell.Screen, lines []string) {
+	w, h := s.Size()
+	width := 0
+	for _, l := range lines {
+		width = max(width, len([]rune(l)))
+	}
+	width += 4 // two spaces of padding on each side
+	top := max((h-len(lines)-2)/2, 0)
+	left := max((w-width)/2, 0)
+	blank := strings.Repeat(" ", width)
+	s.PutStrStyled(left, top, blank, noticeStyle)
+	for i, l := range lines {
+		pad := (width - len([]rune(l))) / 2
+		row := strings.Repeat(" ", pad) + l + strings.Repeat(" ", width-pad-len([]rune(l)))
+		s.PutStrStyled(left, top+1+i, row, noticeStyle)
+	}
+	s.PutStrStyled(left, top+1+len(lines), blank, noticeStyle)
 }
 
 // ammoText is the HUD's ammo part: rounds in the gun / spare rounds.

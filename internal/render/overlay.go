@@ -43,6 +43,26 @@ func invert(f *Frame, x, y int) {
 	}
 }
 
+// hurtBorder is how many pixels wide the red "you got hit" border is.
+const hurtBorder = 2
+
+// DrawHurt tints the edges of the Frame red while the player is hurting.
+// Call it last, after the weapon and crosshair.
+func DrawHurt(f *Frame, p game.Player) {
+	if !p.Hurting() {
+		return
+	}
+	for y := 0; y < f.H; y++ {
+		for x := 0; x < f.W; x++ {
+			if x >= hurtBorder && x < f.W-hurtBorder && y >= hurtBorder && y < f.H-hurtBorder {
+				continue
+			}
+			px := &f.Pix[y*f.W+x]
+			*px = Pixel{Gray: max(px.Gray, 160), Tint: TintRed}
+		}
+	}
+}
+
 // The gun and its muzzle flash, parsed from the built-in assets at startup.
 var (
 	gunImage   = mustParseImage("gun", assets.Gun)

@@ -18,6 +18,9 @@ const (
 	Empty  Cell = '.'
 	Spawn  Cell = 'P'
 	Target Cell = 'T' // red block, solid; shooting removes it (P1-03)
+	// ZombieStart marks where a zombie starts (P1-06). After parsing, the
+	// cell is floor and the position is in Map.EnemyStarts.
+	ZombieStart Cell = 'Z'
 )
 
 // Solid reports whether the cell blocks movement and rays.
@@ -30,6 +33,22 @@ type Map struct {
 	W, H           int
 	Cells          []Cell  // row-major, index = y*W + x
 	SpawnX, SpawnY float64 // center of the P cell (x+0.5, y+0.5)
+	EnemyStarts    []EnemyStart
+}
+
+// EnemyStart is an enemy placed in the map file.
+type EnemyStart struct {
+	Kind Cell    // the map character, e.g. ZombieStart
+	X, Y float64 // center of its cell
+}
+
+// Clone returns a deep copy, so a new run can start from the original map
+// after shots changed the old one.
+func (m *Map) Clone() *Map {
+	c := *m                                   // copies W, H, spawn; the slices below still share memory...
+	c.Cells = append([]Cell(nil), m.Cells...) // ...so copy them
+	c.EnemyStarts = append([]EnemyStart(nil), m.EnemyStarts...)
+	return &c
 }
 
 // minSize is the smallest map side: a border on both sides plus one open cell.
@@ -81,6 +100,10 @@ func Parse(data []byte) (*Map, error) {
 				spawns++
 				m.SpawnX, m.SpawnY = float64(x)+0.5, float64(y)+0.5
 			}
+			if c == ZombieStart {
+				m.EnemyStarts = append(m.EnemyStarts, EnemyStart{Kind: c, X: float64(x) + 0.5, Y: float64(y) + 0.5})
+				c = Empty
+			}
 			m.Cells = append(m.Cells, c)
 		}
 	}
@@ -117,11 +140,11 @@ func (m *Map) IsSolid(x, y int) bool {
 // checkChar returns an error if the byte at line[x] is not a known map char.
 func checkChar(line string, x, y int) error {
 	switch Cell(line[x]) {
-	case Wall, Empty, Spawn, Target:
+	case Wall, Empty, Spawn, Target, ZombieStart:
 		return nil
 	}
 	// Decode the full character so the message shows it properly,
 	// even if it is a multi-byte UTF-8 character like 'é'.
 	r, _ := utf8.DecodeRuneInString(line[x:])
-	return fmt.Errorf("row %d, column %d: unknown character %q (use '#', '.', 'P' or 'T')", y+1, x+1, r)
+	return fmt.Errorf("row %d, column %d: unknown character %q (use '#', '.', 'P', 'T' or 'Z')", y+1, x+1, r)
 }

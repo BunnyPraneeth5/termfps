@@ -193,31 +193,54 @@ func TestSpaceFiresAndRReloads(t *testing.T) {
 	}
 }
 
-// -test-sprites places a zombie and a shooter in view of the spawn; both
-// get drawn (green and red pixels in the Frame).
-func TestTestSpritesDrawn(t *testing.T) {
+// Zombies from the map are drawn (green). Standing next to one, the player
+// dies, the Game over screen shows, and Enter starts a fresh run.
+func TestZombieKillsPlayerAndRetry(t *testing.T) {
 	s := tcell.NewSimulationScreen("UTF-8")
 	if err := s.Init(); err != nil {
 		t.Fatalf("simulation screen Init: %v", err)
 	}
 	s.SetSize(80, 24)
 	t.Cleanup(s.Fini)
-	m, err := world.Parse([]byte(testMap))
+	m, err := world.Parse([]byte("##########\n#PZ......#\n##########\n"))
 	if err != nil {
 		t.Fatalf("Parse: %v", err)
 	}
-	a := New(s, m, Config{FPS: 30, KeyMode: "events", PixelAspect: 1, TestSprites: true}, t0)
-	if len(a.testSprites) != 2 {
-		t.Fatalf("test sprites = %d, want 2", len(a.testSprites))
-	}
-	a.step(t0.Add(time.Second/30), nil)
-	var green, red bool
+	a := New(s, m, Config{FPS: 30, KeyMode: "events", PixelAspect: 1}, t0)
+	a.state.Mode = game.ModeHalfBlock
+
+	now := t0
+	a.step(now.Add(time.Second/30), nil)
+	green := false
 	for _, p := range a.frame.Pix {
 		green = green || p.Tint == render.TintGreen
-		red = red || p.Tint == render.TintRed
 	}
-	if !green || !red {
-		t.Errorf("green (zombie) drawn: %v, red (shooter) drawn: %v; want both", green, red)
+	if !green {
+		t.Error("zombie not drawn")
+	}
+
+	for i := 0; i < 15*30 && !a.state.Player.Dead(); i++ {
+		now = now.Add(time.Second / 30)
+		a.step(now, nil)
+	}
+	if !a.state.Player.Dead() {
+		t.Fatal("player still alive after 15 s next to a zombie")
+	}
+	now = now.Add(time.Second / 30)
+	a.step(now, nil) // the Game over screen draws
+	found := false
+	for row := 0; row < 24; row++ {
+		found = found || strings.Contains(rowText(s, row), "YOU DIED")
+	}
+	if !found {
+		t.Fatal("no YOU DIED message")
+	}
+
+	now = now.Add(time.Second / 30)
+	a.step(now, []tcell.Event{key(tcell.KeyEnter, 0)})
+	if a.state.Player.HP != game.PlayerMaxHP || len(a.state.Enemies) != 1 || a.state.Mode != game.ModeHalfBlock {
+		t.Errorf("after retry: HP %d, enemies %d, mode %v; want full HP, the map's zombie, mode kept",
+			a.state.Player.HP, len(a.state.Enemies), a.state.Mode)
 	}
 }
 

@@ -186,3 +186,21 @@ func TestEnemyAssetsParse(t *testing.T) {
 		}
 	}
 }
+
+// A flashing sprite (just shot) is drawn white instead of its colors.
+func TestDrawSpriteFlash(t *testing.T) {
+	s := spriteState(t, spriteRoom)
+	f := drawWith(t, s, Sprite{X: 6.5, Y: 5.5, Image: ZombieImage, Height: 0.8, Flash: true})
+	if cols := greenColumns(f); len(cols) != 0 {
+		t.Error("flashing zombie still has green pixels")
+	}
+	white := 0
+	for _, p := range f.Pix {
+		if p.Gray == 255 && p.Tint == TintNone {
+			white++
+		}
+	}
+	if white == 0 {
+		t.Error("flashing zombie has no white pixels")
+	}
+}

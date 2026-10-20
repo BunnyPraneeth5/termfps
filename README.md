@@ -63,6 +63,12 @@ On Windows you can move and turn at the same time.
 
 Example: `.\termfps.exe -fps 60 -aspect 0.9`
 
+## Playing
+
+Zombies (green) hunt you through the map. Each takes 4 hits. Up close they
+hit you for 10 HP per second; the screen edges flash red when you're hurt.
+At 0 HP the game ends: press Enter to try again or Esc to quit.
+
 ## The screen
 
 - **3D view:** walls fade with distance, and north/south faces are drawn
@@ -71,8 +77,9 @@ Example: `.\termfps.exe -fps 60 -aspect 0.9`
   shade blocks (`█▓▒░`), and ASCII (`@%#*+=-:.`).
 - **Minimap** (top right): walls, floor, and an arrow showing where you are
   and which way you face.
-- **HUD** (bottom line): FPS, position, facing angle and compass direction.
-  If the window is wide enough, it also shows frame timings and the input mode.
+- **HUD** (bottom line): health, ammo, facing angle and compass direction.
+  If the window is wide enough, it also shows FPS, render mode, position,
+  frame timings and the input mode.
 
 ## Troubleshooting
 
@@ -101,7 +108,6 @@ The prototype (P0) is done. Planned next, in order (details in [PRD.md](PRD.md))
 ```powershell
 go build ./...; if ($?) { go vet ./... }; if ($?) { gofmt -l . }; if ($?) { go test ./... }
 go test -bench . ./internal/render   # DrawFrame and presenter timings
-.	ermfps.exe -test-sprites          # still zombie + shooter near the start, to check sprite drawing
 ```
 
 Code layout:

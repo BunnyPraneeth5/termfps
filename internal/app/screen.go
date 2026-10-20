@@ -78,21 +78,18 @@ func (p *playingScreen) tick(a *App, now time.Time, dt float64) {
 
 	t0 := time.Now()
 	render.DrawFrame(st, &a.frame)
-	a.sprites = append(a.sprites[:0], a.testSprites...) // enemies join in P1-06
+	a.sprites = a.sprites[:0]
+	for _, e := range st.Enemies {
+		a.sprites = append(a.sprites, render.Sprite{
+			X: e.X, Y: e.Y, Image: enemyImage(e.Kind), Height: 0.8, Flash: e.Flashing(),
+		})
+	}
 	render.DrawSprites(&a.frame, st.Player, a.sprites)
 	render.DrawWeapon(&a.frame, st.Player)
 	render.DrawCrosshair(&a.frame)
+	render.DrawHurt(&a.frame, st.Player)
 	t1 := time.Now()
-	switch st.Mode {
-	case game.ModeHalfBlock:
-		render.PresentHalfBlock(a.scr, &a.frame)
-	case game.ModeShade:
-		render.PresentShade(a.scr, &a.frame)
-	case game.ModeASCII:
-		render.PresentASCII(a.scr, &a.frame)
-	default:
-		panic(fmt.Sprintf("unknown render mode %d", st.Mode))
-	}
+	a.present()
 	minimapHidden := st.ShowMinimap && !render.DrawMinimap(a.scr, st)
 	render.DrawHUD(a.scr, render.HUD{
 		FPS:           a.fps.value(),
@@ -108,4 +105,45 @@ func (p *playingScreen) tick(a *App, now time.Time, dt float64) {
 	t2 := time.Now()
 	a.scr.Show()
 	a.times.add(frameTimes{draw: t1.Sub(t0), present: t2.Sub(t1), show: time.Since(t2)})
+
+	if st.Player.Dead() {
+		a.switchTo(&gameOverScreen{})
+	}
+}
+
+// enemyImage is the sprite picture for an enemy kind.
+func enemyImage(k game.EnemyKind) *render.Image {
+	switch k {
+	case game.KindZombie:
+		return render.ZombieImage
+	}
+	panic(fmt.Sprintf("no image for enemy kind %d", k))
+}
+
+// gameOverScreen shows the run's result over the frozen last frame.
+// Enter starts a new run; Esc quits (P1-11 will go to the menu). R isn't a
+// retry key: it's reload, and a held R would restart by accident.
+type gameOverScreen struct{}
+
+func (g *gameOverScreen) key(a *App, ev *tcell.EventKey) {
+	switch {
+	case ev.Key() == tcell.KeyEnter:
+		a.newRun()
+	case input.IsQuit(ev):
+		a.quit = true
+	}
+}
+
+func (g *gameOverScreen) tick(a *App, now time.Time, dt float64) {
+	st := a.state
+	a.present() // the last frame stays visible behind the message
+	secs := int(st.Time)
+	render.DrawMessage(a.scr, []string{
+		"YOU DIED",
+		"",
+		fmt.Sprintf("Kills: %d    Time: %d:%02d", st.Kills, secs/60, secs%60),
+		"",
+		"Enter: try again    Esc: quit",
+	})
+	a.scr.Show()
 }

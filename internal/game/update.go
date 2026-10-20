@@ -34,6 +34,11 @@ type Input struct {
 // result doesn't depend on the frame rate.
 func Update(s *State, in Input, dt float64) {
 	s.Events = s.Events[:0] // keep the backing array, drop last frame's events
+	if s.Player.Dead() {
+		return // nothing moves after death; the app shows Game over
+	}
+	s.Time += dt
+	s.Player.hurt = max(s.Player.hurt-dt, 0)
 
 	if in.ToggleMinimap {
 		s.ShowMinimap = !s.ShowMinimap
@@ -44,7 +49,12 @@ func Update(s *State, in Input, dt float64) {
 	}
 
 	updateWeapon(s, in, dt)
+	movePlayer(s, in, dt)
+	updateEnemies(s, dt)
+}
 
+// movePlayer turns and moves the player for one frame, sliding along walls.
+func movePlayer(s *State, in Input, dt float64) {
 	p := &s.Player // pointer: changes below modify s.Player itself, not a copy
 
 	turn := axis(in.TurnRight, in.TurnLeft) // right = growing angle (y points down)

@@ -137,3 +137,36 @@ func TestHUDAngleWraps(t *testing.T) {
 		t.Errorf("HUD %q, want 0° E", line)
 	}
 }
+
+func TestHUDHealthFirst(t *testing.T) {
+	h := sampleHUD()
+	h.Player.HP = 73
+	if line := hudLine(t, 80, h); !strings.HasPrefix(line, "HP  73 | AMMO") {
+		t.Errorf("HUD %q, want it to start with HP  73 | AMMO", line)
+	}
+}
+
+// DrawMessage centers its lines in a box with swapped colors.
+func TestDrawMessage(t *testing.T) {
+	s := newSimScreen(t, 80, 24)
+	DrawMessage(s, []string{"YOU DIED", "Enter: try again"})
+	found := 0
+	for row := 0; row < 24; row++ {
+		txt := rowText(s, 80, row)
+		for _, want := range []string{"YOU DIED", "Enter: try again"} {
+			if i := strings.Index(txt, want); i >= 0 {
+				found++
+				center := i + len(want)/2
+				if center < 36 || center > 44 {
+					t.Errorf("%q centered at column %d, want about 40", want, center)
+				}
+				if _, style, _ := s.Get(i, row); style != noticeStyle {
+					t.Errorf("%q not in the box style", want)
+				}
+			}
+		}
+	}
+	if found != 2 {
+		t.Errorf("found %d of 2 message lines", found)
+	}
+}

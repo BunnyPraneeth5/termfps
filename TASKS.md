@@ -195,7 +195,7 @@ Estimated: about 5 weekends.
 - Sprite images stored as text (like maps), embedded.
 - Acceptance: unit tests: a sprite in front of a wall is drawn, one behind a wall isn't, and size shrinks with distance. On screen: a test sprite looks right and hides behind corners.
 
-### [ ] P1-06: Zombies, player health, death
+### [~] P1-06: Zombies, player health, death
 - Green melee enemy: chases along a path around walls (a grid distance map from the player, recomputed when the player changes cell), hits when close. Takes several shots.
 - Player HP 100, shown in the HUD. HP 0 -> Game over screen (kills, time) with Retry or Quit.
 - Acceptance: unit tests for pathfinding around a wall, melee range and damage, taking damage from shots, death. On screen: zombies come around corners and kill you if you don't shoot.

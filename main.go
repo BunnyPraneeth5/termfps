@@ -91,7 +91,6 @@ func parseFlags() (cfg app.Config, ok bool) {
 	}
 	keyMode := flag.String("keys", defaultKeys, `movement keys: "async" (real key state, Windows only) or "events" (terminal key events)`)
 	aspect := flag.Float64("aspect", render.DefaultPixelAspect, "pixel height / width, for tuning wall proportions (0.5-2.0)")
-	testSprites := flag.Bool("test-sprites", false, "place a still zombie and shooter near the start (for checking sprite drawing)")
 	flag.Parse()
 
 	if *aspect < 0.5 || *aspect > 2.0 {
@@ -121,7 +120,6 @@ func parseFlags() (cfg app.Config, ok bool) {
 		// TERMFPS_PANIC forces a panic to test terminal restore:
 		// "1" panics in the main loop after 1 second,
 		// "input" panics in the input goroutine on the first key press.
-		PanicMode:   os.Getenv("TERMFPS_PANIC"),
-		TestSprites: *testSprites,
+		PanicMode: os.Getenv("TERMFPS_PANIC"),
 	}, true
 }

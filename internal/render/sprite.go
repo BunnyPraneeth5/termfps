@@ -20,6 +20,7 @@ type Sprite struct {
 	X, Y   float64 // where it stands, in map cells
 	Image  *Image
 	Height float64 // height in map cells (1 = as tall as a wall)
+	Flash  bool    // draw every opaque pixel white (just got shot)
 
 	dist float64 // distance from the camera, for sorting (set by DrawSprites)
 }
@@ -115,7 +116,11 @@ func drawSprite(f *Frame, p game.Player, s Sprite) {
 				continue
 			}
 			px := s.Image.Pix[i]
-			px.Gray = toGray(float64(px.Gray) * fog)
+			if s.Flash {
+				px = Pixel{Gray: 255}
+			} else {
+				px.Gray = toGray(float64(px.Gray) * fog)
+			}
 			f.Pix[y*f.W+x] = px
 		}
 	}
