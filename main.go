@@ -91,6 +91,7 @@ func parseFlags() (cfg app.Config, ok bool) {
 	}
 	keyMode := flag.String("keys", defaultKeys, `movement keys: "async" (real key state, Windows only) or "events" (terminal key events)`)
 	aspect := flag.Float64("aspect", render.DefaultPixelAspect, "pixel height / width, for tuning wall proportions (0.5-2.0)")
+	textures := flag.Bool("textures", true, "wall textures (brick, stone, metal); -textures=false for flat walls")
 	flag.Parse()
 
 	if *aspect < 0.5 || *aspect > 2.0 {
@@ -121,5 +122,6 @@ func parseFlags() (cfg app.Config, ok bool) {
 		// "1" panics in the main loop after 1 second,
 		// "input" panics in the input goroutine on the first key press.
 		PanicMode: os.Getenv("TERMFPS_PANIC"),
+		Textures:  *textures,
 	}, true
 }

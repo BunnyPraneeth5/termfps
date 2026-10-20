@@ -85,3 +85,22 @@ func TestParseErrors(t *testing.T) {
 		})
 	}
 }
+
+// Stone and metal are walls too: solid, and allowed on the border.
+func TestStoneAndMetalWalls(t *testing.T) {
+	m, err := Parse([]byte("%%&##\n%P.&#\n#%..#\n&&&%#\n"))
+	if err != nil {
+		t.Fatalf("Parse: %v", err)
+	}
+	for _, c := range []Cell{Wall, Stone, Metal} {
+		if !c.IsWall() || !c.Solid() {
+			t.Errorf("%q: IsWall %v, Solid %v; want both true", c, c.IsWall(), c.Solid())
+		}
+	}
+	if !m.IsSolid(3, 1) || !m.IsSolid(1, 2) {
+		t.Error("interior stone/metal cells aren't solid")
+	}
+	if Target.IsWall() {
+		t.Error("a target block counts as a permanent wall")
+	}
+}

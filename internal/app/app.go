@@ -24,6 +24,7 @@ type Config struct {
 	KeyMode     string  // "async" (real key state, Windows) or "events"
 	PixelAspect float64 // pixel height / width
 	PanicMode   string  // TERMFPS_PANIC test switch: "", "1" or "input"
+	Textures    bool    // wall textures on (P1-10); a menu setting in P1-11
 }
 
 // App is everything the loop needs between frames.
@@ -71,7 +72,7 @@ func New(scr tcell.Screen, m *world.Map, cfg Config, now time.Time) *App {
 		cfg:     cfg,
 		level:   m,
 		state:   game.NewState(m.Clone()),
-		frame:   render.Frame{PixelAspect: cfg.PixelAspect},
+		frame:   render.Frame{PixelAspect: cfg.PixelAspect, Textures: cfg.Textures},
 		focused: true,
 		start:   now,
 		last:    now,

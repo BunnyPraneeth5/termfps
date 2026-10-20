@@ -7,7 +7,8 @@ import (
 	"github.com/BunnyPraneeth5/termfps/internal/world"
 )
 
-// Minimap colors: light walls on a dark floor, white player arrow.
+// Minimap colors: light walls (all textures alike) on a dark floor, white
+// player arrow.
 var (
 	minimapWall   = tcell.StyleDefault.Background(grayColor(140))
 	minimapTarget = tcell.StyleDefault.Background(rgbColor(170, TintRed))

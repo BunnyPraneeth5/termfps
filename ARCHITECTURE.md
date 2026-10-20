@@ -114,7 +114,7 @@ Fields beyond P0 (`RenderMode` in T19, `Pixel.Tint` in P1-02, shooting in P1-03)
 - `#` wall, `.` empty, `P` player spawn (exactly one).
 - Border must be fully walls.
 - Before checking: strip a UTF-8 BOM (Notepad adds `EF BB BF`), handle `\n` and `\r\n` line endings, strip trailing spaces/tabs on each line, drop empty lines at the end of the file.
-- Parse must reject (with a clear error naming the row and column): empty file, smaller than 3x3, ragged rows, unknown chars, zero or multiple `P`, open border (the border must be `#`, so a `T` block can't be on it). `T` is a solid red target block (P1-02). `Z` and `S` mark zombie and shooter starts (P1-06, P1-07); after parsing the cell is floor and the position is in `Map.EnemyStarts`.
+- Parse must reject (with a clear error naming the row and column): empty file, smaller than 3x3, ragged rows, unknown chars, zero or multiple `P`, open border (the border must be `#`, so a `T` block can't be on it). `T` is a solid red target block (P1-02). `Z` and `S` mark zombie and shooter starts (P1-06, P1-07); after parsing the cell is floor and the position is in `Map.EnemyStarts`. Walls come in three textures (P1-10): `#` brick, `%` stone, `&` metal; any of them may form the border.
 
 ## Flow (game loop)
 1. `main` creates the tcell screen. If `Init()` fails, print the error and exit 1.

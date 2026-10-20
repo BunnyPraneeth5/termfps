@@ -60,6 +60,7 @@ On Windows you can move and turn at the same time.
 | `-fps N` | `30` | Target frames per second (1-240) |
 | `-keys async\|events` | `async` on Windows, `events` elsewhere | `async` reads real key state (Windows only, ignored while the window isn't focused). `events` uses terminal key events. In that mode, moving and turning at the same time may not work. |
 | `-aspect X` | `1.0` | Pixel height / width (0.5-2.0). Change it if walls look squashed or stretched with your font. |
+| `-textures=false` | on | Flat gray walls instead of brick, stone and metal textures. |
 
 Example: `.\termfps.exe -fps 60 -aspect 0.9`
 
@@ -131,8 +132,10 @@ Code layout:
 | `internal/render` | Pixel frame, shading, presenters (half-block, shade, ASCII), minimap, HUD |
 | `maps/arena.txt` | The map, built into the binary |
 
-Map files use `#` for walls, `.` for floor, and exactly one `P` for the start.
-The border must be all walls.
+Map files use `#` (brick), `%` (stone) and `&` (metal) for walls, `.` for
+floor, exactly one `P` for the start, `T` for a red target block, and `Z` /
+`S` for zombies and shooters that start in the map. The border must be all
+walls.
 
 Design notes live in [PRD.md](PRD.md), [ARCHITECTURE.md](ARCHITECTURE.md) and
 [DECISIONS.md](DECISIONS.md). Progress is in [TASKS.md](TASKS.md) and

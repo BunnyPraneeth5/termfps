@@ -148,3 +148,19 @@ func TestCastRayHitsTarget(t *testing.T) {
 		t.Errorf("hit %+v, want the target at (4, 1), PerpDist 2.5", h)
 	}
 }
+
+// WallX is the hit point's position along the face: the y fraction on an
+// east/west face, the x fraction on a north/south face.
+func TestCastRayWallX(t *testing.T) {
+	m := mustParse(t, room) // faces at x=1, x=6, y=1, y=6
+	if h := CastRay(m, 2.5, 3.25, 1, 0); math.Abs(h.WallX-0.25) > eps {
+		t.Errorf("east ray from y=3.25: WallX = %v, want 0.25", h.WallX)
+	}
+	if h := CastRay(m, 2.75, 3.5, 0, 1); math.Abs(h.WallX-0.75) > eps {
+		t.Errorf("south ray from x=2.75: WallX = %v, want 0.75", h.WallX)
+	}
+	// A slanted ray: whatever face it hits, WallX stays within [0, 1).
+	if h := CastRay(m, 2.5, 2.4, 1, 0.5); h.WallX < 0 || h.WallX >= 1 {
+		t.Errorf("WallX = %v, want within [0, 1)", h.WallX)
+	}
+}

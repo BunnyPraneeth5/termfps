@@ -216,7 +216,7 @@ Estimated: about 5 weekends.
 
 ## World, menus, maps, saving
 
-### [ ] P1-10: Wall textures
+### [~] P1-10: Wall textures
 - `CastRay` also returns where on the wall the ray hit. Wall characters `#` brick, `%` stone, `&` metal map to 16x16 grayscale text textures (embedded). Fog and side shading still apply. Textures on/off flag (setting in P1-11).
 - Acceptance: unit tests for the hit position and texture sampling. On screen: textures look right and line up at corners; turning them off gives the old flat look.
 

@@ -14,7 +14,9 @@ import (
 type Cell byte
 
 const (
-	Wall   Cell = '#'
+	Wall   Cell = '#' // brick wall (P1-10 texture)
+	Stone  Cell = '%' // stone wall
+	Metal  Cell = '&' // metal wall
 	Empty  Cell = '.'
 	Spawn  Cell = 'P'
 	Target Cell = 'T' // red block, solid; shooting removes it (P1-03)
@@ -25,9 +27,14 @@ const (
 	ShooterStart Cell = 'S'
 )
 
+// IsWall reports whether the cell is a permanent wall (any texture).
+func (c Cell) IsWall() bool {
+	return c == Wall || c == Stone || c == Metal
+}
+
 // Solid reports whether the cell blocks movement and rays.
 func (c Cell) Solid() bool {
-	return c == Wall || c == Target
+	return c.IsWall() || c == Target
 }
 
 // Map is a parsed, validated map.
@@ -95,8 +102,8 @@ func Parse(data []byte) (*Map, error) {
 		for x := 0; x < w; x++ {
 			c := Cell(line[x])
 			onBorder := x == 0 || y == 0 || x == w-1 || y == h-1
-			if onBorder && c != Wall {
-				return nil, fmt.Errorf("row %d, column %d: border must be '#', found %q", y+1, x+1, line[x])
+			if onBorder && !c.IsWall() {
+				return nil, fmt.Errorf("row %d, column %d: border must be a wall ('#', '%%' or '&'), found %q", y+1, x+1, line[x])
 			}
 			if c == Spawn {
 				spawns++
@@ -142,11 +149,11 @@ func (m *Map) IsSolid(x, y int) bool {
 // checkChar returns an error if the byte at line[x] is not a known map char.
 func checkChar(line string, x, y int) error {
 	switch Cell(line[x]) {
-	case Wall, Empty, Spawn, Target, ZombieStart, ShooterStart:
+	case Wall, Stone, Metal, Empty, Spawn, Target, ZombieStart, ShooterStart:
 		return nil
 	}
 	// Decode the full character so the message shows it properly,
 	// even if it is a multi-byte UTF-8 character like 'é'.
 	r, _ := utf8.DecodeRuneInString(line[x:])
-	return fmt.Errorf("row %d, column %d: unknown character %q (use '#', '.', 'P', 'T', 'Z' or 'S')", y+1, x+1, r)
+	return fmt.Errorf("row %d, column %d: unknown character %q (use '#', '%%', '&', '.', 'P', 'T', 'Z' or 'S')", y+1, x+1, r)
 }

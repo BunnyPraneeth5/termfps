@@ -28,3 +28,15 @@ var Shooter []byte
 //
 //go:embed ammo.txt
 var Ammo []byte
+
+// Brick, Stone and Metal are 16x16 wall textures for '#', '%' and '&'
+// (P1-10).
+//
+//go:embed brick.txt
+var Brick []byte
+
+//go:embed stone.txt
+var Stone []byte
+
+//go:embed metal.txt
+var Metal []byte

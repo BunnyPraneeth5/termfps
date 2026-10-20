@@ -26,6 +26,8 @@ type Frame struct {
 	// ZBuf is the depth buffer: for each column, the distance to the wall
 	// DrawFrame drew there. Sprites behind that wall are skipped.
 	ZBuf []float64
+	// Textures turns wall textures on (P1-10). Off gives flat gray walls.
+	Textures bool
 }
 
 // DefaultPixelAspect was measured in T11 from a Windows Terminal screenshot:
@@ -77,23 +79,47 @@ func DrawFrame(s *game.State, f *Frame) {
 	for x := 0; x < f.W; x++ {
 		// cameraX goes from -1 (left edge) to almost +1 (right edge).
 		cameraX := 2*float64(x)/float64(f.W) - 1
-		hit := world.CastRay(s.Map, p.X, p.Y, dirX+planeX*cameraX, dirY+planeY*cameraX)
+		rayX, rayY := dirX+planeX*cameraX, dirY+planeY*cameraX
+		hit := world.CastRay(s.Map, p.X, p.Y, rayX, rayY)
 
 		f.ZBuf[x] = hit.PerpDist
 		start, end := wallSpan(f, hit.PerpDist)
+		top, height := wallLine(f, hit.PerpDist)
 		wall := Pixel{Gray: wallShade(hit.PerpDist, hit.Side)}
 		if hit.Cell == world.Target {
 			wall.Tint = TintRed
 		}
+		var tex *Image
+		tx := 0
+		if f.Textures {
+			if tex = wallTexture(hit.Cell); tex != nil {
+				tx = textureColumn(tex, hit, rayX, rayY)
+			}
+		}
 
 		for y := 0; y < f.H; y++ {
 			px := wall
-			if y < start || y >= end {
+			switch {
+			case y < start || y >= end:
 				px = Pixel{Gray: backgroundShade(y, f.H)} // ceiling above, floor below
+			case tex != nil:
+				// Where this pixel falls on the wall, 0 (top) to 1 (bottom).
+				v := (float64(y) + 0.5 - top) / height
+				ty := min(max(int(v*float64(tex.H)), 0), tex.H-1)
+				px.Gray = texturedGray(wall.Gray, tex.Pix[ty*tex.W+tx].Gray)
 			}
 			f.Pix[y*f.W+x] = px // sets the tint too, so no color is left from last frame
 		}
 	}
+}
+
+// wallLine returns where a wall at perpendicular distance dist starts
+// (top, in pixel rows, may be negative up close) and how tall it is, before
+// clipping to the Frame.
+func wallLine(f *Frame, dist float64) (top, height float64) {
+	dist = math.Max(dist, minPerpDist)
+	height = float64(f.W) / (2 * game.PlaneLen * f.PixelAspect * dist)
+	return float64(f.H)/2 - height/2, height
 }
 
 // wallSpan returns the pixel rows [start, end) a wall at perpendicular

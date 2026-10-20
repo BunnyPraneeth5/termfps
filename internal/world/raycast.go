@@ -9,6 +9,9 @@ type Hit struct {
 	MapX     int
 	MapY     int
 	Cell     Cell
+	// WallX is where along the wall face the ray hit, from 0 to 1 (the
+	// fraction of the cell). Textures use it to pick a column (P1-10).
+	WallX float64
 }
 
 // CastRay walks the grid from (posX, posY) along (rayDirX, rayDirY) with the
@@ -66,10 +69,15 @@ func CastRay(m *Map, posX, posY, rayDirX, rayDirY float64) Hit {
 		if m.IsSolid(mapX, mapY) {
 			// sideDist went one step past the face we hit, so step back.
 			perp := sideDistX - deltaX
+			// The hit point's other coordinate: y on an X-side face, x on a
+			// Y-side face. Its fraction is the position along the face.
+			along := posY + perp*rayDirY
 			if side == 1 {
 				perp = sideDistY - deltaY
+				along = posX + perp*rayDirX
 			}
-			return Hit{PerpDist: perp, Side: side, MapX: mapX, MapY: mapY, Cell: m.At(mapX, mapY)}
+			return Hit{PerpDist: perp, Side: side, MapX: mapX, MapY: mapY, Cell: m.At(mapX, mapY),
+				WallX: along - math.Floor(along)}
 		}
 	}
 	return Hit{PerpDist: math.Inf(1), MapX: mapX, MapY: mapY, Cell: m.At(mapX, mapY)}
