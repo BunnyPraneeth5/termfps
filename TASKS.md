@@ -162,7 +162,7 @@ Estimated: about 5 weekends.
 
 ## Foundations
 
-### [ ] P1-01: App structure and screens
+### [~] P1-01: App structure and screens
 - Move the game loop out of `main.go` into a new `internal/app` package. `main.go` keeps only startup (flags, map parse, screen init, restore, panic handling).
 - `app` holds the current screen (Playing for now; Title, Paused, Settings, MapSelect, GameOver come later) and switches between them.
 - `game.State` gets a per-frame event list (`[]game.Event`: shot fired, enemy hit, pickup taken...) that app reads after Update, so later sound and HUD effects don't need game to know about them.

@@ -20,6 +20,19 @@ func TestRenderModeCycle(t *testing.T) {
 	}
 }
 
+// Cycling the mode emits an event for that frame only.
+func TestRenderModeChangedEvent(t *testing.T) {
+	s := newOpenState(t)
+	Update(s, Input{CycleRenderMode: true}, 1.0/30)
+	if !s.HasEvent(EventRenderModeChanged) {
+		t.Error("no EventRenderModeChanged after V")
+	}
+	Update(s, Input{Forward: true}, 1.0/30)
+	if len(s.Events) != 0 {
+		t.Errorf("events = %v on a frame without V, want none", s.Events)
+	}
+}
+
 func TestRenderModeString(t *testing.T) {
 	cases := map[RenderMode]string{
 		ModeHalfBlock: "half-block", ModeShade: "shade", ModeASCII: "ascii", RenderMode(9): "unknown",

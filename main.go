@@ -1,4 +1,7 @@
-// Command termfps is a terminal first-person game (P0 prototype).
+// Command termfps is a terminal first-person game.
+//
+// main only does startup: flags, the embedded map, the terminal, and crash
+// handling. The game loop and screens live in internal/app.
 package main
 
 import (
@@ -9,11 +12,10 @@ import (
 	"runtime"
 	"runtime/debug"
 	"sync"
-	"time"
 
 	"github.com/gdamore/tcell/v2"
 
-	"github.com/BunnyPraneeth5/termfps/internal/game"
+	"github.com/BunnyPraneeth5/termfps/internal/app"
 	"github.com/BunnyPraneeth5/termfps/internal/input"
 	"github.com/BunnyPraneeth5/termfps/internal/render"
 	"github.com/BunnyPraneeth5/termfps/internal/world"
@@ -31,42 +33,14 @@ func main() {
 	os.Exit(run())
 }
 
-// run opens the screen, runs the game, and returns the process exit code.
-// exitCode is a named result so the deferred panic handler can change it.
+// run checks the flags, opens the screen, runs the app, and returns the
+// process exit code. exitCode is a named result so the deferred panic
+// handler can change it.
 func run() (exitCode int) {
-	targetFPS := flag.Int("fps", 30, "target frames per second (1-240)")
-	// Real key state (async) is the default on Windows, where it exists (D19).
-	defaultKeys := "events"
-	if runtime.GOOS == "windows" {
-		defaultKeys = "async"
-	}
-	keyMode := flag.String("keys", defaultKeys, `movement keys: "async" (real key state, Windows only) or "events" (terminal key events)`)
-	aspect := flag.Float64("aspect", render.DefaultPixelAspect, "pixel height / width, for tuning wall proportions (0.5-2.0)")
-	flag.Parse()
-	if *aspect < 0.5 || *aspect > 2.0 {
-		fmt.Fprintf(os.Stderr, "termfps: -aspect must be between 0.5 and 2.0, got %v\n", *aspect)
+	cfg, ok := parseFlags()
+	if !ok {
 		return 2
 	}
-	if *targetFPS < 1 || *targetFPS > 240 {
-		fmt.Fprintf(os.Stderr, "termfps: -fps must be between 1 and 240, got %d\n", *targetFPS)
-		return 2
-	}
-	switch *keyMode {
-	case "events":
-	case "async":
-		if err := input.AsyncSupported(); err != nil {
-			fmt.Fprintln(os.Stderr, "termfps: -keys async:", err)
-			return 2
-		}
-	default:
-		fmt.Fprintf(os.Stderr, "termfps: -keys must be events or async, got %q\n", *keyMode)
-		return 2
-	}
-
-	// TERMFPS_PANIC forces a panic to test terminal restore:
-	// "1" panics in the main loop after 1 second,
-	// "input" panics in the input goroutine on the first key press.
-	panicMode := os.Getenv("TERMFPS_PANIC")
 
 	// Parse the map before opening the screen, so errors print normally.
 	arena, err := world.Parse(arenaFile)
@@ -103,183 +77,49 @@ func run() (exitCode int) {
 		restore()
 	}()
 
-	// A channel passes values between goroutines. The buffer (64) lets the
-	// input goroutine queue events while the main loop is busy drawing.
-	events := make(chan tcell.Event, 64)
-
-	// inputPanic carries a panic report from the input goroutine to the main
-	// loop. Only the main loop touches the screen, so a crash in the input
-	// goroutine can't race with drawing. Buffer 1: the send never waits.
-	inputPanic := make(chan string, 1)
-
-	// "go" starts the function on a new goroutine, which runs at the same
-	// time as the main loop. recover() only catches panics on its own
-	// goroutine, so this one needs its own deferred handler.
-	go func() {
-		defer func() {
-			if r := recover(); r != nil {
-				// debug.Stack here captures this goroutine's stack.
-				inputPanic <- fmt.Sprintf("%v (input goroutine)\n\n%s", r, debug.Stack())
-			}
-		}()
-		input.Pump(screen, events, panicMode == "input")
-	}()
-
-	state := game.NewState(arena)
-	// Half-block needs 24-bit color (D17). tcell reports 1<<24 colors when it
-	// has truecolor, and fewer with TCELL_TRUECOLOR=disable or NO_COLOR.
-	if screen.Colors() < 1<<24 {
-		state.Mode = game.ModeASCII
-	}
-	// The half-block caution shows once, the first time V switches back to
-	// half-block, for cautionFor.
-	const cautionFor = 5 * time.Second
-	var cautionShown bool
-	var cautionUntil time.Time
-	var keys input.Tracker // which movement keys count as held (see D12)
-
-	// Async key state sees keys pressed in any window, so it is only used
-	// while the terminal has focus. Focus events need terminal support; if
-	// none arrive, focused stays true (the HUD shows it).
-	focused := true
-	if *keyMode == "async" {
-		screen.EnableFocus()
-	}
-
-	// The Frame is reused every frame; it only changes size on resize.
-	// FrameSize(screen.Size()) passes Size's two results as the two arguments.
-	frame := render.Frame{PixelAspect: *aspect}
-	frame.Resize(render.FrameSize(screen.Size()))
-
-	interval := time.Second / time.Duration(*targetFPS)
-	ticker := time.NewTicker(interval)
-	defer ticker.Stop()
-
-	start := time.Now()
-	last := start
-	var fps fpsCounter
-	var times timeAverager // frame timings, averaged over each FPS window for the HUD
-
-	for {
-		<-ticker.C // wait for the next tick (receives from the ticker's channel)
-		frameStart := time.Now()
-
-		quit := false
-		toggleMinimap := false
-		cycleMode := false
-	drain:
-		// Take every waiting event without blocking. With "default", select
-		// doesn't wait: if the channel is empty it runs default right away.
-		// "break drain" leaves the labeled for loop, not just the select.
-		for {
-			select {
-			case report := <-inputPanic:
-				restore() // first, then print, then stop: no more drawing
-				fmt.Fprintf(os.Stderr, "termfps: panic: %s", report)
-				return 1
-			case ev := <-events:
-				// A type switch picks a case by the concrete type behind the
-				// tcell.Event interface; ev has that type inside each case.
-				switch ev := ev.(type) {
-				case *tcell.EventResize:
-					screen.Sync()
-					frame.Resize(render.FrameSize(screen.Size()))
-				case *tcell.EventFocus:
-					focused = ev.Focused
-				case *tcell.EventKey:
-					if input.IsQuit(ev) {
-						quit = true
-					} else if input.IsToggleMinimap(ev) {
-						toggleMinimap = !toggleMinimap // two presses in one frame cancel
-					} else if input.IsCycleRenderMode(ev) {
-						cycleMode = true
-					} else if k, ok := input.KeyFor(ev); ok {
-						keys.Press(k, ev.When())
-					}
-				}
-			default:
-				break drain
-			}
-		}
-		if quit {
-			return 0
-		}
-
-		if panicMode == "1" && frameStart.Sub(start) > time.Second {
-			panic("forced test panic (TERMFPS_PANIC=1)")
-		}
-
-		dt := clampDT(frameStart.Sub(last).Seconds())
-		last = frameStart
-		if fps.tick(frameStart) {
-			times.roll()
-		}
-
-		// Below the minimum size: show a message, skip the game this frame.
-		if render.TooSmall(screen.Size()) {
-			render.DrawTooSmall(screen)
-			screen.Show()
-			continue
-		}
-
-		var in game.Input
-		switch {
-		case *keyMode == "events":
-			in = keys.Input(frameStart)
-		case focused:
-			in = input.AsyncInput()
-		}
-		in.ToggleMinimap = toggleMinimap
-		in.CycleRenderMode = cycleMode
-		modeBefore := state.Mode
-		game.Update(state, in, dt)
-		if state.Mode == game.ModeHalfBlock && modeBefore != game.ModeHalfBlock && !cautionShown {
-			cautionShown = true
-			cautionUntil = frameStart.Add(cautionFor)
-		}
-		notice := ""
-		if frameStart.Before(cautionUntil) {
-			notice = "Half-block needs a truecolor terminal and more bandwidth. Use ASCII over slow SSH."
-		}
-
-		t0 := time.Now()
-		render.DrawFrame(state, &frame)
-		t1 := time.Now()
-		switch state.Mode {
-		case game.ModeHalfBlock:
-			render.PresentHalfBlock(screen, &frame)
-		case game.ModeShade:
-			render.PresentShade(screen, &frame)
-		case game.ModeASCII:
-			render.PresentASCII(screen, &frame)
-		default:
-			panic(fmt.Sprintf("unknown render mode %d", state.Mode))
-		}
-		minimapHidden := state.ShowMinimap && !render.DrawMinimap(screen, state)
-		render.DrawHUD(screen, render.HUD{
-			FPS:           fps.value(),
-			Player:        state.Player,
-			Draw:          times.avg.draw,
-			Present:       times.avg.present,
-			Show:          times.avg.show,
-			Keys:          keysLabel(*keyMode, focused),
-			MinimapHidden: minimapHidden,
-			Mode:          state.Mode,
-			Notice:        notice,
-		})
-		t2 := time.Now()
-		screen.Show()
-		times.add(frameTimes{draw: t1.Sub(t0), present: t2.Sub(t1), show: time.Since(t2)})
-	}
+	return app.Run(screen, arena, cfg, restore)
 }
 
-// keysLabel names the input mode for the HUD; async also shows focus.
-func keysLabel(mode string, focused bool) string {
-	if mode != "async" {
-		return "keys events"
+// parseFlags reads and checks the command-line flags. On a bad value it
+// prints why and returns ok = false.
+func parseFlags() (cfg app.Config, ok bool) {
+	targetFPS := flag.Int("fps", 30, "target frames per second (1-240)")
+	// Real key state (async) is the default on Windows, where it exists (D19).
+	defaultKeys := "events"
+	if runtime.GOOS == "windows" {
+		defaultKeys = "async"
 	}
-	if focused {
-		return "keys async (focused)"
+	keyMode := flag.String("keys", defaultKeys, `movement keys: "async" (real key state, Windows only) or "events" (terminal key events)`)
+	aspect := flag.Float64("aspect", render.DefaultPixelAspect, "pixel height / width, for tuning wall proportions (0.5-2.0)")
+	flag.Parse()
+
+	if *aspect < 0.5 || *aspect > 2.0 {
+		fmt.Fprintf(os.Stderr, "termfps: -aspect must be between 0.5 and 2.0, got %v\n", *aspect)
+		return cfg, false
 	}
-	return "keys async (NOT focused)"
+	if *targetFPS < 1 || *targetFPS > 240 {
+		fmt.Fprintf(os.Stderr, "termfps: -fps must be between 1 and 240, got %d\n", *targetFPS)
+		return cfg, false
+	}
+	switch *keyMode {
+	case "events":
+	case "async":
+		if err := input.AsyncSupported(); err != nil {
+			fmt.Fprintln(os.Stderr, "termfps: -keys async:", err)
+			return cfg, false
+		}
+	default:
+		fmt.Fprintf(os.Stderr, "termfps: -keys must be events or async, got %q\n", *keyMode)
+		return cfg, false
+	}
+
+	return app.Config{
+		FPS:         *targetFPS,
+		KeyMode:     *keyMode,
+		PixelAspect: *aspect,
+		// TERMFPS_PANIC forces a panic to test terminal restore:
+		// "1" panics in the main loop after 1 second,
+		// "input" panics in the input goroutine on the first key press.
+		PanicMode: os.Getenv("TERMFPS_PANIC"),
+	}, true
 }

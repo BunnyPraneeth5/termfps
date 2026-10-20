@@ -34,6 +34,9 @@ type State struct {
 	Player      Player
 	ShowMinimap bool
 	Mode        RenderMode
+	// Events lists what happened in the last Update. Update empties it first,
+	// reusing the slice so there is no allocation per frame.
+	Events []Event
 }
 
 // NewState puts the player on the map's spawn, facing east, minimap on.

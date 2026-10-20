@@ -28,11 +28,14 @@ type Input struct {
 // Update advances the game by dt seconds. All speeds are per second, so the
 // result doesn't depend on the frame rate.
 func Update(s *State, in Input, dt float64) {
+	s.Events = s.Events[:0] // keep the backing array, drop last frame's events
+
 	if in.ToggleMinimap {
 		s.ShowMinimap = !s.ShowMinimap
 	}
 	if in.CycleRenderMode {
 		s.Mode = s.Mode.Next()
+		s.Events = append(s.Events, EventRenderModeChanged)
 	}
 
 	p := &s.Player // pointer: changes below modify s.Player itself, not a copy
