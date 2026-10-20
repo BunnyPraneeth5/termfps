@@ -89,3 +89,18 @@ func TestBoxTouchingIsNotHit(t *testing.T) {
 		t.Error("box 0.01 into the wall doesn't count as a hit")
 	}
 }
+
+// Target blocks are solid for movement too.
+func TestTryMoveBlockedByTarget(t *testing.T) {
+	m := mustParse(t, "#######\n"+
+		"#P..T.#\n"+
+		"#.....#\n"+
+		"#######\n")
+	x, y := 2.5, 1.5
+	for range 20 {
+		x, y = TryMove(m, x, y, 0.1, 0, r)
+	}
+	if x+r > 4 {
+		t.Errorf("box edge %v went into the target (face at x=4)", x+r)
+	}
+}

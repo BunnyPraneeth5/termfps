@@ -9,9 +9,10 @@ import (
 	"github.com/BunnyPraneeth5/termfps/internal/world"
 )
 
-// Pixel is one Frame pixel. T20 (stretch) adds a Color field.
+// Pixel is one Frame pixel.
 type Pixel struct {
 	Gray uint8 // brightness 0-255
+	Tint Tint  // color on top of the gray (TintNone = plain gray)
 }
 
 // Frame is the pixel buffer for the 3D view. Each terminal cell shows two
@@ -70,14 +71,17 @@ func DrawFrame(s *game.State, f *Frame) {
 		hit := world.CastRay(s.Map, p.X, p.Y, dirX+planeX*cameraX, dirY+planeY*cameraX)
 
 		start, end := wallSpan(f, hit.PerpDist)
-		wallGray := wallShade(hit.PerpDist, hit.Side)
+		wall := Pixel{Gray: wallShade(hit.PerpDist, hit.Side)}
+		if hit.Cell == world.Target {
+			wall.Tint = TintRed
+		}
 
 		for y := 0; y < f.H; y++ {
-			g := wallGray
+			px := wall
 			if y < start || y >= end {
-				g = backgroundShade(y, f.H) // ceiling above, floor below
+				px = Pixel{Gray: backgroundShade(y, f.H)} // ceiling above, floor below
 			}
-			f.Pix[y*f.W+x].Gray = g
+			f.Pix[y*f.W+x] = px // sets the tint too, so no color is left from last frame
 		}
 	}
 }

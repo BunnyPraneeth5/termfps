@@ -36,14 +36,14 @@ func TestEmbeddedArenaAllReachable(t *testing.T) {
 		for _, d := range [][2]int{{1, 0}, {-1, 0}, {0, 1}, {0, -1}} {
 			nx, ny := x+d[0], y+d[1]
 			j := ny*m.W + nx
-			if m.Cells[j] != world.Wall && !seen[j] {
+			if !m.Cells[j].Solid() && !seen[j] {
 				seen[j] = true
 				queue = append(queue, j)
 			}
 		}
 	}
 	for i, c := range m.Cells {
-		if c != world.Wall && !seen[i] {
+		if !c.Solid() && !seen[i] {
 			t.Errorf("open cell (%d, %d) can't be reached from the spawn", i%m.W, i/m.W)
 		}
 	}

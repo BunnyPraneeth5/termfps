@@ -125,14 +125,26 @@ func TestCastRayZeroDirection(t *testing.T) {
 	}
 }
 
-func TestAtOutsideIsWall(t *testing.T) {
+func TestOutsideIsSolid(t *testing.T) {
 	m := mustParse(t, room)
 	for _, p := range [][2]int{{-1, 0}, {0, -1}, {7, 3}, {3, 7}} {
-		if !m.IsWall(p[0], p[1]) {
-			t.Errorf("IsWall(%d, %d) = false, want true outside the map", p[0], p[1])
+		if !m.IsSolid(p[0], p[1]) {
+			t.Errorf("IsSolid(%d, %d) = false, want true outside the map", p[0], p[1])
 		}
 	}
-	if m.IsWall(1, 1) {
-		t.Error("IsWall(1, 1) = true on the spawn cell, want false")
+	if m.IsSolid(1, 1) {
+		t.Error("IsSolid(1, 1) = true on the spawn cell, want false")
+	}
+}
+
+// A red target block stops rays like a wall and reports itself.
+func TestCastRayHitsTarget(t *testing.T) {
+	m := mustParse(t, "#######\n"+
+		"#P..T.#\n"+
+		"#.....#\n"+
+		"#######\n")
+	h := CastRay(m, 1.5, 1.5, 1, 0) // east, toward the T at x=4
+	if h.Cell != Target || h.MapX != 4 || math.Abs(h.PerpDist-2.5) > eps {
+		t.Errorf("hit %+v, want the target at (4, 1), PerpDist 2.5", h)
 	}
 }

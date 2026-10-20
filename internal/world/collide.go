@@ -29,7 +29,7 @@ func boxHitsWall(m *Map, x, y, radius float64) bool {
 	minY, maxY := int(math.Floor(y-radius)), int(math.Ceil(y+radius))-1
 	for cy := minY; cy <= maxY; cy++ {
 		for cx := minX; cx <= maxX; cx++ {
-			if m.IsWall(cx, cy) {
+			if m.IsSolid(cx, cy) {
 				return true
 			}
 		}

@@ -26,7 +26,7 @@ Note: `//go:embed` only sees files in the same package dir or below. We keep the
 ### world
 - `Parse(data []byte) (*Map, error)`
 - `(*Map) At(x, y int) Cell`
-- `(*Map) IsWall(x, y int) bool` (out of bounds counts as wall)
+- `(*Map) IsSolid(x, y int) bool` (walls and `T` blocks; out of bounds counts as solid)
 - `TryMove(m *Map, x, y, dx, dy, radius float64) (newX, newY float64)`: moves on X and Y separately so the player slides along walls. Each axis checks the player's full box (`x±radius`, `y±radius`), not just the center, so corners can't be clipped.
 - `CastRay(m *Map, posX, posY, rayDirX, rayDirY float64) Hit`: pure function, DDA algorithm, testable without a terminal. Lives in world (not render) because it only needs the map, and game needs it later for shooting. If it were in render, game -> render -> game would be an import cycle, which Go refuses to compile.
 
@@ -89,7 +89,8 @@ type Input struct {
 
 // render
 type Pixel struct {
-    Gray uint8 // brightness 0-255. T20 (stretch) adds a Color field.
+    Gray uint8 // brightness 0-255
+    Tint Tint  // TintNone (gray), TintRed, TintGreen, TintYellow (P1-02)
 }
 type Frame struct {
     W, H int     // W = screen columns, H = 2 * (screen rows - 1). The last row is the HUD.
@@ -98,7 +99,7 @@ type Frame struct {
 ```
 The Frame is reused every frame. Resize it only when the terminal size changes, and reuse the slice's capacity when it is big enough. No per-frame allocation.
 
-Stretch-only fields and types (`RenderMode`, `Pixel.Color`, a shoot action) are added by their stretch tasks, not in P0.
+Fields beyond P0 (`RenderMode` in T19, `Pixel.Tint` in P1-02, shooting in P1-03) were added by the task that needed them.
 
 ## Coordinates
 - Map x grows to the right (east), map y grows down (south), same as the text file.
@@ -113,7 +114,7 @@ Stretch-only fields and types (`RenderMode`, `Pixel.Color`, a shoot action) are 
 - `#` wall, `.` empty, `P` player spawn (exactly one).
 - Border must be fully walls.
 - Before checking: strip a UTF-8 BOM (Notepad adds `EF BB BF`), handle `\n` and `\r\n` line endings, strip trailing spaces/tabs on each line, drop empty lines at the end of the file.
-- Parse must reject (with a clear error naming the row and column): empty file, smaller than 3x3, ragged rows, unknown chars (including `T` in P0, which T20 adds), zero or multiple `P`, open border.
+- Parse must reject (with a clear error naming the row and column): empty file, smaller than 3x3, ragged rows, unknown chars, zero or multiple `P`, open border (the border must be `#`, so a `T` block can't be on it). `T` is a solid red target block (P1-02).
 
 ## Flow (game loop)
 1. `main` creates the tcell screen. If `Init()` fails, print the error and exit 1.
@@ -210,7 +211,7 @@ internal/app         game loop, current screen (Title, MapSelect, Settings, Play
 internal/ui          menu model (items, selection, values; no tcell) + menu drawing (tcell)
 internal/world       + map header (`; name:`), wall types (# % &), T blocks, WallX in Hit, grid pathfinding
 internal/game        + weapon/ammo, enemies, pickups, spawner + tiers, score, per-frame events
-internal/render      + Pixel.Color, depth buffer, sprites, textures, weapon overlay, crosshair
+internal/render      + Pixel.Tint, depth buffer, sprites, textures, weapon overlay, crosshair
 internal/input       + Space, R, mouse buttons, menu keys
 internal/save        save.json load/save (encoding/json, atomic write)
 internal/audio       oto player + generated effects (P1-15)
@@ -240,7 +241,7 @@ Hitscan along the center ray: `world.CastRay` gives the wall distance; the neare
 A grid distance map (BFS) from the player's cell, recomputed only when the player enters a new cell (cheap even on 64x32). Each enemy steps toward a neighbor cell with a smaller distance, moving with `world.TryMove` and dt like the player. Zombies follow it all the way; shooters stop at a preferred range when they have line of sight (raycast from enemy to player).
 
 ### Rendering additions
-- `Pixel.Color`: 0 gray, 1 red, 2 green, 3 yellow. Half-block tints the gray with the color in RGB. Shade/ASCII use the terminal's basic red/green/yellow foreground (works without truecolor).
+- `Pixel.Tint` (done in P1-02): none (gray), red, green, yellow. Half-block tints the gray with the color in RGB. Shade/ASCII use the terminal's basic red/green/yellow foreground (works without truecolor).
 - Depth buffer: DrawFrame stores each column's PerpDist in the Frame (reused slice, no per-frame allocation).
 - Sprites (Lodev billboard method): transform the sprite into camera space, project, scale by distance, draw only columns where the sprite is closer than the depth buffer. Sort sprites far to near. Images are small text pixel-art files with a transparent character.
 - Textures: Hit gains `WallX` (0-1 position along the wall face). The texture column comes from WallX, rows are stretched over the wall span; the texture gray is multiplied by the existing fog and side shading. Off by setting.

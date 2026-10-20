@@ -10,6 +10,7 @@ import (
 // Minimap colors: light walls on a dark floor, white player arrow.
 var (
 	minimapWall   = tcell.StyleDefault.Background(grayColor(140))
+	minimapTarget = tcell.StyleDefault.Background(rgbColor(170, TintRed))
 	minimapFloor  = tcell.StyleDefault.Background(grayColor(25))
 	minimapPlayer = tcell.StyleDefault.Background(grayColor(25)).Foreground(grayColor(255)).Bold(true)
 )
@@ -42,7 +43,10 @@ func DrawMinimap(s tcell.Screen, st *game.State) bool {
 			case x == px && y == py:
 				s.SetContent(sx, y, arrowFor(st.Player.Angle), nil, minimapPlayer)
 				s.SetContent(sx+1, y, ' ', nil, minimapFloor)
-			case m.At(x, y) == world.Wall:
+			case m.At(x, y) == world.Target:
+				s.SetContent(sx, y, ' ', nil, minimapTarget)
+				s.SetContent(sx+1, y, ' ', nil, minimapTarget)
+			case m.At(x, y).Solid():
 				s.SetContent(sx, y, ' ', nil, minimapWall)
 				s.SetContent(sx+1, y, ' ', nil, minimapWall)
 			default:

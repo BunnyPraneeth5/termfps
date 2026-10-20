@@ -66,7 +66,7 @@ func TestParseErrors(t *testing.T) {
 		{"unknown char", "#####\n#P.x#\n#...#\n#####\n", "row 2, column 4: unknown character 'x'"},
 		{"unicode char", "#####\n#P.é#\n#...#\n#####\n", "unknown character 'é'"},
 		{"tab inside row", "#####\n#P\t.#\n#...#\n#####\n", "unknown character '\\t'"},
-		{"target T in P0", "#####\n#P.T#\n#...#\n#####\n", "'T' targets are not supported"},
+		{"target T on the border", "##T##\n#P..#\n#...#\n#####\n", "row 1, column 3: border"},
 		{"no spawn", "#####\n#...#\n#...#\n#####\n", "0 spawn points"},
 		{"two spawns", "#####\n#P.P#\n#...#\n#####\n", "2 spawn points"},
 		{"open top border", "##.##\n#P..#\n#...#\n#####\n", "row 1, column 3: border"},

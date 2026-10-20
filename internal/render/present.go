@@ -20,8 +20,8 @@ func PresentHalfBlock(s tcell.Screen, f *Frame) {
 		bottom := f.Pix[(2*row+1)*f.W : (2*row+2)*f.W]
 		for x := 0; x < f.W; x++ {
 			style := tcell.StyleDefault.
-				Foreground(grayColor(top[x].Gray)).
-				Background(grayColor(bottom[x].Gray))
+				Foreground(rgbColor(top[x].Gray, top[x].Tint)).
+				Background(rgbColor(bottom[x].Gray, bottom[x].Tint))
 			s.Put(x, row, halfBlock, style)
 		}
 	}
@@ -35,7 +35,8 @@ var (
 )
 
 // PresentShade writes the Frame as one shade block per cell (stretch T19).
-// It uses the terminal's default colors, so it works without truecolor.
+// It uses the terminal's default colors (basic colors for tinted cells), so
+// it works without truecolor.
 func PresentShade(s tcell.Screen, f *Frame) {
 	presentRamp(s, f, shadeRamp)
 }
@@ -55,7 +56,11 @@ func presentRamp(s tcell.Screen, f *Frame, ramp []string) {
 		bottom := f.Pix[(2*row+1)*f.W : (2*row+2)*f.W]
 		for x := 0; x < f.W; x++ {
 			avg := uint8((int(top[x].Gray) + int(bottom[x].Gray)) / 2)
-			s.Put(x, row, ramp[rampIndex(avg, len(ramp))], tcell.StyleDefault)
+			style := tcell.StyleDefault
+			if c, ok := basicColor(cellTint(top[x], bottom[x])); ok {
+				style = style.Foreground(c)
+			}
+			s.Put(x, row, ramp[rampIndex(avg, len(ramp))], style)
 		}
 	}
 }

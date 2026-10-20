@@ -170,7 +170,7 @@ Estimated: about 5 weekends.
   - The game plays exactly as before (all P0 checks still pass by eye).
   - All existing tests pass; new tests for screen switching.
 
-### [ ] P1-02: Color in the renderer + red target blocks (was T20)
+### [~] P1-02: Color in the renderer + red target blocks (was T20)
 - `Pixel.Color` (gray, red, green, yellow). Half-block uses RGB tints; shade and ASCII use the terminal's basic red/green/yellow, which works without truecolor.
 - Map character `T`: a solid red block, shootable later (P1-03).
 - Acceptance: a `T` block shows red in all three render modes. Unit tests for parsing `T` and for the color in each presenter.

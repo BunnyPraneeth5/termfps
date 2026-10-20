@@ -14,10 +14,16 @@ import (
 type Cell byte
 
 const (
-	Wall  Cell = '#'
-	Empty Cell = '.'
-	Spawn Cell = 'P'
+	Wall   Cell = '#'
+	Empty  Cell = '.'
+	Spawn  Cell = 'P'
+	Target Cell = 'T' // red block, solid; shooting removes it (P1-03)
 )
+
+// Solid reports whether the cell blocks movement and rays.
+func (c Cell) Solid() bool {
+	return c == Wall || c == Target
+}
 
 // Map is a parsed, validated map.
 type Map struct {
@@ -93,21 +99,20 @@ func (m *Map) At(x, y int) Cell {
 	return m.Cells[y*m.W+x]
 }
 
-// IsWall reports whether (x, y) is solid. Outside the map counts as wall.
-func (m *Map) IsWall(x, y int) bool {
-	return m.At(x, y) == Wall
+// IsSolid reports whether (x, y) blocks movement and rays. Outside the map
+// counts as solid.
+func (m *Map) IsSolid(x, y int) bool {
+	return m.At(x, y).Solid()
 }
 
 // checkChar returns an error if the byte at line[x] is not a known map char.
 func checkChar(line string, x, y int) error {
 	switch Cell(line[x]) {
-	case Wall, Empty, Spawn:
+	case Wall, Empty, Spawn, Target:
 		return nil
-	case 'T':
-		return fmt.Errorf("row %d, column %d: 'T' targets are not supported yet (stretch task T20)", y+1, x+1)
 	}
 	// Decode the full character so the message shows it properly,
 	// even if it is a multi-byte UTF-8 character like 'é'.
 	r, _ := utf8.DecodeRuneInString(line[x:])
-	return fmt.Errorf("row %d, column %d: unknown character %q (use '#', '.', or 'P')", y+1, x+1, r)
+	return fmt.Errorf("row %d, column %d: unknown character %q (use '#', '.', 'P' or 'T')", y+1, x+1, r)
 }

@@ -63,7 +63,7 @@ func CastRay(m *Map, posX, posY, rayDirX, rayDirY float64) Hit {
 			mapY += stepY
 			side = 1
 		}
-		if m.IsWall(mapX, mapY) {
+		if m.IsSolid(mapX, mapY) {
 			// sideDist went one step past the face we hit, so step back.
 			perp := sideDistX - deltaX
 			if side == 1 {
