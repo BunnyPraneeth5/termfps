@@ -13,6 +13,9 @@ const (
 	TurnSpeed = math.Pi
 	// Radius is the player's collision half-size, in map cells.
 	Radius = 0.2
+	// BobPerCell is how far the bob phase moves per cell walked
+	// (2*pi / 1.5: one full sway every 1.5 cells).
+	BobPerCell = 2 * math.Pi / 1.5
 )
 
 // Input is what the player is doing this frame. The input package fills it;
@@ -60,7 +63,9 @@ func Update(s *State, in Input, dt float64) {
 	length := math.Hypot(moveX, moveY)
 	dx := moveX / length * MoveSpeed * dt
 	dy := moveY / length * MoveSpeed * dt
+	oldX, oldY := p.X, p.Y
 	p.X, p.Y = world.TryMove(s.Map, p.X, p.Y, dx, dy, Radius)
+	p.Bob = normalizeAngle(p.Bob + math.Hypot(p.X-oldX, p.Y-oldY)*BobPerCell)
 }
 
 // axis turns a pair of opposite keys into +1, -1 or 0 (both or neither).

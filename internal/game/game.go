@@ -16,6 +16,9 @@ type Player struct {
 	X, Y   float64 // position in map units
 	Angle  float64 // radians, kept in [0, 2*pi)
 	Weapon Weapon
+	// Bob is the walking bob phase in radians, [0, 2*pi). It advances with
+	// distance walked; the gun graphic sways with it.
+	Bob float64
 }
 
 // Dir returns the unit facing direction.

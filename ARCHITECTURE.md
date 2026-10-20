@@ -215,7 +215,7 @@ internal/render      + Pixel.Tint, depth buffer, sprites, textures, weapon overl
 internal/input       + Space, R, mouse buttons, menu keys
 internal/save        save.json load/save (encoding/json, atomic write)
 internal/audio       oto player + generated effects (P1-15)
-assets/              sprites and textures as text files (embedded like maps)
+internal/assets      pixel-art images (gun, flash, sprites) and textures as text files, embedded; format in render.ParseImage
 ```
 
 ### Screens

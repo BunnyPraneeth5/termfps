@@ -143,3 +143,29 @@ func TestWallBlocksShot(t *testing.T) {
 		t.Error("shot went through a wall and destroyed the target")
 	}
 }
+
+// The muzzle flash lasts FlashTime after a shot.
+func TestFlashTiming(t *testing.T) {
+	s := newOpenState(t)
+	Update(s, Input{Fire: true}, frameDT)
+	if !s.Player.Weapon.Flashing() {
+		t.Fatal("no flash right after a shot")
+	}
+	run(s, Input{}, 4, 0) // 0.13 s later (0.1 s plus float rounding is 4 frames)
+	if s.Player.Weapon.Flashing() {
+		t.Error("flash still on 0.13 s after the shot")
+	}
+}
+
+// The bob phase moves only while walking.
+func TestBobAdvancesWhileWalking(t *testing.T) {
+	s := newOpenState(t)
+	run(s, Input{TurnLeft: true}, 10, 0)
+	if s.Player.Bob != 0 {
+		t.Errorf("bob = %v after turning in place, want 0", s.Player.Bob)
+	}
+	run(s, Input{Forward: true}, 10, 0)
+	if s.Player.Bob == 0 {
+		t.Error("bob didn't move while walking")
+	}
+}

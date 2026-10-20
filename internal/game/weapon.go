@@ -10,15 +10,17 @@ const (
 	StartReserve = 50        // spare rounds at the start
 	FireInterval = 1.0 / 3.0 // seconds between shots (3 per second)
 	ReloadTime   = 1.5       // seconds a reload takes
+	FlashTime    = 0.1       // seconds the muzzle flash (and recoil) shows
 )
 
-// Weapon is the player's gun: a magazine, spare rounds, and two timers.
+// Weapon is the player's gun: a magazine, spare rounds, and timers.
 type Weapon struct {
 	Mag     int // rounds in the gun
 	Reserve int // spare rounds
 
 	cooldown  float64 // seconds until the next shot is allowed
 	reloading float64 // seconds left in the current reload; 0 = not reloading
+	flash     float64 // seconds left of the muzzle flash; 0 = none
 }
 
 // NewWeapon returns a full gun with the starting spare rounds.
@@ -31,12 +33,18 @@ func (w Weapon) Reloading() bool {
 	return w.reloading > 0
 }
 
+// Flashing reports whether the muzzle flash shows (right after a shot).
+func (w Weapon) Flashing() bool {
+	return w.flash > 0
+}
+
 // updateWeapon advances the gun's timers and handles the fire and reload
 // inputs for one frame. Shots are hitscan along the view direction.
 func updateWeapon(s *State, in Input, dt float64) {
 	w := &s.Player.Weapon // pointer: changes below modify the player's gun
 
 	w.cooldown = max(w.cooldown-dt, 0)
+	w.flash = max(w.flash-dt, 0)
 	if w.reloading > 0 {
 		w.reloading -= dt
 		if w.reloading <= 0 {
@@ -65,6 +73,7 @@ func updateWeapon(s *State, in Input, dt float64) {
 		return
 	}
 	w.Mag--
+	w.flash = FlashTime
 	s.Events = append(s.Events, EventShotFired)
 	shoot(s)
 	if w.Mag == 0 {

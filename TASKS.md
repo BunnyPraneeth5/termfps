@@ -184,7 +184,7 @@ Estimated: about 5 weekends.
 - Space and R work in both key modes (async: GetAsyncKeyState; events: one-shot presses).
 - Acceptance: unit tests for fire rate, magazine and reserve counts, reload timing, auto-reload, a target hit, and a wall blocking the shot. On screen: crosshair centered, ammo counts right.
 
-### [ ] P1-04: Weapon graphics and muzzle flash
+### [~] P1-04: Weapon graphics and muzzle flash
 - Pixel-art gun at the bottom center, drawn into the Frame after DrawFrame. Yellow muzzle flash ~0.1 s and a small recoil on each shot. Optional gentle bobbing while walking.
 - Acceptance: the gun shows in all three render modes; the flash appears only right after a shot. Tests for the overlay position and flash timing.
 

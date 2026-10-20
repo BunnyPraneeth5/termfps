@@ -78,6 +78,7 @@ func (p *playingScreen) tick(a *App, now time.Time, dt float64) {
 
 	t0 := time.Now()
 	render.DrawFrame(st, &a.frame)
+	render.DrawWeapon(&a.frame, st.Player)
 	render.DrawCrosshair(&a.frame)
 	t1 := time.Now()
 	switch st.Mode {
