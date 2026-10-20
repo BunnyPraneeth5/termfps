@@ -8,6 +8,7 @@ import (
 	"github.com/gdamore/tcell/v2"
 
 	"github.com/BunnyPraneeth5/termfps/internal/game"
+	"github.com/BunnyPraneeth5/termfps/internal/render"
 	"github.com/BunnyPraneeth5/termfps/internal/world"
 )
 
@@ -189,5 +190,33 @@ func TestSpaceFiresAndRReloads(t *testing.T) {
 	a.step(t0.Add(2*time.Second/30), []tcell.Event{key(tcell.KeyRune, 'r')})
 	if !a.state.Player.Weapon.Reloading() {
 		t.Error("R didn't start a reload")
+	}
+}
+
+// -test-sprites places a zombie and a shooter in view of the spawn; both
+// get drawn (green and red pixels in the Frame).
+func TestTestSpritesDrawn(t *testing.T) {
+	s := tcell.NewSimulationScreen("UTF-8")
+	if err := s.Init(); err != nil {
+		t.Fatalf("simulation screen Init: %v", err)
+	}
+	s.SetSize(80, 24)
+	t.Cleanup(s.Fini)
+	m, err := world.Parse([]byte(testMap))
+	if err != nil {
+		t.Fatalf("Parse: %v", err)
+	}
+	a := New(s, m, Config{FPS: 30, KeyMode: "events", PixelAspect: 1, TestSprites: true}, t0)
+	if len(a.testSprites) != 2 {
+		t.Fatalf("test sprites = %d, want 2", len(a.testSprites))
+	}
+	a.step(t0.Add(time.Second/30), nil)
+	var green, red bool
+	for _, p := range a.frame.Pix {
+		green = green || p.Tint == render.TintGreen
+		red = red || p.Tint == render.TintRed
+	}
+	if !green || !red {
+		t.Errorf("green (zombie) drawn: %v, red (shooter) drawn: %v; want both", green, red)
 	}
 }

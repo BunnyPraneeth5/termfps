@@ -190,7 +190,7 @@ Estimated: about 5 weekends.
 
 ## Enemies
 
-### [ ] P1-05: Sprites (billboards hidden by walls)
+### [~] P1-05: Sprites (billboards hidden by walls)
 - DrawFrame records each column's wall distance (a depth buffer in the Frame). A sprite renderer draws small pixel-art images that always face the camera, scaled by distance, skipping columns where a wall is closer.
 - Sprite images stored as text (like maps), embedded.
 - Acceptance: unit tests: a sprite in front of a wall is drawn, one behind a wall isn't, and size shrinks with distance. On screen: a test sprite looks right and hides behind corners.

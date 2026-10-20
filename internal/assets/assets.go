@@ -13,3 +13,13 @@ var Gun []byte
 //
 //go:embed flash.txt
 var Flash []byte
+
+// Zombie is the green melee enemy (P1-05 images, P1-06 behavior).
+//
+//go:embed zombie.txt
+var Zombie []byte
+
+// Shooter is the red ranged enemy (P1-05 images, P1-07 behavior).
+//
+//go:embed shooter.txt
+var Shooter []byte

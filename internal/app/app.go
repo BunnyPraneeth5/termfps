@@ -23,6 +23,7 @@ type Config struct {
 	KeyMode     string  // "async" (real key state, Windows) or "events"
 	PixelAspect float64 // pixel height / width
 	PanicMode   string  // TERMFPS_PANIC test switch: "", "1" or "input"
+	TestSprites bool    // place a still zombie and shooter near the start (P1-05 check)
 }
 
 // App is everything the loop needs between frames.
@@ -34,6 +35,11 @@ type App struct {
 	keys    input.Tracker // which movement keys count as held (D12)
 	focused bool          // terminal has focus (async keys only count then)
 	current screen        // what's showing: playing now, menus later (P1-11)
+
+	// testSprites are the still sprites from Config.TestSprites; sprites is
+	// the per-frame list handed to the renderer, reused between frames.
+	testSprites []render.Sprite
+	sprites     []render.Sprite
 
 	start, last time.Time
 	fps         fpsCounter
@@ -76,6 +82,9 @@ func New(scr tcell.Screen, m *world.Map, cfg Config, now time.Time) *App {
 	}
 	// FrameSize(scr.Size()) passes Size's two results as the two arguments.
 	a.frame.Resize(render.FrameSize(scr.Size()))
+	if cfg.TestSprites {
+		a.testSprites = testSprites(m)
+	}
 	a.switchTo(&playingScreen{})
 	return a
 }
@@ -187,6 +196,32 @@ func (a *App) step(now time.Time, events []tcell.Event) (quit bool) {
 
 	a.current.tick(a, now, dt)
 	return a.quit
+}
+
+// testSprites places a still zombie and shooter on free cells 4 and 6
+// steps from the spawn (the first ones in reading order), so sprite drawing
+// can be checked on screen before enemies exist (P1-05).
+func testSprites(m *world.Map) []render.Sprite {
+	sx, sy := int(m.SpawnX), int(m.SpawnY)
+	find := func(steps int) (float64, float64, bool) {
+		for y := 0; y < m.H; y++ {
+			for x := 0; x < m.W; x++ {
+				d := max(x-sx, sx-x) + max(y-sy, sy-y)
+				if d == steps && !m.At(x, y).Solid() {
+					return float64(x) + 0.5, float64(y) + 0.5, true
+				}
+			}
+		}
+		return 0, 0, false
+	}
+	var out []render.Sprite
+	if x, y, ok := find(4); ok {
+		out = append(out, render.Sprite{X: x, Y: y, Image: render.ZombieImage, Height: 0.8})
+	}
+	if x, y, ok := find(6); ok {
+		out = append(out, render.Sprite{X: x, Y: y, Image: render.ShooterImage, Height: 0.8})
+	}
+	return out
 }
 
 // keysLabel names the input mode for the HUD; async also shows focus.

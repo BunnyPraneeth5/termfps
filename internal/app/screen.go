@@ -78,6 +78,8 @@ func (p *playingScreen) tick(a *App, now time.Time, dt float64) {
 
 	t0 := time.Now()
 	render.DrawFrame(st, &a.frame)
+	a.sprites = append(a.sprites[:0], a.testSprites...) // enemies join in P1-06
+	render.DrawSprites(&a.frame, st.Player, a.sprites)
 	render.DrawWeapon(&a.frame, st.Player)
 	render.DrawCrosshair(&a.frame)
 	t1 := time.Now()

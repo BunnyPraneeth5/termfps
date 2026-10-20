@@ -23,6 +23,9 @@ type Frame struct {
 	// PixelAspect is a pixel's height divided by its width; must be > 0.
 	// Usually DefaultPixelAspect; the -aspect flag overrides it for tuning.
 	PixelAspect float64
+	// ZBuf is the depth buffer: for each column, the distance to the wall
+	// DrawFrame drew there. Sprites behind that wall are skipped.
+	ZBuf []float64
 }
 
 // DefaultPixelAspect was measured in T11 from a Windows Terminal screenshot:
@@ -43,6 +46,12 @@ func (f *Frame) Resize(w, h int) {
 		f.Pix = f.Pix[:n] // re-slice: same backing array, new length
 	} else {
 		f.Pix = make([]Pixel, n)
+	}
+	cols := max(w, 0)
+	if cap(f.ZBuf) >= cols {
+		f.ZBuf = f.ZBuf[:cols]
+	} else {
+		f.ZBuf = make([]float64, cols)
 	}
 	f.W, f.H = w, h
 }
@@ -70,6 +79,7 @@ func DrawFrame(s *game.State, f *Frame) {
 		cameraX := 2*float64(x)/float64(f.W) - 1
 		hit := world.CastRay(s.Map, p.X, p.Y, dirX+planeX*cameraX, dirY+planeY*cameraX)
 
+		f.ZBuf[x] = hit.PerpDist
 		start, end := wallSpan(f, hit.PerpDist)
 		wall := Pixel{Gray: wallShade(hit.PerpDist, hit.Side)}
 		if hit.Cell == world.Target {
