@@ -220,3 +220,20 @@ func TestTestSpritesDrawn(t *testing.T) {
 		t.Errorf("green (zombie) drawn: %v, red (shooter) drawn: %v; want both", green, red)
 	}
 }
+
+// Leaving half-block within the caution's 5 seconds hides it right away
+// (bug seen in the user's video: the caution stayed on in shade mode).
+func TestCautionHiddenOutsideHalfBlock(t *testing.T) {
+	a, s := newTestApp(t)
+	a.state.Mode = game.ModeASCII
+	now := t0.Add(time.Second / 30)
+	a.step(now, []tcell.Event{key(tcell.KeyRune, 'v')}) // ascii -> half-block: caution on
+	if !strings.Contains(rowText(s, 22)+rowText(s, 21), "Half-block needs") {
+		t.Fatal("caution not shown in half-block")
+	}
+	now = now.Add(time.Second / 30)
+	a.step(now, []tcell.Event{key(tcell.KeyRune, 'v')}) // half-block -> shade, within 5 s
+	if strings.Contains(rowText(s, 22)+rowText(s, 21), "Half-block needs") {
+		t.Error("caution still shown after switching to shade")
+	}
+}

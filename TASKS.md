@@ -162,7 +162,7 @@ Estimated: about 5 weekends.
 
 ## Foundations
 
-### [~] P1-01: App structure and screens
+### [x] P1-01: App structure and screens
 - Move the game loop out of `main.go` into a new `internal/app` package. `main.go` keeps only startup (flags, map parse, screen init, restore, panic handling).
 - `app` holds the current screen (Playing for now; Title, Paused, Settings, MapSelect, GameOver come later) and switches between them.
 - `game.State` gets a per-frame event list (`[]game.Event`: shot fired, enemy hit, pickup taken...) that app reads after Update, so later sound and HUD effects don't need game to know about them.
@@ -170,27 +170,27 @@ Estimated: about 5 weekends.
   - The game plays exactly as before (all P0 checks still pass by eye).
   - All existing tests pass; new tests for screen switching.
 
-### [~] P1-02: Color in the renderer + red target blocks (was T20)
+### [x] P1-02: Color in the renderer + red target blocks (was T20)
 - `Pixel.Color` (gray, red, green, yellow). Half-block uses RGB tints; shade and ASCII use the terminal's basic red/green/yellow, which works without truecolor.
 - Map character `T`: a solid red block, shootable later (P1-03).
 - Acceptance: a `T` block shows red in all three render modes. Unit tests for parsing `T` and for the color in each presenter.
 
 ## Shooting and weapon
 
-### [~] P1-03: Shooting, crosshair, ammo and reload
+### [x] P1-03: Shooting, crosshair, ammo and reload
 - Space fires a hitscan shot along the center ray, about 3 per second while held. Crosshair `+` at the screen center.
 - Magazine 25, start with 25 + 50 spare. R reloads (~1.5 s, no shooting meanwhile). Auto-reload when the magazine is empty and there are spares. Firing with 0 ammo does nothing (later: empty click sound).
 - A shot that hits a `T` block removes it. HUD: `AMMO 18 / 50`, `RELOADING...`.
 - Space and R work in both key modes (async: GetAsyncKeyState; events: one-shot presses).
 - Acceptance: unit tests for fire rate, magazine and reserve counts, reload timing, auto-reload, a target hit, and a wall blocking the shot. On screen: crosshair centered, ammo counts right.
 
-### [~] P1-04: Weapon graphics and muzzle flash
+### [x] P1-04: Weapon graphics and muzzle flash
 - Pixel-art gun at the bottom center, drawn into the Frame after DrawFrame. Yellow muzzle flash ~0.1 s and a small recoil on each shot. Optional gentle bobbing while walking.
 - Acceptance: the gun shows in all three render modes; the flash appears only right after a shot. Tests for the overlay position and flash timing.
 
 ## Enemies
 
-### [~] P1-05: Sprites (billboards hidden by walls)
+### [x] P1-05: Sprites (billboards hidden by walls)
 - DrawFrame records each column's wall distance (a depth buffer in the Frame). A sprite renderer draws small pixel-art images that always face the camera, scaled by distance, skipping columns where a wall is closer.
 - Sprite images stored as text (like maps), embedded.
 - Acceptance: unit tests: a sprite in front of a wall is drawn, one behind a wall isn't, and size shrinks with distance. On screen: a test sprite looks right and hides behind corners.

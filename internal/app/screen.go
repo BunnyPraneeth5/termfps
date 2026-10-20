@@ -72,8 +72,8 @@ func (p *playingScreen) tick(a *App, now time.Time, dt float64) {
 		a.cautionUntil = now.Add(cautionFor)
 	}
 	notice := ""
-	if now.Before(a.cautionUntil) {
-		notice = caution
+	if now.Before(a.cautionUntil) && st.Mode == game.ModeHalfBlock {
+		notice = caution // only while half-block is actually on screen
 	}
 
 	t0 := time.Now()
