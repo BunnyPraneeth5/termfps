@@ -123,3 +123,16 @@ Template:
 - Issues found: Smart App Control blocked Go test binaries several times (once retried fine; once needed a Windows restart). Two of my test setups had wrong geometry or float timing; the code was right.
 - Not done: on-screen checks for P1-01 to P1-05 (marked [~]); nothing pushed.
 - Next: user review of P1-01 to P1-05, then P1-06 (zombies, health, death).
+
+## 2026-10-21 (P1-06 to P1-10)
+- User reviewed P1-01 to P1-05 (test video, frames checked; -test-sprites): all fine. Fixed a bug seen in the video: the half-block caution stayed on after switching to shade (`3a8977d`).
+- Done (one commit each; build, vet, gofmt, tests pass; 198 tests):
+  - P1-06 `71f6bb8`: zombies from `Z` in maps; BFS distance field + line of sight; zombie chase/melee; player HP 100, hurt border, enemy hit flash; death -> Game over (Enter retries on a fresh map copy, Esc quits); `-test-sprites` removed.
+  - P1-07 `da27adf`: shooters from `S`; sight + range, aim delay, interval, accuracy by distance (seeded `State.Rand`), retreat, approach around walls.
+  - P1-08 `9e81341`: spawner (out of sight, 6+ cells, max alive), tiers every 20 kills or 4 minutes from one `TierFor` table, tier scaling, HUD KILLS/TIER/time, "TIER n" notice.
+  - P1-09 `6cc0784`: ammo boxes every 20-40 s (max 3), +25 up to 125, yellow sprite + minimap dot.
+  - P1-10 `753c9f3`: brick/stone/metal textures (`#` `%` `&`), `Hit.WallX`, `-textures` flag; 0.18 ms per frame.
+- Arena now has 2 zombies, 2 shooters, 3 targets, stone and metal walls.
+- Issues found: a few test setups needed fixing (shooter first-shot timing tolerance; HUD widths after layout changes; a hand-made zombie with no damage multiplier). `go vet` caught a `%` in an error message. Code paths were otherwise as designed.
+- Not done: on-screen checks for P1-06 to P1-10 (marked [~]); balancing is P1-16; nothing pushed.
+- Next: user review of P1-06 to P1-10, then P1-11 (menus).
