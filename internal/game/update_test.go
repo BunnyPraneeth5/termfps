@@ -139,9 +139,10 @@ func TestToggleMinimap(t *testing.T) {
 
 func TestOppositeKeysCancel(t *testing.T) {
 	s := newOpenState(t)
-	before := s.Player
+	x, y, a := s.Player.X, s.Player.Y, s.Player.Angle
 	Update(s, Input{Forward: true, Back: true, TurnLeft: true, TurnRight: true}, 0.1)
-	if s.Player != before {
-		t.Errorf("player moved with opposite keys held: %+v -> %+v", before, s.Player)
+	if s.Player.X != x || s.Player.Y != y || s.Player.Angle != a {
+		t.Errorf("player moved with opposite keys held: (%v, %v, %v) -> (%v, %v, %v)",
+			x, y, a, s.Player.X, s.Player.Y, s.Player.Angle)
 	}
 }

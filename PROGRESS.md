@@ -136,3 +136,4 @@ Template:
 - Issues found: a few test setups needed fixing (shooter first-shot timing tolerance; HUD widths after layout changes; a hand-made zombie with no damage multiplier). `go vet` caught a `%` in an error message. Code paths were otherwise as designed.
 - Not done: on-screen checks for P1-06 to P1-10 (marked [~]); balancing is P1-16; nothing pushed.
 - Next: user review of P1-06 to P1-10, then P1-11 (menus).
+- User played P1-06 to P1-10: "really nice" but too hard at the start. Early balancing (D30): zombie 75 HP, 1.5 cells/s, random 7-10 damage per hit; shooter unchanged; arena starts with 1 zombie; tier 1 first spawn at 10 s, every 8 s, max 3 alive; regeneration +5 HP/s after 4 s unhurt. Suggestion 4 (softer shooters) not applied because the user said shooters are fine; offered to apply it.

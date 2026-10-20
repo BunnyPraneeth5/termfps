@@ -249,5 +249,6 @@ Estimated: about 5 weekends.
 - Acceptance: tests for the generated waveforms (length, no clipping) and the event -> sound mapping. On screen and ears: sounds play and overlap; volume and mute work.
 
 ### [ ] P1-16: Balancing, README, demo
+- Started early (D30, 2026-10-21): zombie 75 HP / 1.5 cells/s / 7-10 damage, calmer arena, slower tier 1, health regeneration. Still to do: playtest tiers 3+, ammo cap, health pickups or not.
 - Tune tiers, damage, HP, spawn rates, ammo cap; decide health pickups or regen. Update the README (controls, menus, survival rules) and record a new demo.
 - Acceptance: the user plays each map for a few minutes and is happy with the difficulty curve.

@@ -39,6 +39,7 @@ func Update(s *State, in Input, dt float64) {
 	}
 	s.Time += dt
 	s.Player.hurt = max(s.Player.hurt-dt, 0)
+	regenerate(&s.Player, dt)
 
 	if in.ToggleMinimap {
 		s.ShowMinimap = !s.ShowMinimap
@@ -53,6 +54,26 @@ func Update(s *State, in Input, dt float64) {
 	updateEnemies(s, dt)
 	updateSurvival(s, dt)
 	updatePickups(s, dt)
+}
+
+// Health regeneration (2026-10-21 balancing, D30).
+const (
+	RegenDelay  = 4.0 // seconds without being hit before healing starts
+	RegenPerSec = 5.0 // HP per second while healing
+)
+
+// regenerate heals the player slowly once they haven't been hit for
+// RegenDelay seconds, up to PlayerMaxHP.
+func regenerate(p *Player, dt float64) {
+	p.sinceHurt += dt
+	if p.sinceHurt < RegenDelay || p.HP >= PlayerMaxHP {
+		p.regen = 0
+		return
+	}
+	p.regen += RegenPerSec * dt
+	whole := int(p.regen) // move only whole HP into HP; keep the fraction
+	p.HP = min(p.HP+whole, PlayerMaxHP)
+	p.regen -= float64(whole)
 }
 
 // movePlayer turns and moves the player for one frame, sliding along walls.

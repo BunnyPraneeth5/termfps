@@ -39,7 +39,8 @@ func TestZombieFromMap(t *testing.T) {
 	}
 }
 
-// Four hits kill a zombie: it's removed and counts as a kill.
+// Three hits kill a zombie (75 HP, 25 per hit): it's removed and counts as
+// a kill.
 func TestShootingKillsZombie(t *testing.T) {
 	s := stateFrom(t, "##########\n#P......Z#\n##########\n")
 	hits, kills := 0, 0
@@ -48,8 +49,8 @@ func TestShootingKillsZombie(t *testing.T) {
 		hits += count(s, EventEnemyHit)
 		kills += count(s, EventEnemyKilled)
 	}
-	if hits != 4 || kills != 1 || len(s.Enemies) != 0 || s.Kills != 1 {
-		t.Errorf("hits %d, kills %d, enemies left %d, Kills %d; want 4, 1, 0, 1", hits, kills, len(s.Enemies), s.Kills)
+	if hits != 3 || kills != 1 || len(s.Enemies) != 0 || s.Kills != 1 {
+		t.Errorf("hits %d, kills %d, enemies left %d, Kills %d; want 3, 1, 0, 1", hits, kills, len(s.Enemies), s.Kills)
 	}
 }
 
@@ -90,25 +91,30 @@ func TestZombieWalksAroundWalls(t *testing.T) {
 	}
 }
 
-// In reach, a zombie hits after a short delay, then once per second; the
-// player dies at 0 HP and the game stops.
+// In reach, a zombie hits after a short delay, then once per second for a
+// random 7-10 HP; the player dies at 0 HP and the game stops.
 func TestZombieMeleeAndDeath(t *testing.T) {
 	s := stateFrom(t, "######\n#PZ..#\n######\n")
 	s.Enemies[0].X = s.Player.X + 0.6 // already in reach
 	hurt := 0
 	var times []float64
-	for range 15 * 30 {
+	for range 20 * 30 {
+		hpBefore := s.Player.HP
 		Update(s, Input{}, frameDT)
 		if count(s, EventPlayerHurt) > 0 {
 			hurt++
 			times = append(times, s.Time)
+			if d := hpBefore - s.Player.HP; !s.Player.Dead() && (d < ZombieMeleeDamageMin || d > ZombieMeleeDamageMax) {
+				t.Errorf("a hit took %d HP, want %d-%d", d, ZombieMeleeDamageMin, ZombieMeleeDamageMax)
+			}
 		}
 		if s.Player.Dead() {
 			break
 		}
 	}
-	if hurt != 10 || !s.Player.Dead() || s.Player.HP != 0 {
-		t.Fatalf("hits %d, HP %d, dead %v; want 10 hits of 10 HP and dead", hurt, s.Player.HP, s.Player.Dead())
+	// 100 HP at 7-10 per hit: 10 to 15 hits.
+	if hurt < 10 || hurt > 15 || !s.Player.Dead() || s.Player.HP != 0 {
+		t.Fatalf("hits %d, HP %d, dead %v; want 10-15 hits and dead", hurt, s.Player.HP, s.Player.Dead())
 	}
 	if times[0] > ZombieFirstHitDelay+0.05 {
 		t.Errorf("first hit at %.2f s, want about %.1f s", times[0], ZombieFirstHitDelay)
@@ -121,6 +127,36 @@ func TestZombieMeleeAndDeath(t *testing.T) {
 	Update(s, Input{Forward: true, Fire: true}, frameDT)
 	if s.Time != before || len(s.Events) != 0 {
 		t.Error("game kept running after the player died")
+	}
+}
+
+// Healing starts 4 s after the last hit, at 5 HP per second, up to 100.
+func TestRegeneration(t *testing.T) {
+	s := stateFrom(t, "#####\n#P..#\n#####\n")
+	hurtPlayer(s, 40) // 60 HP left
+	run(s, Input{}, int((RegenDelay-0.1)*30), 0)
+	if s.Player.HP != 60 {
+		t.Fatalf("HP %d just before %.0f s, want still 60", s.Player.HP, RegenDelay)
+	}
+	run(s, Input{}, 2*30+6, 0) // a bit over 2 s of healing
+	if s.Player.HP < 69 || s.Player.HP > 71 {
+		t.Errorf("HP %d after ~2 s of healing, want about 70", s.Player.HP)
+	}
+	run(s, Input{}, 20*30, 0)
+	if s.Player.HP != PlayerMaxHP {
+		t.Errorf("HP %d after a long rest, want capped at %d", s.Player.HP, PlayerMaxHP)
+	}
+}
+
+// A new hit restarts the wait.
+func TestRegenerationResetsOnHit(t *testing.T) {
+	s := stateFrom(t, "#####\n#P..#\n#####\n")
+	hurtPlayer(s, 40)
+	run(s, Input{}, 3*30, 0)
+	hurtPlayer(s, 10) // 50 HP, wait starts over
+	run(s, Input{}, 3*30, 0)
+	if s.Player.HP != 50 {
+		t.Errorf("HP %d 3 s after the second hit, want 50 (no healing yet)", s.Player.HP)
 	}
 }
 

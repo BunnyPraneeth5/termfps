@@ -10,7 +10,7 @@ import (
 const (
 	TierKills         = 20    // kills in a tier before the next one
 	TierTime          = 240.0 // seconds in a tier before the next one (4 minutes)
-	FirstSpawnDelay   = 3.0   // seconds before the first spawn of a run
+	FirstSpawnDelay   = 10.0  // seconds before the first spawn of a run
 	SpawnMinDistance  = 6.0   // cells: never spawn closer to the player
 	spawnTries        = 40    // random cells to try per spawn before giving up
 	spawnMinSeparated = 1.0   // cells: never spawn on top of another enemy
@@ -34,8 +34,8 @@ func TierFor(tier int) TierStats {
 		HPMul:        1 + 0.25*t,
 		DamageMul:    1 + 0.15*t,
 		SpeedMul:     math.Min(1+0.05*t, 1.5),
-		SpawnEvery:   math.Max(6-0.5*t, 2),
-		MaxAlive:     min(4+tier, 14),
+		SpawnEvery:   math.Max(8-0.6*t, 2), // tier 1: every 8 s
+		MaxAlive:     min(2+tier, 14),      // tier 1: 3 alive
 		ShooterShare: math.Min(0.2+0.05*t, 0.5),
 	}
 }

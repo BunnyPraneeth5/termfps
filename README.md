@@ -66,8 +66,8 @@ Example: `.\termfps.exe -fps 60 -aspect 0.9`
 
 ## Playing
 
-- **Zombies (green)** hunt you through the map. Each takes 4 hits. Up close
-  they hit you for 10 HP per second.
+- **Zombies (green)** hunt you through the map. Each takes 3 hits. Up close
+  they hit you for 7-10 HP per second.
 - **Shooters (red)** keep their distance and shoot when they can see you
   (8 damage, less accurate from far away). Each takes 2 hits. Break line of
   sight to stay safe.
@@ -76,6 +76,7 @@ Example: `.\termfps.exe -fps 60 -aspect 0.9`
   more of them are shooters. How long can you last?
 - **Ammo boxes** (yellow, also a yellow dot on the minimap) appear every
   20-40 seconds. Walk over one for +25 spare rounds (up to 125).
+- You heal 5 HP per second after 4 seconds without being hit.
 - The screen edges flash red when you're hurt; enemies flash white when hit.
 - At 0 HP the game ends: press Enter to try again or Esc to quit.
 

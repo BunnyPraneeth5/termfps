@@ -180,3 +180,14 @@ Format: what, why, trade-off, revisit when.
 - Why: shooting is now a full feature (ammo, reload, enemies), so it belongs in the P1 plan, not as a small P0 extra.
 - Trade-off: none.
 - Revisit when: never.
+
+## D30: Early balancing of the start (2026-10-21)
+- What: after playing P1-06 to P1-10, the user found the start too hard. Changes, in the user's words where given:
+  - Zombie: 75 HP (3 hits), 1.5 cells/s, a random 7-10 damage per hit, once per second (user's numbers). Tiers still scale these.
+  - Shooter: unchanged (user: "everything is good").
+  - Arena: only 1 zombie placed at the start (was 2 zombies + 2 shooters).
+  - Tier 1: first spawn after 10 s (was 3), then every 8 s (was 6), at most 3 alive (was 5). The curve still reaches spawns every 2 s and 14 alive.
+  - Health regeneration: +5 HP per second after 4 s without being hit, up to 100.
+- Why: about 23 damage per second could reach the player within ~15 s of starting with no way to recover. Now the start is gentle and the tiers do the ramping.
+- Trade-off: a careful player can heal between fights indefinitely; tiers must keep the pressure up. Not yet tuned by playtesting.
+- Revisit when: balancing (P1-16), after playtesting tiers 3+.

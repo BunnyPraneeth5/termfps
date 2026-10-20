@@ -16,12 +16,13 @@ const (
 	// EnemyRadius is every enemy's collision half-size with walls.
 	EnemyRadius = 0.25
 
-	ZombieHP            = 100 // 4 shots
-	ZombieSpeed         = 2.0 // cells per second (the player does 3)
-	ZombieMeleeRange    = 0.8 // center-to-center distance it can hit from
-	ZombieMeleeDamage   = 10
-	ZombieMeleeInterval = 1.0 // seconds between hits
-	ZombieFirstHitDelay = 0.4 // seconds after reaching the player before the first hit
+	ZombieHP             = 75  // 3 shots
+	ZombieSpeed          = 1.5 // cells per second (the player does 3)
+	ZombieMeleeRange     = 0.8 // center-to-center distance it can hit from
+	ZombieMeleeDamageMin = 7   // each hit does a random amount in [min, max]
+	ZombieMeleeDamageMax = 10
+	ZombieMeleeInterval  = 1.0 // seconds between hits
+	ZombieFirstHitDelay  = 0.4 // seconds after reaching the player before the first hit
 
 	ShooterHP             = 50  // 2 shots
 	ShooterSpeed          = 1.6 // cells per second
@@ -121,7 +122,8 @@ func updateZombie(s *State, e *Enemy, dt float64) {
 		return
 	}
 	if e.attackCD == 0 {
-		hurtPlayer(s, e.damage(ZombieMeleeDamage))
+		base := ZombieMeleeDamageMin + s.Rand.IntN(ZombieMeleeDamageMax-ZombieMeleeDamageMin+1) // IntN(n): 0..n-1
+		hurtPlayer(s, e.damage(base))
 		e.attackCD = ZombieMeleeInterval
 	}
 }
@@ -209,6 +211,7 @@ func hurtPlayer(s *State, damage int) {
 	}
 	p.HP = max(p.HP-damage, 0)
 	p.hurt = hurtFlashTime
+	p.sinceHurt = 0 // regeneration waits RegenDelay again
 	s.Events = append(s.Events, EventPlayerHurt)
 	if p.HP == 0 {
 		s.Events = append(s.Events, EventPlayerDied)

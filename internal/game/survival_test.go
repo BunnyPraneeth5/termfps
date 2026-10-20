@@ -112,8 +112,8 @@ func TestFirstSpawnDelay(t *testing.T) {
 // Enemies spawned at a higher tier get more HP.
 func TestSpawnScaledByTier(t *testing.T) {
 	s := survivalState(t)
-	s.Tier = 3 // HP x1.5
-	for i := 0; i < 10*30 && len(s.Enemies) == 0; i++ {
+	s.Tier = 3                                          // HP x1.5
+	for i := 0; i < 20*30 && len(s.Enemies) == 0; i++ { // first spawn at 10 s
 		Update(s, Input{}, frameDT)
 		s.Player.HP = PlayerMaxHP
 	}
@@ -121,10 +121,11 @@ func TestSpawnScaledByTier(t *testing.T) {
 		t.Fatal("nothing spawned")
 	}
 	e := s.Enemies[0]
-	want := ZombieHP * 3 / 2
+	base := ZombieHP
 	if e.Kind == KindShooter {
-		want = ShooterHP * 3 / 2
+		base = ShooterHP
 	}
+	want := int(math.Round(float64(base) * TierFor(3).HPMul))
 	if e.HP != want || e.damageMul != TierFor(3).DamageMul {
 		t.Errorf("tier 3 spawn: HP %d, damage x%.2f; want %d and x%.2f", e.HP, e.damageMul, want, TierFor(3).DamageMul)
 	}

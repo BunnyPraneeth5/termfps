@@ -22,7 +22,9 @@ type Player struct {
 	Bob float64
 	HP  int // 0 = dead
 
-	hurt float64 // seconds left of the red "you got hit" flash
+	hurt      float64 // seconds left of the red "you got hit" flash
+	sinceHurt float64 // seconds since the last hit (regeneration waits for RegenDelay)
+	regen     float64 // HP regenerated but not yet whole (HP is a whole number)
 }
 
 // Hurting reports whether the player was just hit (red screen edges).
