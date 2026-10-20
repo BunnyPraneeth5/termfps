@@ -99,6 +99,15 @@ func (m *Map) At(x, y int) Cell {
 	return m.Cells[y*m.W+x]
 }
 
+// Set changes the cell at (x, y), e.g. when a shot destroys a target.
+// It does nothing outside the map.
+func (m *Map) Set(x, y int, c Cell) {
+	if x < 0 || y < 0 || x >= m.W || y >= m.H {
+		return
+	}
+	m.Cells[y*m.W+x] = c
+}
+
 // IsSolid reports whether (x, y) blocks movement and rays. Outside the map
 // counts as solid.
 func (m *Map) IsSolid(x, y int) bool {

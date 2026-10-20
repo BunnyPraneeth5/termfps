@@ -40,9 +40,17 @@ func TestHUDCoreAt80Columns(t *testing.T) {
 	}
 }
 
-func TestHUDTimingsAt100Columns(t *testing.T) {
-	if line := hudLine(t, 100, sampleHUD()); !strings.Contains(line, "show 2.00 ms") {
-		t.Errorf("HUD %q missing timings at 100 columns", line)
+func TestHUDTimingsAt110Columns(t *testing.T) {
+	if line := hudLine(t, 110, sampleHUD()); !strings.Contains(line, "show 2.00 ms") {
+		t.Errorf("HUD %q missing timings at 110 columns", line)
+	}
+}
+
+func TestHUDAmmo(t *testing.T) {
+	h := sampleHUD()
+	h.Player.Weapon = game.Weapon{Mag: 18, Reserve: 50}
+	if line := hudLine(t, 80, h); !strings.Contains(line, "AMMO 18 / 50 |") {
+		t.Errorf("HUD %q, want AMMO 18 / 50", line)
 	}
 }
 
@@ -85,11 +93,11 @@ func TestHUDNoticeOneLineWhenWide(t *testing.T) {
 	}
 }
 
-// Extras never appear cut off: at 50 columns only the core part shows.
+// Extras never appear cut off: at 70 columns only the core part shows.
 func TestHUDNoPartialExtras(t *testing.T) {
-	line := hudLine(t, 50, sampleHUD())
+	line := hudLine(t, 70, sampleHUD())
 	if strings.Contains(line, "draw") || strings.Contains(line, "|  ") {
-		t.Errorf("HUD %q shows a partial extra at 50 columns", line)
+		t.Errorf("HUD %q shows a partial extra at 70 columns", line)
 	}
 	if !strings.HasSuffix(line, "| half-block") {
 		t.Errorf("HUD %q, want it to end with the core part", line)

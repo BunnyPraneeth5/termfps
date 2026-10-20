@@ -43,6 +43,16 @@ func IsToggleMinimap(ev *tcell.EventKey) bool {
 	return ev.Key() == tcell.KeyRune && unicode.ToLower(ev.Rune()) == 'm'
 }
 
+// IsFire reports whether the key is Space (fire).
+func IsFire(ev *tcell.EventKey) bool {
+	return ev.Key() == tcell.KeyRune && ev.Rune() == ' '
+}
+
+// IsReload reports whether the key is R (either case).
+func IsReload(ev *tcell.EventKey) bool {
+	return ev.Key() == tcell.KeyRune && unicode.ToLower(ev.Rune()) == 'r'
+}
+
 // IsCycleRenderMode reports whether the key is V (either case).
 func IsCycleRenderMode(ev *tcell.EventKey) bool {
 	return ev.Key() == tcell.KeyRune && unicode.ToLower(ev.Rune()) == 'v'

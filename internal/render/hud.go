@@ -27,8 +27,8 @@ type HUD struct {
 // compass names the 8 directions in the same order as the minimap arrows.
 var compass = [8]string{"E", "SE", "S", "SW", "W", "NW", "N", "NE"}
 
-// DrawHUD writes the HUD on the last row. The first part (FPS, position,
-// facing, render mode) always shows; the extras are added in order only
+// DrawHUD writes the HUD on the last row. The first part (FPS, ammo,
+// position, facing, render mode) always shows; the extras are added in order only
 // while they fit whole, so nothing is cut off mid-word at 80 columns. A
 // Notice goes on the row(s) just above, over the bottom of the 3D view,
 // never over the minimap (which sits at the top).
@@ -41,8 +41,8 @@ func DrawHUD(s tcell.Screen, h HUD) {
 
 	p := h.Player
 	deg := int(math.Round(p.Angle*180/math.Pi)) % 360
-	line := fmt.Sprintf("FPS %4.1f | x %5.2f y %5.2f | %3d° %-2s | %s",
-		h.FPS, p.X, p.Y, deg, compass[dirIndex(p.Angle)], h.Mode)
+	line := fmt.Sprintf("FPS %4.1f | %s | x %5.2f y %5.2f | %3d° %-2s | %s",
+		h.FPS, ammoText(p.Weapon), p.X, p.Y, deg, compass[dirIndex(p.Angle)], h.Mode)
 
 	var extras []string
 	if h.MinimapHidden {
@@ -88,6 +88,15 @@ func wrapSentences(text string, width int) []string {
 		parts[i] = strings.TrimSpace(parts[i])
 	}
 	return parts
+}
+
+// ammoText is the HUD's ammo part: rounds in the gun / spare rounds.
+func ammoText(w game.Weapon) string {
+	s := fmt.Sprintf("AMMO %2d / %d", w.Mag, w.Reserve)
+	if w.Reloading() {
+		s += " RELOADING"
+	}
+	return s
 }
 
 // dirIndex returns the nearest of 8 directions (0 = east, clockwise).

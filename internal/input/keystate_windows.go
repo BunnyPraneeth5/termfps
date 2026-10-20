@@ -18,6 +18,7 @@ var (
 
 // Windows virtual-key codes. Letters use their uppercase ASCII value.
 const (
+	vkSpace = 0x20
 	vkLeft  = 0x25
 	vkUp    = 0x26
 	vkRight = 0x27
@@ -29,7 +30,8 @@ func AsyncSupported() error {
 	return procGetAsyncKeyState.Find()
 }
 
-// AsyncInput reads which movement keys are physically down right now.
+// AsyncInput reads which movement, fire and reload keys are physically
+// down right now.
 // It sees keys pressed in any window, so the caller must ignore it while
 // the terminal doesn't have focus.
 func AsyncInput() game.Input {
@@ -40,6 +42,8 @@ func AsyncInput() game.Input {
 		StrafeRight: down('D'),
 		TurnLeft:    down('Q') || down(vkLeft),
 		TurnRight:   down('E') || down(vkRight),
+		Fire:        down(vkSpace),
+		Reload:      down('R'),
 	}
 }
 

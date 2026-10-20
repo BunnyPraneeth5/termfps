@@ -177,7 +177,7 @@ Estimated: about 5 weekends.
 
 ## Shooting and weapon
 
-### [ ] P1-03: Shooting, crosshair, ammo and reload
+### [~] P1-03: Shooting, crosshair, ammo and reload
 - Space fires a hitscan shot along the center ray, about 3 per second while held. Crosshair `+` at the screen center.
 - Magazine 25, start with 25 + 50 spare. R reloads (~1.5 s, no shooting meanwhile). Auto-reload when the magazine is empty and there are spares. Firing with 0 ammo does nothing (later: empty click sound).
 - A shot that hits a `T` block removes it. HUD: `AMMO 18 / 50`, `RELOADING...`.

@@ -45,6 +45,8 @@ they haven't been tested yet.
 | `A` / `D` | Strafe left / right |
 | `Q` / `←` | Turn left |
 | `E` / `→` | Turn right |
+| `Space` | Shoot (hold for 3 shots per second) |
+| `R` | Reload (the gun also reloads by itself when empty) |
 | `M` | Show / hide the minimap |
 | `V` | Switch render mode: half-block → shade → ASCII |
 | `Esc` / `Ctrl+C` | Quit |

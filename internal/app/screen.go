@@ -24,9 +24,13 @@ type screen interface {
 
 // playingScreen is the game itself: 3D view, minimap and HUD.
 type playingScreen struct {
-	// One-shot inputs pressed since the last frame.
+	// One-shot inputs pressed since the last frame. With terminal key events,
+	// holding Space sends repeats, so fire keeps going (limited by the
+	// gun's fire rate). Async key mode reads Space and R directly.
 	toggleMinimap bool
 	cycleMode     bool
+	fire          bool
+	reload        bool
 }
 
 func (p *playingScreen) key(a *App, ev *tcell.EventKey) {
@@ -37,6 +41,10 @@ func (p *playingScreen) key(a *App, ev *tcell.EventKey) {
 		p.toggleMinimap = !p.toggleMinimap // two presses in one frame cancel
 	case input.IsCycleRenderMode(ev):
 		p.cycleMode = true
+	case input.IsFire(ev):
+		p.fire = true
+	case input.IsReload(ev):
+		p.reload = true
 	default:
 		if k, ok := input.KeyFor(ev); ok {
 			a.keys.Press(k, ev.When())
@@ -53,7 +61,9 @@ func (p *playingScreen) tick(a *App, now time.Time, dt float64) {
 		in = input.AsyncInput()
 	}
 	in.ToggleMinimap, in.CycleRenderMode = p.toggleMinimap, p.cycleMode
-	p.toggleMinimap, p.cycleMode = false, false
+	in.Fire = in.Fire || p.fire
+	in.Reload = in.Reload || p.reload
+	p.toggleMinimap, p.cycleMode, p.fire, p.reload = false, false, false, false
 
 	st := a.state
 	game.Update(st, in, dt)
@@ -68,6 +78,7 @@ func (p *playingScreen) tick(a *App, now time.Time, dt float64) {
 
 	t0 := time.Now()
 	render.DrawFrame(st, &a.frame)
+	render.DrawCrosshair(&a.frame)
 	t1 := time.Now()
 	switch st.Mode {
 	case game.ModeHalfBlock:

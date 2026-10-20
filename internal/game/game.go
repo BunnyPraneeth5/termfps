@@ -13,8 +13,9 @@ const PlaneLen = 0.66
 // Player is the camera in the world. See ARCHITECTURE.md "Coordinates":
 // y points down, Angle 0 faces east, a growing Angle turns right (clockwise).
 type Player struct {
-	X, Y  float64 // position in map units
-	Angle float64 // radians, kept in [0, 2*pi)
+	X, Y   float64 // position in map units
+	Angle  float64 // radians, kept in [0, 2*pi)
+	Weapon Weapon
 }
 
 // Dir returns the unit facing direction.
@@ -43,7 +44,7 @@ type State struct {
 func NewState(m *world.Map) *State {
 	return &State{
 		Map:         m,
-		Player:      Player{X: m.SpawnX, Y: m.SpawnY, Angle: 0},
+		Player:      Player{X: m.SpawnX, Y: m.SpawnY, Angle: 0, Weapon: NewWeapon()},
 		ShowMinimap: true,
 	}
 }

@@ -21,6 +21,8 @@ type Input struct {
 	Forward, Back           bool
 	StrafeLeft, StrafeRight bool
 	TurnLeft, TurnRight     bool
+	Fire                    bool // fire button held (or pressed) this frame
+	Reload                  bool // reload asked for this frame
 	ToggleMinimap           bool // one-shot: true only on the frame M was pressed
 	CycleRenderMode         bool // one-shot: true only on the frame V was pressed
 }
@@ -37,6 +39,8 @@ func Update(s *State, in Input, dt float64) {
 		s.Mode = s.Mode.Next()
 		s.Events = append(s.Events, EventRenderModeChanged)
 	}
+
+	updateWeapon(s, in, dt)
 
 	p := &s.Player // pointer: changes below modify s.Player itself, not a copy
 

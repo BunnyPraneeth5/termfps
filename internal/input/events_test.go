@@ -57,6 +57,20 @@ func TestIsCycleRenderMode(t *testing.T) {
 	}
 }
 
+func TestIsFireAndReload(t *testing.T) {
+	if !IsFire(tcell.NewEventKey(tcell.KeyRune, ' ', tcell.ModNone)) {
+		t.Error("Space is not fire")
+	}
+	for _, r := range []rune{'r', 'R'} {
+		if !IsReload(tcell.NewEventKey(tcell.KeyRune, r, tcell.ModNone)) {
+			t.Errorf("%q is not reload", r)
+		}
+	}
+	if IsFire(tcell.NewEventKey(tcell.KeyRune, 'f', tcell.ModNone)) || IsReload(tcell.NewEventKey(tcell.KeyRune, 'e', tcell.ModNone)) {
+		t.Error("wrong keys count as fire or reload")
+	}
+}
+
 func TestIsQuit(t *testing.T) {
 	if !IsQuit(tcell.NewEventKey(tcell.KeyEscape, 0, tcell.ModNone)) {
 		t.Error("Esc is not quit")

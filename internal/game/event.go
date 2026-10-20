@@ -8,6 +8,11 @@ type Event int
 const (
 	// EventRenderModeChanged: V switched the render mode this frame.
 	EventRenderModeChanged Event = iota + 1 // start at 1 so the zero value means "no event"
+	EventShotFired                          // a round left the gun
+	EventEmptyClick                         // tried to fire with no rounds at all
+	EventReloadStarted                      // a reload began (by R or automatically)
+	EventReloaded                           // a reload finished; rounds moved into the gun
+	EventTargetDestroyed                    // a shot removed a red target block
 )
 
 // HasEvent reports whether e happened in the last Update.

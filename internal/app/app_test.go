@@ -174,3 +174,20 @@ func TestSwitchTo(t *testing.T) {
 		t.Error("Esc quit the app; it should have gone to the new screen")
 	}
 }
+
+// Space fires through the playing screen; R starts a reload; the HUD shows
+// the ammo.
+func TestSpaceFiresAndRReloads(t *testing.T) {
+	a, s := newTestApp(t)
+	a.step(t0.Add(time.Second/30), []tcell.Event{key(tcell.KeyRune, ' ')})
+	if got := a.state.Player.Weapon.Mag; got != 24 {
+		t.Errorf("magazine = %d after Space, want 24", got)
+	}
+	if hud := rowText(s, 23); !strings.Contains(hud, "AMMO 24 / 50") {
+		t.Errorf("HUD %q, want AMMO 24 / 50", hud)
+	}
+	a.step(t0.Add(2*time.Second/30), []tcell.Event{key(tcell.KeyRune, 'r')})
+	if !a.state.Player.Weapon.Reloading() {
+		t.Error("R didn't start a reload")
+	}
+}
