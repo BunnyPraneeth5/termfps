@@ -60,4 +60,4 @@ Append an entry to PROGRESS.md. Log any new decision in DECISIONS.md.
 - Windows Smart App Control (on, on the user's machine) sometimes blocks a freshly built `termfps.exe` ("An Application Control policy has blocked this file"). Not a code problem; a restart has cleared it. Rebuild only when code changed. Agents can't run the exe here either.
 
 ## Current focus
-P0 is done (T1-T19; T20 moved into P1, D29). P1 is planned in TASKS.md: P1-01 to P1-16, not started. Start with P1-01 only when the user says so.
+P1-01 to P1-05 are coded and committed, waiting for the user's review (batch of five). Next after review: P1-06 (zombies, player health, death).

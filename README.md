@@ -101,6 +101,7 @@ The prototype (P0) is done. Planned next, in order (details in [PRD.md](PRD.md))
 ```powershell
 go build ./...; if ($?) { go vet ./... }; if ($?) { gofmt -l . }; if ($?) { go test ./... }
 go test -bench . ./internal/render   # DrawFrame and presenter timings
+.	ermfps.exe -test-sprites          # still zombie + shooter near the start, to check sprite drawing
 ```
 
 Code layout:

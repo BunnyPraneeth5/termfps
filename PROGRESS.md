@@ -112,3 +112,14 @@ Template:
 - Written: PRD Roadmap -> P1 spec; TASKS.md P1-01 to P1-16 with acceptance checks; DECISIONS D21-D29 (T20 moved into P1); ARCHITECTURE "P1 design"; CLAUDE.md scope now P1; README roadmap.
 - Interpretations to confirm: map unlock by surviving 5 minutes; mouse clicks select menu items, and in game left-click shoots, right-click reloads.
 - Next: P1-01 (app structure and screens) when the user says go.
+
+## 2026-10-20 (P1-01 to P1-05)
+- Done (one commit each; build, vet, gofmt, tests pass; 151 tests):
+  - P1-01 `1f08432`: `internal/app` (Run, step, screen interface, playing screen); main.go only startup; Ctrl+C quits anywhere; `game.State.Events`.
+  - P1-02 `f9b4990`: `Pixel.Tint` (red, green, yellow), red `T` target blocks (solid, not on the border), `IsSolid`; three T blocks in the arena.
+  - P1-03 `835498c`: shooting (Space, hitscan, 3/s), magazine 25 + 50 spare, R reload 1.5 s, auto-reload, empty click, crosshair, HUD ammo; shots destroy T blocks.
+  - P1-04 `83f658f`: text pixel-art images (`internal/assets`, `render.ParseImage`), gun at the bottom center, yellow muzzle flash, recoil, walking bob.
+  - P1-05 `8611272`: depth buffer + billboard sprites hidden by walls; zombie (green) and shooter (red) images; `-test-sprites` flag for checking.
+- Issues found: Smart App Control blocked Go test binaries several times (once retried fine; once needed a Windows restart). Two of my test setups had wrong geometry or float timing; the code was right.
+- Not done: on-screen checks for P1-01 to P1-05 (marked [~]); nothing pushed.
+- Next: user review of P1-01 to P1-05, then P1-06 (zombies, health, death).
