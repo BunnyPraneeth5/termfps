@@ -59,23 +59,57 @@ These are planned for later phases; see "Roadmap".
 ## Roadmap (after P0)
 Agreed 2026-10-19 (DECISIONS D20). Nothing here is built yet. Each phase gets its own plan (scope, design, tasks) before any code, the same way P0 did.
 
-P0 status: core (T1-T18) and stretch T19 are done. Stretch T20 (red targets, Space to shoot) is still open and doubles as the first step of P1, because enemies need shooting.
+P0 status: core (T1-T18) and stretch T19 are done. Stretch T20 (red targets) moved into P1 as task P1-02 (D29).
 
-### P1: a real single-player game
-In scope:
-- **Enemies / bots that move:** patrol, chase when they see you (line of sight with the existing raycaster), health and damage.
-- **Sprites:** enemies drawn as billboard images in the 3D view, hidden correctly behind walls. Enemies get color (Style: color only for important things).
-- **Weapon graphics:** a gun at the bottom center, with a muzzle flash when firing.
-- **Wall textures:** simple patterns (for example bricks). They'll be coarse at terminal resolution and mostly lost in ASCII mode.
-- **Menus:** title screen, pause menu, settings.
-- **Multiple maps:** a map select screen.
-- **Saving:** settings and progress. What exactly to save is decided when planning P1.
+### P1: a real single-player game (planned 2026-10-20)
+Tasks: TASKS.md "P1". Decisions: DECISIONS.md D21-D29.
 
-Undecided, decide when planning P1:
-- **Sound:** leaning toward necessary. Terminals can't play sound, so it needs an audio library (a new dependency, needs approval). Works only when playing locally; over SSH there's only the terminal bell.
-- **Mouse input:** terminals report clicks and which cell the mouse is over, but can't lock the mouse, so smooth mouse-look isn't possible. Click to shoot is.
+**The game: endless survival.** Each map is an arena. Enemies keep coming and get stronger. You play until you die, then try to beat your best.
 
-Suggested order: T20 -> enemies + sprites -> weapon graphics -> menus + multiple maps -> wall textures -> saving -> mouse and sound (if chosen).
+**Flow:** Start menu (Play, Select map, Settings, Quit) -> pick a map -> survive -> Game over screen (kills, time survived, tier reached, your best) -> Retry or back to the menu.
+
+**Survival rules**
+- Enemies spawn at random free cells that you can't see and that are at least a few cells away.
+- **Difficulty tiers:** every **20 kills or 4 minutes, whichever comes first**, the next tier starts. Enemies get more HP and damage, move a bit faster, and spawn more often, with more alive at once. The HUD shows the tier. Exact numbers are tuned in balancing (P1-16).
+- **Score:** kills, time survived, tier reached.
+- **Player:** 100 HP. Health pickups or slow regeneration are open for balancing (P1-16), not planned yet.
+
+**Weapon and ammo**
+- One gun. The magazine holds **25**. You start with **25 loaded + 50 spare**.
+- **Space** (or **left-click**) fires: an instant hitscan shot along the crosshair at the screen center, about 3 shots per second while held.
+- **R** (or **right-click**) reloads, taking about 1.5 s with no shooting meanwhile. **Auto-reload** when the magazine hits 0 and there are spares.
+- **Ammo pickups** appear at random free cells at random times (about every 20-40 s, at most 3 on the map). Walking over one gives +25 spare. The spare ammo cap is tuned in balancing.
+- HUD: `AMMO 18 / 50`, `RELOADING...`.
+
+**Enemies** (both are sprites hidden correctly behind walls, and both find a path around walls)
+
+| | Zombie | Shooter |
+|---|---|---|
+| Color | Green | Red |
+| Attack | Melee, up close | Shoots from a distance (hitscan, accuracy drops with distance) |
+| Behavior | Rushes straight at you, often in groups | Keeps some distance, needs line of sight |
+| Toughness | Tanky, easy to hit | Fragile |
+
+**Weapon graphics:** a pixel-art gun at the bottom center, a **yellow** muzzle flash (~0.1 s) and a small recoil when firing, maybe gentle bobbing while walking. Drawn into the Frame, so it shows in all render modes.
+
+**Wall textures:** each wall character has its own pattern: `#` brick, `%` stone, `&` metal. Textures are 16x16 grayscale images stored as text files, embedded like maps. Fog and side-darkening still apply. Settings: Textures on/off. They're coarse at terminal resolution and mostly lost in ASCII mode.
+
+**Menus**
+- **Start:** Play, Select map, Settings, Quit.
+- **Pause** (Esc during play; the game freezes, dimmed behind the menu): Resume, Settings, Restart, Quit to menu.
+- **Settings:** render mode, FPS (30/60), minimap at start, textures on/off, sound on/off + volume, key mode, pixel aspect.
+- **Keyboard:** Up/Down or W/S move, Enter selects, Left/Right change a setting, Esc goes back.
+- **Mouse:** click a menu item to select it. Ctrl+C quits instantly from anywhere.
+
+**Maps:** four arenas of different shapes: **16x16, 32x32, 64x32, 16x64**, all embedded from `maps/`. An optional header line names a map (`; name: The Warehouse`). Map characters: `#` `%` `&` walls, `.` floor, `P` start, `T` red target block (shootable). The first map is open; each next map **unlocks after surviving 5 minutes** on the previous one. On maps too big for the screen, the minimap shows a window around the player that scrolls.
+
+**Saving:** **settings and progress** (unlocked maps; best kills, time and tier per map; total kills), written automatically to `%AppData%\termfps\save.json`. The write is atomic: a temp file, then a rename. A damaged save file is reported in the menu, kept as `save.json.bad`, and replaced with defaults. **No mid-game saves.**
+
+**Mouse in the game:** left-click shoots, right-click reloads. No mouse-look: terminals can't lock the mouse.
+
+**Sound:** played through the computer's speakers by the game itself (the terminal can't play sound), using the **oto** audio library. That's a new dependency, approved by the user. Effects are **generated in code** (gunshot, reload, empty click, zombie groan, enemy shot, hurt, pickup, tier up), so there are no sound files and no copyright questions. Settings: sound on/off and volume. Local play only. On Linux, oto needs the ALSA development libraries.
+
+**Not in P1:** mouse-look, mid-game saves, a "clear the level" mode, health pickups (unless balancing needs them), multiplayer, AI agents.
 
 ### P2: server / client split
 The game logic runs as a server and the screen is a client. Both AI opponents (P3) and multiplayer (P4) need this. `world` and `game` already have no terminal code (D8), which is what makes the split possible.

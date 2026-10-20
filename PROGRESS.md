@@ -106,3 +106,9 @@ Template:
   - P2 server/client split. P3 you vs CLI AI agents (Claude Code, Codex, opencode...) likely via MCP, with modes like hide and seek and face-to-face, details decided when building P3. P4 multiplayer over LAN, then SSH.
 - Not done: nothing built for the roadmap yet, by the user's choice. T20 still open.
 - Next: when the user is ready, T20, then plan P1 (scope, design, tasks) before coding.
+
+## 2026-10-20 (P1 planning)
+- Done: planned P1 with the user (docs only, no code). User's choices: Esc pauses; limited ammo (25-round magazine, start 25 + 50, reload, auto-reload, random ammo pickups); zombies (green, melee) and shooters (red, ranged); endless survival with tiers every 20 kills or 4 minutes; settings + progress saved, no mid-game saves; four maps 16x16, 32x32, 64x32, 16x64, next unlocks after 5 minutes survived; sound via oto (new dependency approved) with effects generated in code; mouse clicks only (menus, shoot, reload).
+- Written: PRD Roadmap -> P1 spec; TASKS.md P1-01 to P1-16 with acceptance checks; DECISIONS D21-D29 (T20 moved into P1); ARCHITECTURE "P1 design"; CLAUDE.md scope now P1; README roadmap.
+- Interpretations to confirm: map unlock by surviving 5 minutes; mouse clicks select menu items, and in game left-click shoots, right-click reloads.
+- Next: P1-01 (app structure and screens) when the user says go.

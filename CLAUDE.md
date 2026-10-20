@@ -2,27 +2,30 @@
 (Copy as AGENTS.md if using Antigravity or Codex.)
 
 ## What this is
-Terminal first-person game. Raycaster, mostly monochrome, half-block pixels by default (ASCII and shade blocks later). Single player prototype (P0). Read PRD.md for scope, ARCHITECTURE.md for design, DECISIONS.md D11 for the render approach and D12 for input.
+Terminal first-person game. Raycaster, mostly monochrome, half-block pixels by default, shade and ASCII modes with V. The P0 prototype is done; P1 (single-player survival game) is planned. Read PRD.md (Roadmap -> P1) for scope, ARCHITECTURE.md (incl. "P1 design") for design, DECISIONS.md D21-D29 for P1 choices, D11 for rendering and D19 for input.
 
 ## Stack
-Go (latest stable) + tcell v2, pinned version. No other dependencies. Windows Terminal + PowerShell is the main test target.
+Go (latest stable) + tcell v2, pinned version. P1-15 adds `github.com/ebitengine/oto/v3` for sound (approved, D27). No other dependencies. Windows Terminal + PowerShell is the main test target.
 
 ## Modules
 - internal/world: map parse, collision, raycast (`CastRay`). No tcell.
 - internal/game: player, state, update. No tcell.
 - internal/input: tcell events -> game.Input (held-key tracking).
 - internal/render: Frame buffer, DrawFrame, presenters, minimap, HUD. DrawFrame has no tcell; only presenters, minimap, and HUD touch the screen.
+- Planned in P1 (ARCHITECTURE "P1 design"): internal/app (loop + screens), internal/ui (menus), internal/save (save.json), internal/audio (oto). world and game never import tcell or audio.
 
 ## Rules
-- Stay in P0 scope. If a task needs something out of scope, stop and ask.
-- No new dependencies without asking.
+- Stay in P1 scope (PRD Roadmap -> P1, TASKS.md P1). If a task needs something out of scope, stop and ask.
+- No new dependencies without asking. Approved: tcell v2, oto v3 (only from P1-15).
 - Only touch files the current task needs.
 - world and game packages must never import tcell.
 - Movement and turning use dt (per second), never per frame or per key event.
 - Terminal must always be restored on exit and on panic, including panics in the input goroutine.
 - The input goroutine only sends events. It never reads or writes game State.
 - No silent fallbacks or fake data. If something fails, return or show the error.
-- Small changes. One task at a time from TASKS.md.
+- Small changes. One task at a time from TASKS.md. One commit per task.
+- Randomness (spawns, pickups, enemy accuracy) goes through an injected `*rand.Rand` so tests are repeatable.
+- game emits per-frame events; sound and HUD effects react to them. game never calls audio or render.
 - I'm new to Go: add a short comment when using a Go concept a beginner might not know (goroutines, channels, select, embed, interfaces, sync.Once, build-tagged files).
 
 ## Verify before saying done
@@ -57,4 +60,4 @@ Append an entry to PROGRESS.md. Log any new decision in DECISIONS.md.
 - Windows Smart App Control (on, on the user's machine) sometimes blocks a freshly built `termfps.exe` ("An Application Control policy has blocked this file"). Not a code problem; a restart has cleared it. Rebuild only when code changed. Agents can't run the exe here either.
 
 ## Current focus
-P0 core (T1-T18) and stretch T19 (render modes + V) are complete. T20 (targets + shooting) not started; ask before starting it. The roadmap after P0 (P1-P4) is in PRD "Roadmap" and DECISIONS D20; nothing from it is planned into tasks yet. Don't build roadmap features until the user asks to plan that phase.
+P0 is done (T1-T19; T20 moved into P1, D29). P1 is planned in TASKS.md: P1-01 to P1-16, not started. Start with P1-01 only when the user says so.

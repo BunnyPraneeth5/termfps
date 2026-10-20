@@ -199,3 +199,58 @@ For each column `x`:
 - Does the `GetAsyncKeyState` spike (T8) give move-and-turn without focus problems?
 - Does Windows Terminal render `▀` without gaps between rows? Recent versions draw block characters themselves (`builtinGlyphs` setting). Check in T6.
 - Final `pixelAspect` value for the Windows Terminal font (T11).
+
+## P1 design (planned 2026-10-20, not built yet)
+Spec: PRD "Roadmap" -> P1. Tasks: TASKS.md "P1". The P0 rules above still hold: `world` and `game` never import tcell (and never import audio), movement uses dt, only the main goroutine touches the screen.
+
+### Packages
+```
+main.go              flags, map loading, screen init, restore + panic handling only
+internal/app         game loop, current screen (Title, MapSelect, Settings, Playing, Paused, GameOver), wiring
+internal/ui          menu model (items, selection, values; no tcell) + menu drawing (tcell)
+internal/world       + map header (`; name:`), wall types (# % &), T blocks, WallX in Hit, grid pathfinding
+internal/game        + weapon/ammo, enemies, pickups, spawner + tiers, score, per-frame events
+internal/render      + Pixel.Color, depth buffer, sprites, textures, weapon overlay, crosshair
+internal/input       + Space, R, mouse buttons, menu keys
+internal/save        save.json load/save (encoding/json, atomic write)
+internal/audio       oto player + generated effects (P1-15)
+assets/              sprites and textures as text files (embedded like maps)
+```
+
+### Screens
+`app` owns one current screen. Each frame it drains events, gives keys/clicks to the current screen, and draws it.
+- Playing: game.Update, then render (3D, sprites, weapon, minimap, HUD).
+- Paused: no Update. Draw the last Frame dimmed + the pause menu.
+- Menus (Title, MapSelect, Settings): `ui` menus over a plain background.
+- GameOver: run summary + best, Retry / Menu.
+Async key state is read only on the Playing screen, so a key held while leaving a menu can't leak into the game.
+
+### Game state additions
+- `Player`: + HP, weapon (magazine, reserve, cooldown, reload timer).
+- `Enemy`: kind (zombie, shooter), position, HP, state (chase, attack, dead), attack cooldown.
+- `Pickup`: position, ammo amount.
+- `Run`: kills, time, tier, spawner timers. Tier scaling factors live in one table so balancing is one place.
+- `Events []Event` per frame (ShotFired, EnemyHit, EnemyKilled, PlayerHurt, Reloaded, PickupTaken, TierUp, EmptyClick). App uses them for sound and HUD effects; game doesn't know who listens.
+- Randomness through an injected `*rand.Rand`, so spawner and accuracy tests are repeatable.
+
+### Shooting
+Hitscan along the center ray: `world.CastRay` gives the wall distance; the nearest enemy (or `T` block) in front of it, within its radius of the ray, is hit.
+
+### Enemy movement
+A grid distance map (BFS) from the player's cell, recomputed only when the player enters a new cell (cheap even on 64x32). Each enemy steps toward a neighbor cell with a smaller distance, moving with `world.TryMove` and dt like the player. Zombies follow it all the way; shooters stop at a preferred range when they have line of sight (raycast from enemy to player).
+
+### Rendering additions
+- `Pixel.Color`: 0 gray, 1 red, 2 green, 3 yellow. Half-block tints the gray with the color in RGB. Shade/ASCII use the terminal's basic red/green/yellow foreground (works without truecolor).
+- Depth buffer: DrawFrame stores each column's PerpDist in the Frame (reused slice, no per-frame allocation).
+- Sprites (Lodev billboard method): transform the sprite into camera space, project, scale by distance, draw only columns where the sprite is closer than the depth buffer. Sort sprites far to near. Images are small text pixel-art files with a transparent character.
+- Textures: Hit gains `WallX` (0-1 position along the wall face). The texture column comes from WallX, rows are stretched over the wall span; the texture gray is multiplied by the existing fog and side shading. Off by setting.
+- Weapon overlay and crosshair are drawn into the Frame after sprites, so all render modes show them.
+
+### Maps
+`//go:embed maps/*.txt` into an `embed.FS`; every file is parsed at startup (a broken map is an error before the screen opens, like now). Optional first lines starting with `;` are headers (`; name: The Warehouse`). The minimap draws a window centered on the player when the map is bigger than the space it has.
+
+### Saving
+`os.UserConfigDir()` + `termfps/save.json`. Write to `save.json.tmp`, then rename over `save.json`. On load: missing file = defaults (first run); unreadable file = rename to `save.json.bad`, use defaults, show a message in the menu.
+
+### Sound
+`internal/audio` wraps oto: one context at startup, effects pre-generated as PCM buffers (sine/square waves + noise with envelopes), each event starts a new player so sounds overlap. Volume from settings. If the context fails, audio is disabled and the error is shown in the menu, never silently ignored.

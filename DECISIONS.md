@@ -126,3 +126,57 @@ Format: what, why, trade-off, revisit when.
 - Why: the user's direction after P0. A real single-player game first makes the AI and multiplayer phases worth playing. AI opponents come before multiplayer because they're the project's unique hook and don't need networking, only the P2 split. This supersedes D9.
 - Trade-off: P1 grows the scope a lot (several weekends, not one). Sound would need a new dependency and only works locally. AI opponents bring open problems (decision speed vs 30 FPS, token cost, fairness, safety) that P3 must solve.
 - Revisit when: planning each phase.
+
+## D21: P1 is an endless survival game (2026-10-20)
+- What: each map is an arena; enemies keep spawning out of sight; difficulty tiers rise every 20 kills or 4 minutes, whichever comes first (more enemy HP, damage, speed, spawn rate). Score = kills, time survived, tier. No "clear the level" mode.
+- Why: the user wants a complete single-player FPS with rising pressure rather than hand-built levels; random spawns and pickups fit it, and one mode keeps P1 smaller.
+- Trade-off: no story or level progression; the difficulty curve depends on balancing (P1-16).
+- Revisit when: balancing shows it gets boring, or a level mode is wanted.
+
+## D22: Limited ammo with magazines and random pickups (2026-10-20)
+- What: magazine 25; start with 25 + 50 spare; R reloads (~1.5 s); auto-reload when the magazine is empty; ammo pickups (+25) at random free cells every ~20-40 s, at most 3 on the map. Hitscan shots, ~3 per second.
+- Why: the user's choice: resource pressure and reloading make fights tense.
+- Trade-off: more state, HUD and balancing work; running dry must stay rare enough to be fun.
+- Revisit when: balancing (P1-16).
+
+## D23: Two enemy types, colored (2026-10-20)
+- What: zombies (green, melee, rush, tanky) and shooters (red, ranged hitscan, keep distance, need line of sight, fragile). Muzzle flash is yellow. Everything else stays gray.
+- Why: the user's choice; two clearly different threats; color only for important things (PRD Style).
+- Trade-off: two AI behaviors to build and balance. Colors in shade/ASCII mode use basic terminal colors.
+- Revisit when: adding more enemy types.
+
+## D24: Esc pauses; Ctrl+C quits (2026-10-20)
+- What: Esc during play opens the pause menu (Resume, Settings, Restart, Quit to menu). Quitting happens from menus. Ctrl+C still quits instantly from anywhere.
+- Why: with menus, an instant-quit Esc loses a run by accident.
+- Trade-off: one more key press to quit.
+- Revisit when: never for P1.
+
+## D25: Save settings and progress, no mid-game saves (2026-10-20)
+- What: `%AppData%\termfps\save.json` via `os.UserConfigDir` and `encoding/json` (standard library): settings, unlocked maps, best kills/time/tier per map, total kills. Atomic write; a damaged file is reported, kept as `save.json.bad`, and replaced with defaults.
+- Why: survival runs are short, so only bests and settings matter. Settings are saved so they don't need resetting each launch.
+- Trade-off: a run can't be resumed after quitting.
+- Revisit when: runs get long enough that people want to resume.
+
+## D26: Four maps of different shapes, unlocked by survival (2026-10-20)
+- What: 16x16, 32x32, 64x32, 16x64 arenas embedded from `maps/` (directory embed); optional `; name:` header; the first map is open, the next unlocks after surviving 5 minutes on the previous. The minimap scrolls on maps bigger than the screen allows.
+- Why: different shapes (open, big, long corridor) change how fights play; unlocking gives a goal across runs.
+- Trade-off: the minimap needs a scrolling window; bigger maps mean longer rays (still cheap).
+- Revisit when: adding more maps or a map editor.
+
+## D27: Sound through the oto library, effects generated in code (2026-10-20)
+- What: `github.com/ebitengine/oto/v3` (new dependency, approved by the user) behind `internal/audio`. Effects are synthesized in code (no sound files). Sound on/off and volume settings. If audio can't start, the game runs silently and the menu says why.
+- Why: terminals can't play sound, but the game process can play through the speakers. A shooter needs overlapping sounds, which Windows' built-in PlaySound can't do. oto is pure Go on Windows and macOS. Generated effects avoid asset and copyright questions and fit the retro style.
+- Trade-off: a second dependency. On Linux oto needs cgo and ALSA development libraries. Sound plays only where the game runs, so SSH players (P4) won't hear it.
+- Revisit when: SSH play (P4), or if oto causes build problems.
+
+## D28: Mouse clicks only (2026-10-20)
+- What: menus: click an item to select it. In game: left-click shoots, right-click reloads. No mouse-look.
+- Why: terminals report clicks and the cell under the pointer but can't lock the mouse, so mouse-look would feel clumsy.
+- Trade-off: turning stays on the keyboard.
+- Revisit when: a terminal offers relative mouse movement.
+
+## D29: T20 moves into P1 (2026-10-20)
+- What: P0's last stretch task (red targets + shooting) becomes P1-02 (color in the renderer, `T` blocks) and part of P1-03 (shooting). P0 closes with T1-T19 done.
+- Why: shooting is now a full feature (ammo, reload, enemies), so it belongs in the P1 plan, not as a small P0 extra.
+- Trade-off: none.
+- Revisit when: never.

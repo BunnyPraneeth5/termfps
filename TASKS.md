@@ -1,8 +1,10 @@
-# TASKS: termfps P0
+# TASKS: termfps
 
 One task at a time. Run the verify command from CLAUDE.md before marking done.
 Visual acceptance checks (anything you have to look at on screen) are signed off by me, not by an agent.
-Status: [ ] todo, [~] in progress, [x] done
+Status: [ ] todo, [~] in progress, [x] done, [-] moved
+
+# P0: prototype (done)
 
 ## Day 1: setup, loop, map, raycaster
 
@@ -143,12 +145,109 @@ Status: [ ] todo, [~] in progress, [x] done
   - Switching modes mid-game doesn't flicker or leave garbage.
   - DrawFrame code is unchanged by this task.
 
-### [ ] T20: Targets + shooting
+### [-] T20: Targets + shooting (moved to P1-02 and P1-03, D29)
 - Parse accepts `T` (solid, like a wall, for collision and rays). Add `Pixel.Color`; `T` cells set `Color = 1` and render red in every mode.
 - Space (one-shot) casts the center ray with `world.CastRay`. If it hits a `T`, that cell becomes empty.
 - Acceptance: shooting a visible target removes it. Shooting a wall does nothing. Unit test for the shot on a small test map.
 
 ## After P0
 
-T20 above is still open and is also the first step of P1 (enemies need shooting).
-The phases after P0 (P1 single-player game, P2 server/client split, P3 AI-agent opponents, P4 multiplayer) are in PRD.md "Roadmap" and DECISIONS.md D20. Their tasks get written when each phase is planned. Don't start them from here.
+T20 moved into P1 as P1-02 (DECISIONS D29). P2-P4 are in PRD.md "Roadmap"; their tasks get written when each phase is planned.
+
+# P1: single-player survival game
+
+Spec: PRD.md "Roadmap" -> P1. Design: ARCHITECTURE.md "P1 design". Decisions: D21-D29.
+Same rules as P0: one task at a time, verify command before marking done, one commit per task, visual checks signed off by the user.
+Estimated: about 5 weekends.
+
+## Foundations
+
+### [ ] P1-01: App structure and screens
+- Move the game loop out of `main.go` into a new `internal/app` package. `main.go` keeps only startup (flags, map parse, screen init, restore, panic handling).
+- `app` holds the current screen (Playing for now; Title, Paused, Settings, MapSelect, GameOver come later) and switches between them.
+- `game.State` gets a per-frame event list (`[]game.Event`: shot fired, enemy hit, pickup taken...) that app reads after Update, so later sound and HUD effects don't need game to know about them.
+- Acceptance:
+  - The game plays exactly as before (all P0 checks still pass by eye).
+  - All existing tests pass; new tests for screen switching.
+
+### [ ] P1-02: Color in the renderer + red target blocks (was T20)
+- `Pixel.Color` (gray, red, green, yellow). Half-block uses RGB tints; shade and ASCII use the terminal's basic red/green/yellow, which works without truecolor.
+- Map character `T`: a solid red block, shootable later (P1-03).
+- Acceptance: a `T` block shows red in all three render modes. Unit tests for parsing `T` and for the color in each presenter.
+
+## Shooting and weapon
+
+### [ ] P1-03: Shooting, crosshair, ammo and reload
+- Space fires a hitscan shot along the center ray, about 3 per second while held. Crosshair `+` at the screen center.
+- Magazine 25, start with 25 + 50 spare. R reloads (~1.5 s, no shooting meanwhile). Auto-reload when the magazine is empty and there are spares. Firing with 0 ammo does nothing (later: empty click sound).
+- A shot that hits a `T` block removes it. HUD: `AMMO 18 / 50`, `RELOADING...`.
+- Space and R work in both key modes (async: GetAsyncKeyState; events: one-shot presses).
+- Acceptance: unit tests for fire rate, magazine and reserve counts, reload timing, auto-reload, a target hit, and a wall blocking the shot. On screen: crosshair centered, ammo counts right.
+
+### [ ] P1-04: Weapon graphics and muzzle flash
+- Pixel-art gun at the bottom center, drawn into the Frame after DrawFrame. Yellow muzzle flash ~0.1 s and a small recoil on each shot. Optional gentle bobbing while walking.
+- Acceptance: the gun shows in all three render modes; the flash appears only right after a shot. Tests for the overlay position and flash timing.
+
+## Enemies
+
+### [ ] P1-05: Sprites (billboards hidden by walls)
+- DrawFrame records each column's wall distance (a depth buffer in the Frame). A sprite renderer draws small pixel-art images that always face the camera, scaled by distance, skipping columns where a wall is closer.
+- Sprite images stored as text (like maps), embedded.
+- Acceptance: unit tests: a sprite in front of a wall is drawn, one behind a wall isn't, and size shrinks with distance. On screen: a test sprite looks right and hides behind corners.
+
+### [ ] P1-06: Zombies, player health, death
+- Green melee enemy: chases along a path around walls (a grid distance map from the player, recomputed when the player changes cell), hits when close. Takes several shots.
+- Player HP 100, shown in the HUD. HP 0 -> Game over screen (kills, time) with Retry or Quit.
+- Acceptance: unit tests for pathfinding around a wall, melee range and damage, taking damage from shots, death. On screen: zombies come around corners and kill you if you don't shoot.
+
+### [ ] P1-07: Shooter enemies
+- Red ranged enemy: needs line of sight (raycast), keeps some distance, shoots with a cooldown; accuracy drops with distance. Fragile.
+- Acceptance: unit tests: no shot without line of sight, cooldown respected, hit chance falls with distance. On screen: shooters hold distance and hurt you when they see you.
+
+### [ ] P1-08: Survival spawner, tiers, score
+- Spawns zombies and shooters at random free cells out of the player's sight and at least a few cells away.
+- Tier up every 20 kills or 4 minutes, whichever comes first: more enemy HP, damage, speed, spawn rate, max alive. HUD shows tier, kills, time.
+- Random source is injectable so tests are repeatable.
+- Acceptance: unit tests: never spawns in sight or too close, tier rules (kills and time), scaling applied. On screen: pressure keeps rising.
+
+### [ ] P1-09: Ammo pickups
+- Spawn at random free cells every ~20-40 s, at most 3 alive. Walking over one gives +25 spare (up to a cap). Shown as a sprite and a minimap dot.
+- Acceptance: unit tests: spawn timing and limit, pickup radius, cap. On screen: pickups appear and refill ammo.
+
+## World, menus, maps, saving
+
+### [ ] P1-10: Wall textures
+- `CastRay` also returns where on the wall the ray hit. Wall characters `#` brick, `%` stone, `&` metal map to 16x16 grayscale text textures (embedded). Fog and side shading still apply. Textures on/off flag (setting in P1-11).
+- Acceptance: unit tests for the hit position and texture sampling. On screen: textures look right and line up at corners; turning them off gives the old flat look.
+
+### [ ] P1-11: Menus: start, pause, settings (keyboard + mouse clicks)
+- New `internal/ui` menu model (items, selection, values), tested without a terminal, plus drawing.
+- Start: Play, Select map, Settings, Quit. Esc during play -> Pause: Resume, Settings, Restart, Quit to menu (game frozen and dimmed behind). Settings: render mode, FPS 30/60, minimap at start, textures, sound on/off + volume (applies from P1-15), key mode, pixel aspect.
+- Keyboard: Up/Down or W/S, Enter, Left/Right, Esc back. Mouse: click an item to select it. Ctrl+C quits from anywhere.
+- Acceptance: unit tests for menu navigation and value changes. On screen: all menus work by keyboard and by clicking; settings take effect right away.
+
+### [ ] P1-12: Four maps, map select, unlocks, scrolling minimap
+- Maps 16x16, 32x32, 64x32, 16x64 in `maps/`, all embedded (directory embed). Optional `; name:` header line.
+- Map select menu; the first map is open, each next one unlocks after surviving 5 minutes on the previous (kept in memory until P1-13).
+- Minimap shows a window around the player when the map doesn't fit.
+- Acceptance: tests: every embedded map parses, every open cell is reachable, header parsing, unlock rule, minimap window. On screen: all four maps play; the minimap scrolls on big ones.
+
+### [ ] P1-13: Saving settings and progress
+- `%AppData%\termfps\save.json` (`os.UserConfigDir`): settings, unlocked maps, best kills / time / tier per map, total kills. Saved automatically when a setting changes or a run ends.
+- Atomic write (temp file + rename). A damaged file -> message in the menu, the file kept as `save.json.bad`, defaults used.
+- Acceptance: tests (temp dir): save and load round trip, damaged file handling, atomic write. On screen: settings and bests survive a restart.
+
+## Extras
+
+### [ ] P1-14: Mouse in game
+- Left-click shoots, right-click reloads. No mouse-look.
+- Acceptance: unit tests for the mouse-button mapping. On screen: clicking shoots and reloads.
+
+### [ ] P1-15: Sound (oto)
+- Add `github.com/ebitengine/oto/v3` (approved, D27) behind a small `internal/audio` package. Effects generated in code: gunshot, reload, empty click, zombie groan, enemy shot, hurt, pickup, tier up. Triggered by game events (P1-01). Settings: sound on/off and volume.
+- If audio can't start, the game still runs and the menu shows "sound unavailable: <reason>".
+- Acceptance: tests for the generated waveforms (length, no clipping) and the event -> sound mapping. On screen and ears: sounds play and overlap; volume and mute work.
+
+### [ ] P1-16: Balancing, README, demo
+- Tune tiers, damage, HP, spawn rates, ammo cap; decide health pickups or regen. Update the README (controls, menus, survival rules) and record a new demo.
+- Acceptance: the user plays each map for a few minutes and is happy with the difficulty curve.
