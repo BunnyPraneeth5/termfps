@@ -3,6 +3,7 @@ package game
 
 import (
 	"math"
+	"math/rand/v2"
 
 	"github.com/BunnyPraneeth5/termfps/internal/world"
 )
@@ -59,6 +60,11 @@ type State struct {
 	Kills   int     // enemies killed this run
 	Time    float64 // seconds survived this run
 
+	// Rand is the source of randomness (enemy accuracy, later spawns and
+	// pickups). NewState seeds it with a fixed value so tests repeat; the
+	// app replaces it with a time-seeded one for real games.
+	Rand *rand.Rand
+
 	// dist is the distance field from the player's cell (distCell), used by
 	// enemies to walk around walls. -1 = not computed yet.
 	dist     []int
@@ -72,11 +78,15 @@ func NewState(m *world.Map) *State {
 		Map:         m,
 		Player:      Player{X: m.SpawnX, Y: m.SpawnY, Angle: 0, Weapon: NewWeapon(), HP: PlayerMaxHP},
 		ShowMinimap: true,
+		Rand:        rand.New(rand.NewPCG(1, 2)), // fixed seed: repeatable
 		distCell:    -1,
 	}
 	for _, e := range m.EnemyStarts {
-		if e.Kind == world.ZombieStart {
+		switch e.Kind {
+		case world.ZombieStart:
 			s.Enemies = append(s.Enemies, newZombie(e.X, e.Y))
+		case world.ShooterStart:
+			s.Enemies = append(s.Enemies, newShooter(e.X, e.Y))
 		}
 	}
 	return s

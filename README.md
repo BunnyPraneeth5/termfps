@@ -65,9 +65,13 @@ Example: `.\termfps.exe -fps 60 -aspect 0.9`
 
 ## Playing
 
-Zombies (green) hunt you through the map. Each takes 4 hits. Up close they
-hit you for 10 HP per second; the screen edges flash red when you're hurt.
-At 0 HP the game ends: press Enter to try again or Esc to quit.
+- **Zombies (green)** hunt you through the map. Each takes 4 hits. Up close
+  they hit you for 10 HP per second.
+- **Shooters (red)** keep their distance and shoot when they can see you
+  (8 damage, less accurate from far away). Each takes 2 hits. Break line of
+  sight to stay safe.
+- The screen edges flash red when you're hurt; enemies flash white when hit.
+- At 0 HP the game ends: press Enter to try again or Esc to quit.
 
 ## The screen
 

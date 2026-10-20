@@ -116,6 +116,8 @@ func enemyImage(k game.EnemyKind) *render.Image {
 	switch k {
 	case game.KindZombie:
 		return render.ZombieImage
+	case game.KindShooter:
+		return render.ShooterImage
 	}
 	panic(fmt.Sprintf("no image for enemy kind %d", k))
 }

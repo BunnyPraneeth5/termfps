@@ -13,13 +13,28 @@ const (
 	PlayerMaxHP  = 100
 	BulletDamage = 25 // per hit, enemies and players alike
 
-	ZombieHP            = 100  // 4 shots
-	ZombieSpeed         = 2.0  // cells per second (the player does 3)
-	ZombieRadius        = 0.25 // collision half-size with walls
-	ZombieMeleeRange    = 0.8  // center-to-center distance it can hit from
+	// EnemyRadius is every enemy's collision half-size with walls.
+	EnemyRadius = 0.25
+
+	ZombieHP            = 100 // 4 shots
+	ZombieSpeed         = 2.0 // cells per second (the player does 3)
+	ZombieMeleeRange    = 0.8 // center-to-center distance it can hit from
 	ZombieMeleeDamage   = 10
 	ZombieMeleeInterval = 1.0 // seconds between hits
 	ZombieFirstHitDelay = 0.4 // seconds after reaching the player before the first hit
+
+	ShooterHP             = 50  // 2 shots
+	ShooterSpeed          = 1.6 // cells per second
+	ShooterRange          = 6.0 // fires when it sees the player this close or closer
+	ShooterMinRange       = 2.5 // backs away when the player is closer than this
+	ShooterDamage         = 8
+	ShooterInterval       = 1.5 // seconds between shots
+	ShooterFirstShotDelay = 0.8 // seconds from spotting the player to the first shot
+	// Hit chance falls with distance: ShooterAccNear at 0 cells, minus
+	// ShooterAccPerCell per cell, never below ShooterAccMin.
+	ShooterAccNear    = 0.9
+	ShooterAccPerCell = 0.11
+	ShooterAccMin     = 0.25
 
 	// EnemyHitRadius: a shot hits an enemy if it passes this close to its
 	// center (about the width of its sprite).
@@ -36,7 +51,8 @@ const (
 type EnemyKind int
 
 const (
-	KindZombie EnemyKind = iota
+	KindZombie  EnemyKind = iota // green, melee
+	KindShooter                  // red, ranged
 )
 
 // Enemy is one enemy in the world.
@@ -47,6 +63,7 @@ type Enemy struct {
 
 	attackCD float64 // seconds until it may attack again
 	flash    float64 // seconds left of its white "hit" flash
+	sawLast  bool    // shooter: it saw the player last frame
 }
 
 // Flashing reports whether the enemy was just shot (drawn white).
@@ -57,6 +74,11 @@ func (e Enemy) Flashing() bool {
 // newZombie returns a zombie standing at (x, y).
 func newZombie(x, y float64) Enemy {
 	return Enemy{Kind: KindZombie, X: x, Y: y, HP: ZombieHP, attackCD: ZombieFirstHitDelay}
+}
+
+// newShooter returns a shooter standing at (x, y).
+func newShooter(x, y float64) Enemy {
+	return Enemy{Kind: KindShooter, X: x, Y: y, HP: ShooterHP}
 }
 
 // updateEnemies moves every enemy and lets it attack. It refreshes the
@@ -76,20 +98,72 @@ func updateEnemies(s *State, dt float64) {
 		e := &s.Enemies[i] // pointer: change the enemy in the slice, not a copy
 		e.flash = max(e.flash-dt, 0)
 		e.attackCD = max(e.attackCD-dt, 0)
-		dist := math.Hypot(p.X-e.X, p.Y-e.Y)
-		if dist > ZombieMeleeRange {
-			e.attackCD = max(e.attackCD, ZombieFirstHitDelay) // fresh delay on (re)arrival
-			chase(s, e, ZombieSpeed*dt)
-			continue
+		switch e.Kind {
+		case KindZombie:
+			updateZombie(s, e, dt)
+		case KindShooter:
+			updateShooter(s, e, dt)
 		}
-		if e.attackCD == 0 {
-			hurtPlayer(s, ZombieMeleeDamage)
-			e.attackCD = ZombieMeleeInterval
-			if s.Player.HP == 0 {
-				return
-			}
+		if s.Player.Dead() {
+			return
 		}
 	}
+}
+
+// updateZombie walks toward the player and hits when in reach.
+func updateZombie(s *State, e *Enemy, dt float64) {
+	p := s.Player
+	if math.Hypot(p.X-e.X, p.Y-e.Y) > ZombieMeleeRange {
+		e.attackCD = max(e.attackCD, ZombieFirstHitDelay) // fresh delay on (re)arrival
+		chase(s, e, ZombieSpeed*dt)
+		return
+	}
+	if e.attackCD == 0 {
+		hurtPlayer(s, ZombieMeleeDamage)
+		e.attackCD = ZombieMeleeInterval
+	}
+}
+
+// updateShooter fires when it sees the player within range, backs off when
+// the player is too close, and otherwise walks toward the player (around
+// walls when it can't see them).
+func updateShooter(s *State, e *Enemy, dt float64) {
+	p := s.Player
+	dist := math.Hypot(p.X-e.X, p.Y-e.Y)
+	sees := dist <= ShooterRange && world.LineOfSight(s.Map, e.X, e.Y, p.X, p.Y)
+	if sees && !e.sawLast {
+		e.attackCD = max(e.attackCD, ShooterFirstShotDelay) // a moment to aim
+	}
+	e.sawLast = sees
+	if !sees {
+		chase(s, e, ShooterSpeed*dt)
+		return
+	}
+	if dist < ShooterMinRange {
+		retreat(s, e, ShooterSpeed*dt)
+	}
+	if e.attackCD == 0 {
+		e.attackCD = ShooterInterval
+		s.Events = append(s.Events, EventEnemyShot)
+		if s.Rand.Float64() < ShooterHitChance(dist) {
+			hurtPlayer(s, ShooterDamage)
+		}
+	}
+}
+
+// ShooterHitChance is the chance (0-1) a shooter's shot hits from dist cells.
+func ShooterHitChance(dist float64) float64 {
+	return max(ShooterAccNear-ShooterAccPerCell*dist, ShooterAccMin)
+}
+
+// retreat moves e up to step cells straight away from the player.
+func retreat(s *State, e *Enemy, step float64) {
+	mx, my := e.X-s.Player.X, e.Y-s.Player.Y
+	l := math.Hypot(mx, my)
+	if l < 1e-6 {
+		return
+	}
+	e.X, e.Y = world.TryMove(s.Map, e.X, e.Y, mx/l*step, my/l*step, EnemyRadius)
 }
 
 // chase moves e up to step cells toward the player: straight at them when
@@ -121,7 +195,7 @@ func chase(s *State, e *Enemy, step float64) {
 		return
 	}
 	step = min(step, l)
-	e.X, e.Y = world.TryMove(s.Map, e.X, e.Y, mx/l*step, my/l*step, ZombieRadius)
+	e.X, e.Y = world.TryMove(s.Map, e.X, e.Y, mx/l*step, my/l*step, EnemyRadius)
 }
 
 // hurtPlayer takes HP from the player (never below 0) and flashes the

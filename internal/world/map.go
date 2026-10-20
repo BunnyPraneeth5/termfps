@@ -21,6 +21,8 @@ const (
 	// ZombieStart marks where a zombie starts (P1-06). After parsing, the
 	// cell is floor and the position is in Map.EnemyStarts.
 	ZombieStart Cell = 'Z'
+	// ShooterStart marks where a shooter starts (P1-07), like ZombieStart.
+	ShooterStart Cell = 'S'
 )
 
 // Solid reports whether the cell blocks movement and rays.
@@ -100,7 +102,7 @@ func Parse(data []byte) (*Map, error) {
 				spawns++
 				m.SpawnX, m.SpawnY = float64(x)+0.5, float64(y)+0.5
 			}
-			if c == ZombieStart {
+			if c == ZombieStart || c == ShooterStart {
 				m.EnemyStarts = append(m.EnemyStarts, EnemyStart{Kind: c, X: float64(x) + 0.5, Y: float64(y) + 0.5})
 				c = Empty
 			}
@@ -140,11 +142,11 @@ func (m *Map) IsSolid(x, y int) bool {
 // checkChar returns an error if the byte at line[x] is not a known map char.
 func checkChar(line string, x, y int) error {
 	switch Cell(line[x]) {
-	case Wall, Empty, Spawn, Target, ZombieStart:
+	case Wall, Empty, Spawn, Target, ZombieStart, ShooterStart:
 		return nil
 	}
 	// Decode the full character so the message shows it properly,
 	// even if it is a multi-byte UTF-8 character like 'é'.
 	r, _ := utf8.DecodeRuneInString(line[x:])
-	return fmt.Errorf("row %d, column %d: unknown character %q (use '#', '.', 'P', 'T' or 'Z')", y+1, x+1, r)
+	return fmt.Errorf("row %d, column %d: unknown character %q (use '#', '.', 'P', 'T', 'Z' or 'S')", y+1, x+1, r)
 }

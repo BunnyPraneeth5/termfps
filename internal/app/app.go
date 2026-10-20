@@ -5,6 +5,7 @@ package app
 
 import (
 	"fmt"
+	"math/rand/v2"
 	"os"
 	"runtime/debug"
 	"time"
@@ -69,6 +70,7 @@ func New(scr tcell.Screen, m *world.Map, cfg Config, now time.Time) *App {
 		start:   now,
 		last:    now,
 	}
+	a.state.Rand = newRand() // real games differ each time; tests reset it if needed
 	// Half-block needs 24-bit color (D17). tcell reports 1<<24 colors when it
 	// has truecolor, and fewer with TCELL_TRUECOLOR=disable or NO_COLOR.
 	if scr.Colors() < 1<<24 {
@@ -93,8 +95,15 @@ func (a *App) newRun() {
 	a.state = game.NewState(a.level.Clone())
 	a.state.Mode = old.Mode
 	a.state.ShowMinimap = old.ShowMinimap
+	a.state.Rand = newRand()
 	a.keys = input.Tracker{}
 	a.switchTo(&playingScreen{})
+}
+
+// newRand returns a random source seeded from the clock.
+func newRand() *rand.Rand {
+	t := uint64(time.Now().UnixNano())
+	return rand.New(rand.NewPCG(t, t>>32|1))
 }
 
 // present writes the Frame to the screen with the current render mode.
