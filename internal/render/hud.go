@@ -19,6 +19,8 @@ type HUD struct {
 	Keys                string        // input mode label, e.g. "keys async (focused)"
 	MinimapHidden       bool          // minimap is on but didn't fit on screen
 	Mode                game.RenderMode
+	Kills, Tier         int
+	Time                float64 // seconds survived this run
 	// Notice is a temporary message shown just above the HUD row (empty =
 	// none). Too wide for the screen, it wraps at sentence ends.
 	Notice string
@@ -28,7 +30,7 @@ type HUD struct {
 var compass = [8]string{"E", "SE", "S", "SW", "W", "NW", "N", "NE"}
 
 // DrawHUD writes the HUD on the last row. The first part (health, ammo,
-// facing) always shows. The extras (FPS, render mode, position, timings,
+// kills, tier, time, facing) always shows. The extras (FPS, render mode, position, timings,
 // key mode) are added in order only while they fit whole, so nothing is cut
 // off mid-word at 80 columns. A Notice goes on the row(s) just above, over
 // the bottom of the 3D view, never over the minimap (which sits at the top).
@@ -41,8 +43,8 @@ func DrawHUD(s tcell.Screen, h HUD) {
 
 	p := h.Player
 	deg := int(math.Round(p.Angle*180/math.Pi)) % 360
-	line := fmt.Sprintf("HP %3d | %s | %3d° %-2s",
-		p.HP, ammoText(p.Weapon), deg, compass[dirIndex(p.Angle)])
+	line := fmt.Sprintf("HP %3d | %s | KILLS %d | TIER %d | %s | %3d° %-2s",
+		p.HP, ammoText(p.Weapon), h.Kills, h.Tier, Clock(h.Time), deg, compass[dirIndex(p.Angle)])
 
 	var extras []string
 	if h.MinimapHidden {
@@ -113,6 +115,12 @@ func DrawMessage(s tcell.Screen, lines []string) {
 		s.PutStrStyled(left, top+1+i, row, noticeStyle)
 	}
 	s.PutStrStyled(left, top+1+len(lines), blank, noticeStyle)
+}
+
+// Clock formats seconds as m:ss (e.g. 3:07).
+func Clock(seconds float64) string {
+	s := int(seconds)
+	return fmt.Sprintf("%d:%02d", s/60, s%60)
 }
 
 // ammoText is the HUD's ammo part: rounds in the gun / spare rounds.

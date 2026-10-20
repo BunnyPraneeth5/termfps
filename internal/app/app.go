@@ -50,10 +50,16 @@ type App struct {
 	// to half-block, until cautionUntil.
 	cautionShown bool
 	cautionUntil time.Time
+
+	// After a tier-up, "TIER n" shows above the HUD until tierUntil.
+	tierUntil time.Time
 }
 
 // cautionFor is how long the half-block caution stays on screen.
 const cautionFor = 5 * time.Second
+
+// tierNoticeFor is how long the "TIER n" notice shows after a tier-up.
+const tierNoticeFor = 3 * time.Second
 
 const caution = "Half-block needs a truecolor terminal and more bandwidth. Use ASCII over slow SSH."
 

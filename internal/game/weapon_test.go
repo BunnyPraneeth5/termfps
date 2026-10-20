@@ -117,7 +117,9 @@ func shootingRange(t *testing.T, layout string) *State {
 	if err != nil {
 		t.Fatalf("Parse: %v", err)
 	}
-	return NewState(m) // spawn faces east
+	s := NewState(m) // spawn faces east
+	s.Spawning = false
+	return s
 }
 
 func TestShotDestroysTarget(t *testing.T) {

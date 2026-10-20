@@ -70,6 +70,9 @@ Example: `.\termfps.exe -fps 60 -aspect 0.9`
 - **Shooters (red)** keep their distance and shoot when they can see you
   (8 damage, less accurate from far away). Each takes 2 hits. Break line of
   sight to stay safe.
+- More enemies keep coming, out of your sight. Every 20 kills or 4 minutes
+  the **tier** goes up: enemies get tougher, faster and more frequent, and
+  more of them are shooters. How long can you last?
 - The screen edges flash red when you're hurt; enemies flash white when hit.
 - At 0 HP the game ends: press Enter to try again or Esc to quit.
 
@@ -81,7 +84,8 @@ Example: `.\termfps.exe -fps 60 -aspect 0.9`
   shade blocks (`█▓▒░`), and ASCII (`@%#*+=-:.`).
 - **Minimap** (top right): walls, floor, and an arrow showing where you are
   and which way you face.
-- **HUD** (bottom line): health, ammo, facing angle and compass direction.
+- **HUD** (bottom line): health, ammo, kills, tier, time survived, facing
+  angle and compass direction.
   If the window is wide enough, it also shows FPS, render mode, position,
   frame timings and the input mode.
 

@@ -71,8 +71,14 @@ func (p *playingScreen) tick(a *App, now time.Time, dt float64) {
 		a.cautionShown = true
 		a.cautionUntil = now.Add(cautionFor)
 	}
+	if st.HasEvent(game.EventTierUp) {
+		a.tierUntil = now.Add(tierNoticeFor)
+	}
 	notice := ""
-	if now.Before(a.cautionUntil) && st.Mode == game.ModeHalfBlock {
+	switch {
+	case now.Before(a.tierUntil):
+		notice = fmt.Sprintf("TIER %d: enemies are tougher and come faster.", st.Tier)
+	case now.Before(a.cautionUntil) && st.Mode == game.ModeHalfBlock:
 		notice = caution // only while half-block is actually on screen
 	}
 
@@ -101,6 +107,9 @@ func (p *playingScreen) tick(a *App, now time.Time, dt float64) {
 		MinimapHidden: minimapHidden,
 		Mode:          st.Mode,
 		Notice:        notice,
+		Kills:         st.Kills,
+		Tier:          st.Tier,
+		Time:          st.Time,
 	})
 	t2 := time.Now()
 	a.scr.Show()
@@ -139,11 +148,10 @@ func (g *gameOverScreen) key(a *App, ev *tcell.EventKey) {
 func (g *gameOverScreen) tick(a *App, now time.Time, dt float64) {
 	st := a.state
 	a.present() // the last frame stays visible behind the message
-	secs := int(st.Time)
 	render.DrawMessage(a.scr, []string{
 		"YOU DIED",
 		"",
-		fmt.Sprintf("Kills: %d    Time: %d:%02d", st.Kills, secs/60, secs%60),
+		fmt.Sprintf("Kills: %d    Time: %s    Tier: %d", st.Kills, render.Clock(st.Time), st.Tier),
 		"",
 		"Enter: try again    Esc: quit",
 	})

@@ -24,7 +24,9 @@ func newOpenState(t *testing.T) *State {
 	if err != nil {
 		t.Fatalf("Parse: %v", err)
 	}
-	return NewState(m)
+	s := NewState(m)
+	s.Spawning = false // movement tests: no surprise enemies
+	return s
 }
 
 // angleDiff is the smallest difference between two angles, in radians.

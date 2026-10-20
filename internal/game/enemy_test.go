@@ -13,7 +13,9 @@ func stateFrom(t *testing.T, layout string) *State {
 	if err != nil {
 		t.Fatalf("Parse: %v", err)
 	}
-	return NewState(m)
+	s := NewState(m)
+	s.Spawning = false // these tests are about the map's own enemies
+	return s
 }
 
 // count returns how often e is in the current frame's events.

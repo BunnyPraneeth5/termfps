@@ -18,6 +18,8 @@ const (
 	EventPlayerHurt                         // the player lost HP
 	EventPlayerDied                         // the player's HP reached 0
 	EventEnemyShot                          // a shooter fired at the player (hit or miss)
+	EventEnemySpawned                       // the survival spawner added an enemy
+	EventTierUp                             // the difficulty tier went up
 )
 
 // HasEvent reports whether e happened in the last Update.

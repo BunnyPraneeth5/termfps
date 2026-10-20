@@ -204,7 +204,7 @@ Estimated: about 5 weekends.
 - Red ranged enemy: needs line of sight (raycast), keeps some distance, shoots with a cooldown; accuracy drops with distance. Fragile.
 - Acceptance: unit tests: no shot without line of sight, cooldown respected, hit chance falls with distance. On screen: shooters hold distance and hurt you when they see you.
 
-### [ ] P1-08: Survival spawner, tiers, score
+### [~] P1-08: Survival spawner, tiers, score
 - Spawns zombies and shooters at random free cells out of the player's sight and at least a few cells away.
 - Tier up every 20 kills or 4 minutes, whichever comes first: more enemy HP, damage, speed, spawn rate, max alive. HUD shows tier, kills, time.
 - Random source is injectable so tests are repeatable.

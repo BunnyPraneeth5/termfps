@@ -29,7 +29,7 @@ func hudLine(t *testing.T, cols int, h HUD) string {
 
 func TestHUDCoreAt80Columns(t *testing.T) {
 	line := hudLine(t, 80, sampleHUD())
-	for _, want := range []string{"FPS 30.0", "x 12.34 y  5.67", "270° N", "| half-block"} {
+	for _, want := range []string{"HP", "AMMO", "KILLS 0", "TIER 0", "0:00", "270° N", "FPS 30.0", "| half-block"} {
 		if !strings.Contains(line, want) {
 			t.Errorf("HUD %q missing %q", line, want)
 		}
@@ -40,9 +40,25 @@ func TestHUDCoreAt80Columns(t *testing.T) {
 	}
 }
 
-func TestHUDTimingsAt110Columns(t *testing.T) {
-	if line := hudLine(t, 110, sampleHUD()); !strings.Contains(line, "show 2.00 ms") {
-		t.Errorf("HUD %q missing timings at 110 columns", line)
+func TestHUDTimingsAt140Columns(t *testing.T) {
+	if line := hudLine(t, 140, sampleHUD()); !strings.Contains(line, "show 2.00 ms") {
+		t.Errorf("HUD %q missing timings at 140 columns", line)
+	}
+}
+
+func TestHUDKillsTierTime(t *testing.T) {
+	h := sampleHUD()
+	h.Kills, h.Tier, h.Time = 23, 2, 187.9
+	if line := hudLine(t, 80, h); !strings.Contains(line, "KILLS 23 | TIER 2 | 3:07 |") {
+		t.Errorf("HUD %q, want KILLS 23 | TIER 2 | 3:07", line)
+	}
+}
+
+func TestClock(t *testing.T) {
+	for in, want := range map[float64]string{0: "0:00", 59.9: "0:59", 60: "1:00", 607: "10:07"} {
+		if got := Clock(in); got != want {
+			t.Errorf("Clock(%v) = %q, want %q", in, got, want)
+		}
 	}
 }
 
@@ -99,8 +115,8 @@ func TestHUDNoPartialExtras(t *testing.T) {
 	if strings.Contains(line, "draw") || strings.Contains(line, "|  ") {
 		t.Errorf("HUD %q shows a partial extra at 70 columns", line)
 	}
-	if !strings.HasSuffix(line, "| half-block") {
-		t.Errorf("HUD %q, want it to end with the core part", line)
+	if !strings.HasSuffix(line, "| FPS 30.0") {
+		t.Errorf("HUD %q, want it to end with the last extra that fits whole (FPS)", line)
 	}
 }
 

@@ -64,6 +64,14 @@ type Enemy struct {
 	attackCD float64 // seconds until it may attack again
 	flash    float64 // seconds left of its white "hit" flash
 	sawLast  bool    // shooter: it saw the player last frame
+
+	// Tier scaling (P1-08), set when it spawns; 1 for map enemies.
+	damageMul, speedMul float64
+}
+
+// damage scales a base damage by the enemy's tier.
+func (e Enemy) damage(base int) int {
+	return int(math.Round(float64(base) * e.damageMul))
 }
 
 // Flashing reports whether the enemy was just shot (drawn white).
@@ -73,12 +81,12 @@ func (e Enemy) Flashing() bool {
 
 // newZombie returns a zombie standing at (x, y).
 func newZombie(x, y float64) Enemy {
-	return Enemy{Kind: KindZombie, X: x, Y: y, HP: ZombieHP, attackCD: ZombieFirstHitDelay}
+	return Enemy{Kind: KindZombie, X: x, Y: y, HP: ZombieHP, attackCD: ZombieFirstHitDelay, damageMul: 1, speedMul: 1}
 }
 
 // newShooter returns a shooter standing at (x, y).
 func newShooter(x, y float64) Enemy {
-	return Enemy{Kind: KindShooter, X: x, Y: y, HP: ShooterHP}
+	return Enemy{Kind: KindShooter, X: x, Y: y, HP: ShooterHP, damageMul: 1, speedMul: 1}
 }
 
 // updateEnemies moves every enemy and lets it attack. It refreshes the
@@ -87,13 +95,7 @@ func updateEnemies(s *State, dt float64) {
 	if len(s.Enemies) == 0 {
 		return
 	}
-	p := s.Player
-	cell := int(p.Y)*s.Map.W + int(p.X)
-	if cell != s.distCell || s.dist == nil {
-		s.dist = world.DistanceField(s.Map, int(p.X), int(p.Y), s.dist)
-		s.distCell = cell
-	}
-
+	ensureDistanceField(s)
 	for i := range s.Enemies {
 		e := &s.Enemies[i] // pointer: change the enemy in the slice, not a copy
 		e.flash = max(e.flash-dt, 0)
@@ -115,11 +117,11 @@ func updateZombie(s *State, e *Enemy, dt float64) {
 	p := s.Player
 	if math.Hypot(p.X-e.X, p.Y-e.Y) > ZombieMeleeRange {
 		e.attackCD = max(e.attackCD, ZombieFirstHitDelay) // fresh delay on (re)arrival
-		chase(s, e, ZombieSpeed*dt)
+		chase(s, e, ZombieSpeed*e.speedMul*dt)
 		return
 	}
 	if e.attackCD == 0 {
-		hurtPlayer(s, ZombieMeleeDamage)
+		hurtPlayer(s, e.damage(ZombieMeleeDamage))
 		e.attackCD = ZombieMeleeInterval
 	}
 }
@@ -136,17 +138,17 @@ func updateShooter(s *State, e *Enemy, dt float64) {
 	}
 	e.sawLast = sees
 	if !sees {
-		chase(s, e, ShooterSpeed*dt)
+		chase(s, e, ShooterSpeed*e.speedMul*dt)
 		return
 	}
 	if dist < ShooterMinRange {
-		retreat(s, e, ShooterSpeed*dt)
+		retreat(s, e, ShooterSpeed*e.speedMul*dt)
 	}
 	if e.attackCD == 0 {
 		e.attackCD = ShooterInterval
 		s.Events = append(s.Events, EventEnemyShot)
 		if s.Rand.Float64() < ShooterHitChance(dist) {
-			hurtPlayer(s, ShooterDamage)
+			hurtPlayer(s, e.damage(ShooterDamage))
 		}
 	}
 }
@@ -202,7 +204,7 @@ func chase(s *State, e *Enemy, step float64) {
 // screen edges.
 func hurtPlayer(s *State, damage int) {
 	p := &s.Player
-	if p.HP == 0 {
+	if p.HP == 0 || damage <= 0 {
 		return
 	}
 	p.HP = max(p.HP-damage, 0)

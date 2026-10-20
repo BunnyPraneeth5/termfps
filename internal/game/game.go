@@ -59,6 +59,14 @@ type State struct {
 	Enemies []Enemy
 	Kills   int     // enemies killed this run
 	Time    float64 // seconds survived this run
+	Tier    int     // difficulty tier, from 1 (P1-08)
+
+	// Spawning turns the survival spawner on (the default). Tests about one
+	// enemy's behavior turn it off so extra enemies don't interfere.
+	Spawning   bool
+	spawnTimer float64 // seconds until the next spawn attempt
+	tierKills  int     // Kills when the current tier started
+	tierStart  float64 // Time when the current tier started
 
 	// Rand is the source of randomness (enemy accuracy, later spawns and
 	// pickups). NewState seeds it with a fixed value so tests repeat; the
@@ -80,6 +88,9 @@ func NewState(m *world.Map) *State {
 		ShowMinimap: true,
 		Rand:        rand.New(rand.NewPCG(1, 2)), // fixed seed: repeatable
 		distCell:    -1,
+		Tier:        1,
+		Spawning:    true,
+		spawnTimer:  FirstSpawnDelay,
 	}
 	for _, e := range m.EnemyStarts {
 		switch e.Kind {

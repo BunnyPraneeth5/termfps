@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/BunnyPraneeth5/termfps/internal/game"
+	"github.com/BunnyPraneeth5/termfps/internal/world"
 )
 
 // The crosshair is a "+" of 9 pixels at the center, contrasting with what's
@@ -51,10 +52,13 @@ func TestDrawHurt(t *testing.T) {
 			t.Fatal("DrawHurt tinted pixels while not hurting")
 		}
 	}
-	m := mustOpenMap(t)
+	// A zombie right next to the player; wait for its first hit.
+	m, err := world.Parse([]byte("#####\n#PZ.#\n#####\n"))
+	if err != nil {
+		t.Fatal(err)
+	}
 	s := game.NewState(m)
-	s.Enemies = append(s.Enemies, game.Enemy{X: s.Player.X + 0.5, Y: s.Player.Y}) // in reach
-	for range 20 {                                                                // until the zombie's first hit
+	for range 30 {
 		game.Update(s, game.Input{}, 1.0/30)
 		if s.Player.Hurting() {
 			break

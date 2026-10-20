@@ -260,3 +260,16 @@ func TestCautionHiddenOutsideHalfBlock(t *testing.T) {
 		t.Error("caution still shown after switching to shade")
 	}
 }
+
+// A tier-up shows "TIER 2" above the HUD.
+func TestTierNotice(t *testing.T) {
+	a, s := newTestApp(t)
+	a.state.Kills = game.TierKills
+	a.step(t0.Add(time.Second/30), nil)
+	if a.state.Tier != 2 {
+		t.Fatalf("tier = %d, want 2", a.state.Tier)
+	}
+	if txt := rowText(s, 22) + rowText(s, 21); !strings.Contains(txt, "TIER 2") {
+		t.Errorf("no TIER 2 notice above the HUD, got %q", txt)
+	}
+}

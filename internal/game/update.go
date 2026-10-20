@@ -51,6 +51,7 @@ func Update(s *State, in Input, dt float64) {
 	updateWeapon(s, in, dt)
 	movePlayer(s, in, dt)
 	updateEnemies(s, dt)
+	updateSurvival(s, dt)
 }
 
 // movePlayer turns and moves the player for one frame, sliding along walls.
