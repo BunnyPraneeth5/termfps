@@ -20,6 +20,8 @@ const (
 	EventEnemyShot                          // a shooter fired at the player (hit or miss)
 	EventEnemySpawned                       // the survival spawner added an enemy
 	EventTierUp                             // the difficulty tier went up
+	EventPickupSpawned                      // an ammo box appeared
+	EventPickupTaken                        // the player took an ammo box
 )
 
 // HasEvent reports whether e happened in the last Update.

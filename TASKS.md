@@ -210,7 +210,7 @@ Estimated: about 5 weekends.
 - Random source is injectable so tests are repeatable.
 - Acceptance: unit tests: never spawns in sight or too close, tier rules (kills and time), scaling applied. On screen: pressure keeps rising.
 
-### [ ] P1-09: Ammo pickups
+### [~] P1-09: Ammo pickups
 - Spawn at random free cells every ~20-40 s, at most 3 alive. Walking over one gives +25 spare (up to a cap). Shown as a sprite and a minimap dot.
 - Acceptance: unit tests: spawn timing and limit, pickup radius, cap. On screen: pickups appear and refill ammo.
 

@@ -8,10 +8,11 @@ import (
 	"github.com/BunnyPraneeth5/termfps/internal/game"
 )
 
-// Enemy images, parsed from the built-in assets at startup.
+// Enemy and pickup images, parsed from the built-in assets at startup.
 var (
 	ZombieImage  = mustParseImage("zombie", assets.Zombie)
 	ShooterImage = mustParseImage("shooter", assets.Shooter)
+	AmmoImage    = mustParseImage("ammo", assets.Ammo)
 )
 
 // Sprite is a flat picture standing in the world (an enemy, a pickup). It

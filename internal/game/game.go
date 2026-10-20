@@ -65,8 +65,11 @@ type State struct {
 	// enemy's behavior turn it off so extra enemies don't interfere.
 	Spawning   bool
 	spawnTimer float64 // seconds until the next spawn attempt
-	tierKills  int     // Kills when the current tier started
-	tierStart  float64 // Time when the current tier started
+
+	Pickups     []Pickup // ammo boxes on the floor (P1-09)
+	pickupTimer float64  // seconds until the next box
+	tierKills   int      // Kills when the current tier started
+	tierStart   float64  // Time when the current tier started
 
 	// Rand is the source of randomness (enemy accuracy, later spawns and
 	// pickups). NewState seeds it with a fixed value so tests repeat; the
@@ -92,6 +95,7 @@ func NewState(m *world.Map) *State {
 		Spawning:    true,
 		spawnTimer:  FirstSpawnDelay,
 	}
+	s.pickupTimer = nextPickupDelay(s)
 	for _, e := range m.EnemyStarts {
 		switch e.Kind {
 		case world.ZombieStart:

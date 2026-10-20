@@ -23,3 +23,8 @@ var Zombie []byte
 //
 //go:embed shooter.txt
 var Shooter []byte
+
+// Ammo is the ammo box pickup (P1-09).
+//
+//go:embed ammo.txt
+var Ammo []byte

@@ -90,6 +90,9 @@ func (p *playingScreen) tick(a *App, now time.Time, dt float64) {
 			X: e.X, Y: e.Y, Image: enemyImage(e.Kind), Height: 0.8, Flash: e.Flashing(),
 		})
 	}
+	for _, pk := range st.Pickups {
+		a.sprites = append(a.sprites, render.Sprite{X: pk.X, Y: pk.Y, Image: render.AmmoImage, Height: 0.3})
+	}
 	render.DrawSprites(&a.frame, st.Player, a.sprites)
 	render.DrawWeapon(&a.frame, st.Player)
 	render.DrawCrosshair(&a.frame)

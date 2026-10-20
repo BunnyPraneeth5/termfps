@@ -73,6 +73,8 @@ Example: `.\termfps.exe -fps 60 -aspect 0.9`
 - More enemies keep coming, out of your sight. Every 20 kills or 4 minutes
   the **tier** goes up: enemies get tougher, faster and more frequent, and
   more of them are shooters. How long can you last?
+- **Ammo boxes** (yellow, also a yellow dot on the minimap) appear every
+  20-40 seconds. Walk over one for +25 spare rounds (up to 125).
 - The screen edges flash red when you're hurt; enemies flash white when hit.
 - At 0 HP the game ends: press Enter to try again or Esc to quit.
 

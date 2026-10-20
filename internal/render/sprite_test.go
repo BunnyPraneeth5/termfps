@@ -180,7 +180,7 @@ func TestDrawSpritesNearCoversFar(t *testing.T) {
 }
 
 func TestEnemyAssetsParse(t *testing.T) {
-	for name, data := range map[string][]byte{"zombie": assets.Zombie, "shooter": assets.Shooter} {
+	for name, data := range map[string][]byte{"zombie": assets.Zombie, "shooter": assets.Shooter, "ammo": assets.Ammo} {
 		if _, err := ParseImage(data); err != nil {
 			t.Errorf("%s: %v", name, err)
 		}

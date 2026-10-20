@@ -68,3 +68,19 @@ func TestDrawMinimapTooSmall(t *testing.T) {
 		t.Error("DrawMinimap returned true on a screen too small for it")
 	}
 }
+
+// Ammo boxes show as yellow dots on the minimap.
+func TestDrawMinimapPickup(t *testing.T) {
+	scr := newSimScreen(t, 80, 24)
+	m, err := world.Parse([]byte(room))
+	if err != nil {
+		t.Fatalf("Parse: %v", err)
+	}
+	st := game.NewState(m)
+	st.Pickups = []game.Pickup{{X: 2.5, Y: 4.5, Amount: 25}}
+	DrawMinimap(scr, st)
+	const x0 = 69 // 80 - 5*2 - 1
+	if str, style, _ := scr.Get(x0+2*2, 4); str != "●" || style != minimapAmmo {
+		t.Errorf("box cell = %q, want a yellow dot", str)
+	}
+}

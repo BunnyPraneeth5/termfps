@@ -13,6 +13,7 @@ var (
 	minimapTarget = tcell.StyleDefault.Background(rgbColor(170, TintRed))
 	minimapFloor  = tcell.StyleDefault.Background(grayColor(25))
 	minimapPlayer = tcell.StyleDefault.Background(grayColor(25)).Foreground(grayColor(255)).Bold(true)
+	minimapAmmo   = tcell.StyleDefault.Background(grayColor(25)).Foreground(rgbColor(230, TintYellow))
 )
 
 // arrows point in 8 directions, starting east and turning clockwise on
@@ -54,6 +55,13 @@ func DrawMinimap(s tcell.Screen, st *game.State) bool {
 				s.SetContent(sx+1, y, ' ', nil, minimapFloor)
 			}
 		}
+	}
+	for _, pk := range st.Pickups { // ammo boxes: a yellow dot
+		x, y := int(pk.X), int(pk.Y)
+		if x == px && y == py {
+			continue // the player's arrow wins
+		}
+		s.SetContent(x0+x*minimapCellWidth, y, '●', nil, minimapAmmo)
 	}
 	return true
 }
