@@ -62,7 +62,7 @@ Agreed 2026-10-19 (DECISIONS D20). Nothing here is built yet. Each phase gets it
 P0 status: core (T1-T18) and stretch T19 are done. Stretch T20 (red targets) moved into P1 as task P1-02 (D29).
 
 ### P1: a real single-player game (planned 2026-10-20)
-Tasks: TASKS.md "P1". Decisions: DECISIONS.md D21-D29.
+Tasks: TASKS.md "P1". Decisions: DECISIONS.md D21-D31.
 
 **The game: endless survival.** Each map is an arena. Enemies keep coming and get stronger. You play until you die, then try to beat your best.
 
@@ -70,9 +70,9 @@ Tasks: TASKS.md "P1". Decisions: DECISIONS.md D21-D29.
 
 **Survival rules**
 - Enemies spawn at random free cells that you can't see and that are at least a few cells away.
-- **Difficulty tiers:** every **20 kills or 4 minutes, whichever comes first**, the next tier starts. Enemies get more HP and damage, move a bit faster, and spawn more often, with more alive at once. The HUD shows the tier. Exact numbers are tuned in balancing (P1-16).
+- **Difficulty tiers:** every **20 kills or 4 minutes, whichever comes first**, the next tier starts. Enemies get more HP and damage, move a bit faster, and spawn more often, with more alive at once. The HUD shows the tier. Exact numbers are tuned in balancing (P1-18).
 - **Score:** kills, time survived, tier reached.
-- **Player:** 100 HP. Health pickups or slow regeneration are open for balancing (P1-16), not planned yet.
+- **Player:** 100 HP. Health pickups or slow regeneration are open for balancing (P1-18), not planned yet.
 
 **Weapon and ammo**
 - One gun. The magazine holds **25**. You start with **25 loaded + 50 spare**.
@@ -108,6 +108,8 @@ Tasks: TASKS.md "P1". Decisions: DECISIONS.md D21-D29.
 **Mouse in the game:** left-click shoots, right-click reloads. No mouse-look: terminals can't lock the mouse.
 
 **Sound:** played through the computer's speakers by the game itself (the terminal can't play sound), using the **oto** audio library. That's a new dependency, approved by the user. Effects are **generated in code** (gunshot, reload, empty click, zombie groan, enemy shot, hurt, pickup, tier up), so there are no sound files and no copyright questions. Settings: sound on/off and volume. Local play only. On Linux, oto needs the ALSA development libraries.
+
+**Feedback additions (D31):** smoother events-mode keys (a tap turns a little, holds are smooth on Linux) and a "Mixed" render mode (ASCII character with a dim colored background), from S0ra's feedback.
 
 **Not in P1:** mouse-look, mid-game saves, a "clear the level" mode, health pickups (unless balancing needs them), multiplayer, AI agents.
 

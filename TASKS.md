@@ -156,7 +156,7 @@ T20 moved into P1 as P1-02 (DECISIONS D29). P2-P4 are in PRD.md "Roadmap"; their
 
 # P1: single-player survival game
 
-Spec: PRD.md "Roadmap" -> P1. Design: ARCHITECTURE.md "P1 design". Decisions: D21-D29.
+Spec: PRD.md "Roadmap" -> P1. Design: ARCHITECTURE.md "P1 design". Decisions: D21-D31.
 Same rules as P0: one task at a time, verify command before marking done, one commit per task, visual checks signed off by the user.
 Estimated: about 5 weekends.
 
@@ -222,7 +222,7 @@ Estimated: about 5 weekends.
 
 ### [ ] P1-11: Menus: start, pause, settings (keyboard + mouse clicks)
 - New `internal/ui` menu model (items, selection, values), tested without a terminal, plus drawing.
-- Start: Play, Select map, Settings, Quit. Esc during play -> Pause: Resume, Settings, Restart, Quit to menu (game frozen and dimmed behind). Settings: render mode, FPS 30/60, minimap at start, textures, sound on/off + volume (applies from P1-15), key mode, pixel aspect.
+- Start: Play, Select map, Settings, Quit. Esc during play -> Pause: Resume, Settings, Restart, Quit to menu (game frozen and dimmed behind). Settings: render mode, FPS 30/60, minimap at start, textures, sound on/off + volume (applies from P1-17), key mode, pixel aspect.
 - Keyboard: Up/Down or W/S, Enter, Left/Right, Esc back. Mouse: click an item to select it. Ctrl+C quits from anywhere.
 - Acceptance: unit tests for menu navigation and value changes. On screen: all menus work by keyboard and by clicking; settings take effect right away.
 
@@ -237,18 +237,34 @@ Estimated: about 5 weekends.
 - Atomic write (temp file + rename). A damaged file -> message in the menu, the file kept as `save.json.bad`, defaults used.
 - Acceptance: tests (temp dir): save and load round trip, damaged file handling, atomic write. On screen: settings and bests survive a restart.
 
+## Feedback (S0ra, D31)
+
+Ideas and reference from S0ra (YouTube + Discord, 2026-10-23): events-mode input on Linux and a "Mixed" ASCII render mode. Key release events (needs a tcell change) are left for when Linux/mac support starts.
+
+### [ ] P1-14: Smoother events-mode keys
+- Tracker learns the OS repeat delay from the first press -> first repeat gap and sets FirstWindow to it plus a margin, so holds don't stop just before repeats begin on Linux (600-660ms delays).
+- Turning eases in over the first ~0.4s of a hold, so a single tap turns ~30-50° instead of ~99°. Movement too, if it feels better.
+- README: in events mode only the last pressed key repeats, so moving + turning together is limited; async (Windows) doesn't have this.
+- Acceptance: unit tests for the learned window and the ease-in (fake times). On screen (user, `-keys events`): a tap turns a small amount, holding is smooth.
+
+### [ ] P1-15: "Mixed" render mode
+- New RenderMode after ASCII in the V cycle: per cell, ASCII ramp character from the averaged gray, fg = pixel color, bg = pixel color x 0.2. Needs truecolor (same fallback as half-block).
+- Optional: round colors to steps so neighbouring cells share a style and tcell sends fewer color codes; measure bytes per frame with and without, keep only if it helps.
+- Credit S0ra / libasciic in README.
+- Acceptance: unit test for the presenter (character and both colors for known pixels). On screen (user): mode looks right, FPS holds at 30/60 in Windows Terminal and conhost.
+
 ## Extras
 
-### [ ] P1-14: Mouse in game
+### [ ] P1-16: Mouse in game
 - Left-click shoots, right-click reloads. No mouse-look.
 - Acceptance: unit tests for the mouse-button mapping. On screen: clicking shoots and reloads.
 
-### [ ] P1-15: Sound (oto)
+### [ ] P1-17: Sound (oto)
 - Add `github.com/ebitengine/oto/v3` (approved, D27) behind a small `internal/audio` package. Effects generated in code: gunshot, reload, empty click, zombie groan, enemy shot, hurt, pickup, tier up. Triggered by game events (P1-01). Settings: sound on/off and volume.
 - If audio can't start, the game still runs and the menu shows "sound unavailable: <reason>".
 - Acceptance: tests for the generated waveforms (length, no clipping) and the event -> sound mapping. On screen and ears: sounds play and overlap; volume and mute work.
 
-### [ ] P1-16: Balancing, README, demo
+### [ ] P1-18: Balancing, README, demo
 - Started early (D30, 2026-10-21): zombie 75 HP / 1.5 cells/s / 7-10 damage, calmer arena, slower tier 1, health regeneration. Still to do: playtest tiers 3+, ammo cap, health pickups or not.
 - Tune tiers, damage, HP, spawn rates, ammo cap; decide health pickups or regen. Update the README (controls, menus, survival rules) and record a new demo.
 - Acceptance: the user plays each map for a few minutes and is happy with the difficulty curve.

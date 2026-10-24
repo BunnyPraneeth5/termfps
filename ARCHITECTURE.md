@@ -214,7 +214,7 @@ internal/game        + weapon/ammo, enemies, pickups, spawner + tiers, score, pe
 internal/render      + Pixel.Tint, depth buffer, sprites, textures, weapon overlay, crosshair
 internal/input       + Space, R, mouse buttons, menu keys
 internal/save        save.json load/save (encoding/json, atomic write)
-internal/audio       oto player + generated effects (P1-15)
+internal/audio       oto player + generated effects (P1-17)
 internal/assets      pixel-art images (gun, flash, sprites) and textures as text files, embedded; format in render.ParseImage
 ```
 

@@ -130,14 +130,14 @@ Format: what, why, trade-off, revisit when.
 ## D21: P1 is an endless survival game (2026-10-20)
 - What: each map is an arena; enemies keep spawning out of sight; difficulty tiers rise every 20 kills or 4 minutes, whichever comes first (more enemy HP, damage, speed, spawn rate). Score = kills, time survived, tier. No "clear the level" mode.
 - Why: the user wants a complete single-player FPS with rising pressure rather than hand-built levels; random spawns and pickups fit it, and one mode keeps P1 smaller.
-- Trade-off: no story or level progression; the difficulty curve depends on balancing (P1-16).
+- Trade-off: no story or level progression; the difficulty curve depends on balancing (P1-18).
 - Revisit when: balancing shows it gets boring, or a level mode is wanted.
 
 ## D22: Limited ammo with magazines and random pickups (2026-10-20)
 - What: magazine 25; start with 25 + 50 spare; R reloads (~1.5 s); auto-reload when the magazine is empty; ammo pickups (+25) at random free cells every ~20-40 s, at most 3 on the map. Hitscan shots, ~3 per second.
 - Why: the user's choice: resource pressure and reloading make fights tense.
 - Trade-off: more state, HUD and balancing work; running dry must stay rare enough to be fun.
-- Revisit when: balancing (P1-16).
+- Revisit when: balancing (P1-18).
 
 ## D23: Two enemy types, colored (2026-10-20)
 - What: zombies (green, melee, rush, tanky) and shooters (red, ranged hitscan, keep distance, need line of sight, fragile). Muzzle flash is yellow. Everything else stays gray.
@@ -190,4 +190,11 @@ Format: what, why, trade-off, revisit when.
   - Health regeneration: +5 HP per second after 4 s without being hit, up to 100.
 - Why: about 23 damage per second could reach the player within ~15 s of starting with no way to recover. Now the start is gentle and the tiers do the ramping.
 - Trade-off: a careful player can heal between fights indefinitely; tiers must keep the pressure up. Not yet tuned by playtesting.
-- Revisit when: balancing (P1-16), after playtesting tiers 3+.
+- Revisit when: balancing (P1-18), after playtesting tiers 3+.
+
+## D31: S0ra feedback tasks join P1 (2026-10-25)
+- What: two tasks from S0ra's feedback (YouTube + Discord, 2026-10-23) go in before Extras: P1-14 smoother events-mode keys, P1-15 a "Mixed" render mode. Extras renumbered to P1-16 (mouse), P1-17 (sound), P1-18 (balancing).
+- Why: on Linux (events mode) a single tap turned ~99° and moved ~1.65 cells, because a key counts as held for FirstWindow (550ms) after its first event; Linux repeat delays of 600-660ms also cause a stop just before repeats begin. The Mixed mode (ASCII character, fg = color, bg = color x 0.2) costs about the same as half-block, which already sends both colors per cell.
+- Trade-off: true key releases would fix input properly, but tcell v2.13.10 asks for kitty keyboard level 1 only and drops win32-input-mode key-ups. That needs a tcell change, so it waits for Linux/mac support.
+- Credit: S0ra (libasciic, MIT) for the Mixed style idea and the input report.
+- Revisit when: Linux/mac support starts (key releases).
