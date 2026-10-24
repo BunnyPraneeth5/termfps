@@ -39,6 +39,7 @@ func (c Cell) Solid() bool {
 
 // Map is a parsed, validated map.
 type Map struct {
+	Name           string // from the "; name:" header; "" if there is none
 	W, H           int
 	Cells          []Cell  // row-major, index = y*W + x
 	SpawnX, SpawnY float64 // center of the P cell (x+0.5, y+0.5)
@@ -75,6 +76,13 @@ func Parse(data []byte) (*Map, error) {
 	for len(lines) > 0 && lines[len(lines)-1] == "" {
 		lines = lines[:len(lines)-1]
 	}
+	// Header lines start with ";" and come before the grid. off counts them,
+	// so error messages still give the row as the file's line number.
+	name, off, err := parseHeaders(lines)
+	if err != nil {
+		return nil, err
+	}
+	lines = lines[off:]
 	if len(lines) == 0 {
 		return nil, errors.New("map is empty")
 	}
@@ -83,12 +91,12 @@ func Parse(data []byte) (*Map, error) {
 	w, h := len(lines[0]), len(lines)
 	for y, line := range lines {
 		for x := 0; x < len(line); x++ {
-			if err := checkChar(line, x, y); err != nil {
+			if err := checkChar(line, x, y+off); err != nil {
 				return nil, err
 			}
 		}
 		if len(line) != w {
-			return nil, fmt.Errorf("row %d has %d columns, expected %d (all rows must be the same length)", y+1, len(line), w)
+			return nil, fmt.Errorf("row %d has %d columns, expected %d (all rows must be the same length)", y+off+1, len(line), w)
 		}
 	}
 	if w < minSize || h < minSize {
@@ -96,14 +104,14 @@ func Parse(data []byte) (*Map, error) {
 	}
 
 	// Pass 2: build cells, check the border, find the spawn.
-	m := &Map{W: w, H: h, Cells: make([]Cell, 0, w*h)}
+	m := &Map{Name: name, W: w, H: h, Cells: make([]Cell, 0, w*h)}
 	spawns := 0
 	for y, line := range lines {
 		for x := 0; x < w; x++ {
 			c := Cell(line[x])
 			onBorder := x == 0 || y == 0 || x == w-1 || y == h-1
 			if onBorder && !c.IsWall() {
-				return nil, fmt.Errorf("row %d, column %d: border must be a wall ('#', '%%' or '&'), found %q", y+1, x+1, line[x])
+				return nil, fmt.Errorf("row %d, column %d: border must be a wall ('#', '%%' or '&'), found %q", y+off+1, x+1, line[x])
 			}
 			if c == Spawn {
 				spawns++
@@ -156,4 +164,26 @@ func checkChar(line string, x, y int) error {
 	// even if it is a multi-byte UTF-8 character like 'é'.
 	r, _ := utf8.DecodeRuneInString(line[x:])
 	return fmt.Errorf("row %d, column %d: unknown character %q (use '#', '%%', '&', '.', 'P', 'T', 'Z' or 'S')", y+1, x+1, r)
+}
+
+// parseHeaders reads the header lines at the top of a map file. The only
+// header is "; name: The Arena". It returns the name and how many lines
+// were headers. An unknown header is an error, so a typo doesn't go unseen.
+func parseHeaders(lines []string) (name string, n int, err error) {
+	for n < len(lines) && strings.HasPrefix(lines[n], ";") {
+		// Cut splits at the first ":"; found is false if there is none.
+		key, value, found := strings.Cut(strings.TrimPrefix(lines[n], ";"), ":")
+		key, value = strings.TrimSpace(key), strings.TrimSpace(value)
+		switch {
+		case !found || key != "name":
+			return "", 0, fmt.Errorf("row %d: unknown header %q (the only header is \"; name: ...\")", n+1, lines[n])
+		case value == "":
+			return "", 0, fmt.Errorf("row %d: map name is empty", n+1)
+		case name != "":
+			return "", 0, fmt.Errorf("row %d: second name header (the map already has the name %q)", n+1, name)
+		}
+		name = value
+		n++
+	}
+	return name, n, nil
 }

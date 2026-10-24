@@ -78,8 +78,14 @@ func (p *playingScreen) tick(a *App, now time.Time, dt float64) {
 	if st.HasEvent(game.EventTierUp) {
 		a.tierUntil = now.Add(tierNoticeFor)
 	}
+	if n := unlocks(a.unlocked, a.mapIndex, st.Time, len(a.maps)); n > a.unlocked {
+		a.unlocked = n
+		a.unlockUntil = now.Add(tierNoticeFor)
+	}
 	notice := ""
 	switch {
+	case now.Before(a.unlockUntil):
+		notice = fmt.Sprintf("New map unlocked: %s (Select map in the main menu).", a.maps[a.unlocked-1].Name)
 	case now.Before(a.tierUntil):
 		notice = fmt.Sprintf("TIER %d: enemies are tougher and come faster.", st.Tier)
 	case now.Before(a.cautionUntil) && st.Mode == game.ModeHalfBlock:

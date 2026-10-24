@@ -92,11 +92,17 @@ func (a *App) titleMenu() *menuScreen {
 	return s
 }
 
-// mapMenu lists the maps; picking one starts a run on it.
+// mapMenu lists the maps; picking an open one starts a run on it. Locked
+// maps are shown dimmed with what opens them.
 func (a *App) mapMenu() *menuScreen {
 	items := make([]ui.Item, 0, len(a.maps)+1)
 	for i, m := range a.maps {
-		items = append(items, ui.Item{Label: fmt.Sprintf("Map %d (%dx%d)", i+1, m.W, m.H)})
+		it := ui.Item{Label: fmt.Sprintf("%-14s %dx%d", m.Name, m.W, m.H)}
+		if i >= a.unlocked {
+			it.Disabled = true
+			it.Label += fmt.Sprintf("   locked: survive %s on %s", render.Clock(unlockAfter), a.maps[i-1].Name)
+		}
+		items = append(items, it)
 	}
 	items = append(items, ui.Item{Label: "Back"})
 	s := &menuScreen{menu: ui.New("SELECT MAP", nil, items)}

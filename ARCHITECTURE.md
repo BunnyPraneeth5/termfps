@@ -12,7 +12,7 @@ termfps/
   go.mod
   main.go              entry point, embeds maps, wires everything, restores terminal, recovers panics
   maps/
-    arena.txt          16x16 map
+    01-arena.txt       16x16 (plus 02-warehouse 32x32, 03-yard 64x32, 04-tunnel 16x64; P1-12)
   internal/
     world/             map parsing, cell lookup, collision, raycast (no tcell)
     game/              player, game state, update logic (no tcell)
@@ -110,6 +110,7 @@ Fields beyond P0 (`RenderMode` in T19, `Pixel.Tint` in P1-02, shooting in P1-03)
 - The HUD shows `Angle` in degrees (0-359).
 
 ## Map format (`maps/*.txt`)
+- Optional header lines first: `; name: The Arena` (P1-12). Every embedded map needs one, for the map menu. Any other line starting with `;` is an error. Error rows count header lines, so they match the file.
 - Rectangular grid, one row per line.
 - `#` wall, `.` empty, `P` player spawn (exactly one).
 - Border must be fully walls.

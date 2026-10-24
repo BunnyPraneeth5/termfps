@@ -226,7 +226,7 @@ Estimated: about 5 weekends.
 - Keyboard: Up/Down or W/S, Enter, Left/Right, Esc back. Mouse: click an item to select it. Ctrl+C quits from anywhere.
 - Acceptance: unit tests for menu navigation and value changes. On screen: all menus work by keyboard and by clicking; settings take effect right away.
 
-### [ ] P1-12: Four maps, map select, unlocks, scrolling minimap
+### [~] P1-12: Four maps, map select, unlocks, scrolling minimap
 - Maps 16x16, 32x32, 64x32, 16x64 in `maps/`, all embedded (directory embed). Optional `; name:` header line.
 - Map select menu; the first map is open, each next one unlocks after surviving 5 minutes on the previous (kept in memory until P1-13).
 - Minimap shows a window around the player when the map doesn't fit.

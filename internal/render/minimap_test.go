@@ -2,6 +2,7 @@ package render
 
 import (
 	"math"
+	"strings"
 	"testing"
 
 	"github.com/BunnyPraneeth5/termfps/internal/game"
@@ -82,5 +83,65 @@ func TestDrawMinimapPickup(t *testing.T) {
 	const x0 = 69 // 80 - 5*2 - 1
 	if str, style, _ := scr.Get(x0+2*2, 4); str != "●" || style != minimapAmmo {
 		t.Errorf("box cell = %q, want a yellow dot", str)
+	}
+}
+
+func TestMinimapWindow(t *testing.T) {
+	cases := []struct {
+		name           string
+		px, py, ox, oy int
+	}{
+		{"centered", 30, 20, 18, 12},
+		{"left/top edge", 2, 1, 0, 0},
+		{"right/bottom edge", 63, 31, 40, 16},
+	}
+	for _, c := range cases {
+		// 64x32 map, 24x16 window.
+		if ox, oy := minimapWindow(64, 32, 24, 16, c.px, c.py); ox != c.ox || oy != c.oy {
+			t.Errorf("%s: window at (%d, %d), want (%d, %d)", c.name, ox, oy, c.ox, c.oy)
+		}
+	}
+	if ox, oy := minimapWindow(16, 16, 16, 16, 5, 9); ox != 0 || oy != 0 {
+		t.Errorf("map that fits: window at (%d, %d), want (0, 0)", ox, oy)
+	}
+}
+
+// On a map bigger than the minimap's space, it shows a 24x16 window around
+// the player, and the player's arrow is inside it.
+func TestDrawMinimapScrolls(t *testing.T) {
+	scr := newSimScreen(t, 80, 24)
+	var b strings.Builder
+	for y := 0; y < 32; y++ {
+		for x := 0; x < 64; x++ {
+			switch {
+			case x == 0 || y == 0 || x == 63 || y == 31:
+				b.WriteByte('#')
+			case x == 40 && y == 20:
+				b.WriteByte('P')
+			default:
+				b.WriteByte('.')
+			}
+		}
+		b.WriteByte('\n')
+	}
+	m, err := world.Parse([]byte(b.String()))
+	if err != nil {
+		t.Fatalf("Parse: %v", err)
+	}
+	st := game.NewState(m) // facing east
+	if !DrawMinimap(scr, st) {
+		t.Fatal("DrawMinimap returned false for a big map on 80x24")
+	}
+	// Window origin: x 40-12 = 28, y 20-8 = 12. Player at view cell (12, 8).
+	const x0 = 80 - 24*2 - 1
+	if str, _, _ := scr.Get(x0+12*2, 8); str != "→" {
+		t.Errorf("view cell (12, 8) = %q, want the player's arrow →", str)
+	}
+	// Row 16 and below belong to the 3D view, not the minimap.
+	if _, style, _ := scr.Get(x0, 16); style == minimapFloor || style == minimapWall {
+		t.Error("minimap drew more than 16 rows")
+	}
+	if _, style, _ := scr.Get(x0-1, 0); style == minimapFloor || style == minimapWall {
+		t.Error("minimap drew more than 24 cells across")
 	}
 }

@@ -37,6 +37,7 @@ type App struct {
 	cfg      Config
 	maps     []*world.Map // as loaded; each run plays on a fresh copy
 	mapIndex int          // the map Play starts
+	unlocked int          // how many maps are open, from the first (D26)
 	state    *game.State
 	frame    render.Frame
 	keys     input.Tracker // which movement keys count as held (D12)
@@ -63,6 +64,9 @@ type App struct {
 
 	// After a tier-up, "TIER n" shows above the HUD until tierUntil.
 	tierUntil time.Time
+
+	// After a map unlocks, "New map unlocked" shows until unlockUntil.
+	unlockUntil time.Time
 }
 
 // cautionFor is how long the half-block caution stays on screen.
@@ -71,19 +75,23 @@ const cautionFor = 5 * time.Second
 // tierNoticeFor is how long the "TIER n" notice shows after a tier-up.
 const tierNoticeFor = 3 * time.Second
 
+// unlockAfter is how many seconds to survive on a map to open the next (D26).
+const unlockAfter = 5 * 60.0
+
 const caution = "Half-block needs a truecolor terminal and more bandwidth. Use ASCII over slow SSH."
 
 // New sets up the app on an initialized screen at time now, showing the
 // title menu. maps must not be empty.
 func New(scr tcell.Screen, maps []*world.Map, cfg Config, now time.Time) *App {
 	a := &App{
-		scr:     scr,
-		cfg:     cfg,
-		maps:    maps,
-		frame:   render.Frame{PixelAspect: cfg.PixelAspect, Textures: cfg.Textures},
-		focused: true,
-		start:   now,
-		last:    now,
+		scr:      scr,
+		cfg:      cfg,
+		maps:     maps,
+		unlocked: 1,
+		frame:    render.Frame{PixelAspect: cfg.PixelAspect, Textures: cfg.Textures},
+		focused:  true,
+		start:    now,
+		last:     now,
 	}
 	// A state exists from the start, so the render mode has a home before
 	// the first run.
@@ -270,4 +278,14 @@ func keysLabel(mode string, focused bool) string {
 		return "keys async (focused)"
 	}
 	return "keys async (NOT focused)"
+}
+
+// unlocks returns how many maps are open after surviving survived seconds
+// on map played (0-based), when open of total maps were open. Surviving
+// long enough on the newest open map opens the next one.
+func unlocks(open, played int, survived float64, total int) int {
+	if played == open-1 && survived >= unlockAfter && open < total {
+		return open + 1
+	}
+	return open
 }

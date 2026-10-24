@@ -1,13 +1,14 @@
 // Command termfps is a terminal first-person game.
 //
-// main only does startup: flags, the embedded map, the terminal, and crash
+// main only does startup: flags, the embedded maps, the terminal, and crash
 // handling. The game loop and screens live in internal/app.
 package main
 
 import (
-	_ "embed" // the blank import (_) enables the //go:embed directive below
+	"embed"
 	"flag"
 	"fmt"
+	"io/fs"
 	"os"
 	"runtime"
 	"runtime/debug"
@@ -21,11 +22,12 @@ import (
 	"github.com/BunnyPraneeth5/termfps/internal/world"
 )
 
-// arenaFile is the map file, copied into the binary at build time by
-// //go:embed. The directive must sit directly above a package-level var.
+// mapFiles holds every maps/*.txt file, copied into the binary at build
+// time by //go:embed. An embed.FS is a small read-only file system; the
+// directive must sit directly above a package-level var.
 //
-//go:embed maps/arena.txt
-var arenaFile []byte
+//go:embed maps/*.txt
+var mapFiles embed.FS
 
 func main() {
 	// os.Exit skips deferred functions, so all the real work (and every defer)
@@ -42,10 +44,10 @@ func run() (exitCode int) {
 		return 2
 	}
 
-	// Parse the map before opening the screen, so errors print normally.
-	arena, err := world.Parse(arenaFile)
+	// Parse the maps before opening the screen, so errors print normally.
+	maps, err := loadMaps(mapFiles)
 	if err != nil {
-		fmt.Fprintln(os.Stderr, "termfps: maps/arena.txt:", err)
+		fmt.Fprintln(os.Stderr, "termfps:", err)
 		return 1
 	}
 
@@ -77,7 +79,7 @@ func run() (exitCode int) {
 		restore()
 	}()
 
-	return app.Run(screen, []*world.Map{arena}, cfg, restore)
+	return app.Run(screen, maps, cfg, restore)
 }
 
 // parseFlags reads and checks the command-line flags. On a bad value it
@@ -128,4 +130,34 @@ func parseFlags() (cfg app.Config, ok bool) {
 		Sound:          true,
 		Volume:         80,
 	}, true
+}
+
+// loadMaps parses every maps/*.txt file in fsys, in file name order (the
+// number prefix sets the order in the map menu). A map without a "; name:"
+// header is an error, since the menu needs a name.
+func loadMaps(fsys fs.FS) ([]*world.Map, error) {
+	entries, err := fs.ReadDir(fsys, "maps") // sorted by file name
+	if err != nil {
+		return nil, fmt.Errorf("read maps: %w", err)
+	}
+	var maps []*world.Map
+	for _, e := range entries {
+		path := "maps/" + e.Name()
+		data, err := fs.ReadFile(fsys, path)
+		if err != nil {
+			return nil, fmt.Errorf("%s: %w", path, err)
+		}
+		m, err := world.Parse(data)
+		if err != nil {
+			return nil, fmt.Errorf("%s: %w", path, err)
+		}
+		if m.Name == "" {
+			return nil, fmt.Errorf("%s: no \"; name:\" header on the first line", path)
+		}
+		maps = append(maps, m)
+	}
+	if len(maps) == 0 {
+		return nil, fmt.Errorf("no maps in maps/")
+	}
+	return maps, nil
 }

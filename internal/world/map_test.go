@@ -104,3 +104,40 @@ func TestStoneAndMetalWalls(t *testing.T) {
 		t.Error("a target block counts as a permanent wall")
 	}
 }
+
+// An optional "; name:" header names the map; error rows still match the
+// file's lines.
+func TestParseNameHeader(t *testing.T) {
+	m, err := Parse([]byte("\xEF\xBB\xBF;  name:  The Arena \r\n#####\r\n#P..#\r\n#####\r\n"))
+	if err != nil {
+		t.Fatalf("Parse: %v", err)
+	}
+	if m.Name != "The Arena" || m.W != 5 || m.H != 3 {
+		t.Errorf("name %q, %dx%d; want \"The Arena\", 5x3", m.Name, m.W, m.H)
+	}
+	if m.SpawnY != 1.5 {
+		t.Errorf("spawn y = %v, want 1.5 (the header is not a map row)", m.SpawnY)
+	}
+	if m, err := Parse([]byte("###\n#P#\n###\n")); err != nil || m.Name != "" {
+		t.Errorf("no header: name %q, err %v; want empty name, no error", m.Name, err)
+	}
+}
+
+func TestParseHeaderErrors(t *testing.T) {
+	cases := []struct{ name, input, wantErr string }{
+		{"unknown key", "; size: big\n###\n#P#\n###\n", "row 1: unknown header"},
+		{"no colon", "; hello\n###\n#P#\n###\n", "unknown header"},
+		{"empty name", "; name:\n###\n#P#\n###\n", "name is empty"},
+		{"two names", "; name: A\n; name: B\n###\n#P#\n###\n", "row 2: second name"},
+		{"only a header", "; name: A\n", "empty"},
+		{"row numbers count the header", "; name: A\n#####\n#P.x#\n#####\n", "row 3, column 4"},
+	}
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			_, err := Parse([]byte(c.input))
+			if err == nil || !strings.Contains(err.Error(), c.wantErr) {
+				t.Errorf("error = %v, want it to contain %q", err, c.wantErr)
+			}
+		})
+	}
+}
