@@ -137,3 +137,10 @@ Template:
 - Not done: on-screen checks for P1-06 to P1-10 (marked [~]); balancing is P1-16; nothing pushed.
 - Next: user review of P1-06 to P1-10, then P1-11 (menus).
 - User played P1-06 to P1-10: "really nice" but too hard at the start. Early balancing (D30): zombie 75 HP, 1.5 cells/s, random 7-10 damage per hit; shooter unchanged; arena starts with 1 zombie; tier 1 first spawn at 10 s, every 8 s, max 3 alive; regeneration +5 HP/s after 4 s unhurt. Suggestion 4 (softer shooters) not applied because the user said shooters are fine; offered to apply it.
+
+## 2026-10-25 (S0ra feedback, CI)
+- Looked into S0ra's feedback (Linux, `-keys events`). Cause of the ~90° turns and stepped movement: a key counts as held for FirstWindow (550ms) after its first event, so one tap turns ~99° and moves ~1.65 cells; Linux repeat delays (600-660ms) also cause a stop before repeats begin. tcell v2.13.10 can't give key releases (kitty level 1 only, win32-input-mode key-ups dropped).
+- Docs `f912802`: new tasks P1-14 (smoother events-mode keys) and P1-15 (Mixed render mode) before Extras; Extras renumbered to P1-16..18 (D31).
+- CI (D32): GitHub Actions build, vet, gofmt, test on Windows and Ubuntu.
+- Not done: P1-06 to P1-10 still waiting for the user's on-screen review.
+- Next: user review of P1-06 to P1-10, then P1-11 (menus).

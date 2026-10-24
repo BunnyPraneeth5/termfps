@@ -198,3 +198,9 @@ Format: what, why, trade-off, revisit when.
 - Trade-off: true key releases would fix input properly, but tcell v2.13.10 asks for kitty keyboard level 1 only and drops win32-input-mode key-ups. That needs a tcell change, so it waits for Linux/mac support.
 - Credit: S0ra (libasciic, MIT) for the Mixed style idea and the input report.
 - Revisit when: Linux/mac support starts (key releases).
+
+## D32: GitHub Actions CI on Windows and Linux (2026-10-25)
+- What: `.github/workflows/ci.yml` runs build, vet, gofmt and test on every push to main and every pull request, on windows-latest and ubuntu-latest. No macOS for now (user's choice). No releases or packaging.
+- Why: the game is only built on Windows here, but people run it on Linux (S0ra). Files like `keystate_other.go` never compile on Windows, so a break there would go unnoticed. CI is free for public repos and adds no Go dependency.
+- Trade-off: it only checks what the verify command checks; visual checks still need the user. From P1-17 (oto), the Linux job will need the ALSA development libraries installed.
+- Revisit when: P1-17 (add ALSA to the Linux job), or when Linux/mac support starts (add macOS).

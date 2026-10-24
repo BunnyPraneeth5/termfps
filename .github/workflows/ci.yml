@@ -1,0 +1,39 @@
+# Runs the same checks as CLAUDE.md "Verify before saying done" on every
+# push and pull request, on Windows and Linux (D32). Visual checks still
+# need a person.
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  check:
+    strategy:
+      fail-fast: false # finish both systems even if one fails
+      matrix:
+        os: [windows-latest, ubuntu-latest]
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        shell: bash # same commands on both systems (Git Bash on Windows)
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-go@v6
+        with:
+          go-version-file: go.mod
+      - name: Build
+        run: go build ./...
+      - name: Vet
+        run: go vet ./...
+      - name: gofmt
+        run: |
+          out="$(gofmt -l .)"
+          if [ -n "$out" ]; then
+            echo "gofmt needed on:"
+            echo "$out"
+            exit 1
+          fi
+      - name: Test
+        run: go test ./...
