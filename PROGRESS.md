@@ -144,3 +144,11 @@ Template:
 - CI (D32): GitHub Actions build, vet, gofmt, test on Windows and Ubuntu.
 - Not done: P1-06 to P1-10 still waiting for the user's on-screen review.
 - Next: user review of P1-06 to P1-10, then P1-11 (menus).
+
+## 2026-10-25 (P1-11, P1-12)
+- Done (one commit each; build, vet, gofmt, tests pass; 190 top-level tests):
+  - P1-11 `cc98051`: `internal/ui` menu model (items, values, disabled items, click mapping) + drawing; the game opens on a title menu (Play, Select map, Settings, Quit); Esc in game pauses (game frozen, dimmed behind: Resume, Settings, Restart, Quit to menu); game over is a menu (Try again, Main menu); Settings: render mode, FPS 30/60, minimap at start, textures, sound + volume (stored, not used until P1-17), key mode, pixel aspect, all applied right away; mouse clicks pick items (D33).
+  - P1-12 `24368d5`: `; name:` map header (error rows still match the file); four embedded maps (Arena 16x16, Warehouse 32x32, Yard 64x32, Tunnel 16x64) loaded from `maps/*.txt` in file-name order; map select with locks (next map opens after 5:00 on the newest open one, with a notice; in memory until P1-13); the minimap shows at most 24x16 cells and scrolls with the player.
+- Issues found: one of my test expectations missed that the restart frame runs one tick; two shell edits of mine garbled a line and were fixed before committing. Code paths were otherwise as designed.
+- Not done: on-screen checks for P1-06 to P1-12 (marked [~]); README still says Esc quits and lists `maps/arena.txt` (README update is part of P1-18); not pushed.
+- Next: user review, then P1-13 (saving settings and progress).
