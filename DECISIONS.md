@@ -204,3 +204,9 @@ Format: what, why, trade-off, revisit when.
 - Why: the game is only built on Windows here, but people run it on Linux (S0ra). Files like `keystate_other.go` never compile on Windows, so a break there would go unnoticed. CI is free for public repos and adds no Go dependency.
 - Trade-off: it only checks what the verify command checks; visual checks still need the user. From P1-17 (oto), the Linux job will need the ALSA development libraries installed.
 - Revisit when: P1-17 (add ALSA to the Linux job), or when Linux/mac support starts (add macOS).
+
+## D33: Menu details (2026-10-25)
+- What: the game opens on the title menu. Esc on the title menu does nothing (Quit or Ctrl+C quits); Esc on game over goes to the title menu. The game over screen is a menu (Try again, Main menu). Sound and volume settings are in the menu now and stored, with a note that sound isn't in yet (P1-17). FPS changes from the menu reset the frame ticker. Mouse clicks are turned on for the whole run (button events only, no motion).
+- Why: Esc already means "back" everywhere else, so it shouldn't quit by accident on the first screen. Showing the sound settings now keeps the settings list stable for P1-13 saving.
+- Trade-off: while the game runs, the terminal's own mouse text selection doesn't work (most terminals allow Shift+drag to select anyway).
+- Revisit when: P1-16 (mouse in game), or if players miss text selection.

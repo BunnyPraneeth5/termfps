@@ -11,13 +11,14 @@ import (
 	"github.com/BunnyPraneeth5/termfps/internal/render"
 )
 
-// screen is one mode of the app: playing now; title, pause and settings
-// menus, map select and game over come later (P1-11, P1-12). It's an
-// interface: any type with these two methods counts as a screen, so the
-// app can switch between very different screens the same way.
+// screen is one mode of the app: the game itself, or a menu (menus.go).
+// It's an interface: any type with these three methods counts as a screen,
+// so the app can switch between very different screens the same way.
 type screen interface {
 	// key handles one key press. It may set a.quit or switch screens.
 	key(a *App, ev *tcell.EventKey)
+	// click handles a left click on screen cell (x, y).
+	click(a *App, x, y int)
 	// tick advances one frame (dt seconds) and draws it.
 	tick(a *App, now time.Time, dt float64)
 }
@@ -35,8 +36,8 @@ type playingScreen struct {
 
 func (p *playingScreen) key(a *App, ev *tcell.EventKey) {
 	switch {
-	case input.IsQuit(ev): // Esc (Ctrl+C is handled for every screen in step)
-		a.quit = true
+	case input.IsQuit(ev): // Esc pauses (Ctrl+C is handled for every screen in step)
+		a.switchTo(a.pauseMenu())
 	case input.IsToggleMinimap(ev):
 		p.toggleMinimap = !p.toggleMinimap // two presses in one frame cancel
 	case input.IsCycleRenderMode(ev):
@@ -51,6 +52,9 @@ func (p *playingScreen) key(a *App, ev *tcell.EventKey) {
 		}
 	}
 }
+
+// click does nothing in the game yet; P1-16 adds shooting and reloading.
+func (p *playingScreen) click(a *App, x, y int) {}
 
 func (p *playingScreen) tick(a *App, now time.Time, dt float64) {
 	var in game.Input
@@ -83,20 +87,7 @@ func (p *playingScreen) tick(a *App, now time.Time, dt float64) {
 	}
 
 	t0 := time.Now()
-	render.DrawFrame(st, &a.frame)
-	a.sprites = a.sprites[:0]
-	for _, e := range st.Enemies {
-		a.sprites = append(a.sprites, render.Sprite{
-			X: e.X, Y: e.Y, Image: enemyImage(e.Kind), Height: 0.8, Flash: e.Flashing(),
-		})
-	}
-	for _, pk := range st.Pickups {
-		a.sprites = append(a.sprites, render.Sprite{X: pk.X, Y: pk.Y, Image: render.AmmoImage, Height: 0.3})
-	}
-	render.DrawSprites(&a.frame, st.Player, a.sprites)
-	render.DrawWeapon(&a.frame, st.Player)
-	render.DrawCrosshair(&a.frame)
-	render.DrawHurt(&a.frame, st.Player)
+	a.drawScene()
 	t1 := time.Now()
 	a.present()
 	minimapHidden := st.ShowMinimap && !render.DrawMinimap(a.scr, st)
@@ -119,8 +110,29 @@ func (p *playingScreen) tick(a *App, now time.Time, dt float64) {
 	a.times.add(frameTimes{draw: t1.Sub(t0), present: t2.Sub(t1), show: time.Since(t2)})
 
 	if st.Player.Dead() {
-		a.switchTo(&gameOverScreen{})
+		a.switchTo(a.gameOverMenu())
 	}
+}
+
+// drawScene draws the 3D view of the current state into the Frame: walls,
+// sprites, gun, crosshair, hurt border. The pause and game over menus use
+// it too, so the frozen game stays visible behind them after a resize.
+func (a *App) drawScene() {
+	st := a.state
+	render.DrawFrame(st, &a.frame)
+	a.sprites = a.sprites[:0]
+	for _, e := range st.Enemies {
+		a.sprites = append(a.sprites, render.Sprite{
+			X: e.X, Y: e.Y, Image: enemyImage(e.Kind), Height: 0.8, Flash: e.Flashing(),
+		})
+	}
+	for _, pk := range st.Pickups {
+		a.sprites = append(a.sprites, render.Sprite{X: pk.X, Y: pk.Y, Image: render.AmmoImage, Height: 0.3})
+	}
+	render.DrawSprites(&a.frame, st.Player, a.sprites)
+	render.DrawWeapon(&a.frame, st.Player)
+	render.DrawCrosshair(&a.frame)
+	render.DrawHurt(&a.frame, st.Player)
 }
 
 // enemyImage is the sprite picture for an enemy kind.
@@ -132,31 +144,4 @@ func enemyImage(k game.EnemyKind) *render.Image {
 		return render.ShooterImage
 	}
 	panic(fmt.Sprintf("no image for enemy kind %d", k))
-}
-
-// gameOverScreen shows the run's result over the frozen last frame.
-// Enter starts a new run; Esc quits (P1-11 will go to the menu). R isn't a
-// retry key: it's reload, and a held R would restart by accident.
-type gameOverScreen struct{}
-
-func (g *gameOverScreen) key(a *App, ev *tcell.EventKey) {
-	switch {
-	case ev.Key() == tcell.KeyEnter:
-		a.newRun()
-	case input.IsQuit(ev):
-		a.quit = true
-	}
-}
-
-func (g *gameOverScreen) tick(a *App, now time.Time, dt float64) {
-	st := a.state
-	a.present() // the last frame stays visible behind the message
-	render.DrawMessage(a.scr, []string{
-		"YOU DIED",
-		"",
-		fmt.Sprintf("Kills: %d    Time: %s    Tier: %d", st.Kills, render.Clock(st.Time), st.Tier),
-		"",
-		"Enter: try again    Esc: quit",
-	})
-	a.scr.Show()
 }

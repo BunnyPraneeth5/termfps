@@ -77,7 +77,7 @@ func run() (exitCode int) {
 		restore()
 	}()
 
-	return app.Run(screen, arena, cfg, restore)
+	return app.Run(screen, []*world.Map{arena}, cfg, restore)
 }
 
 // parseFlags reads and checks the command-line flags. On a bad value it
@@ -123,5 +123,9 @@ func parseFlags() (cfg app.Config, ok bool) {
 		// "input" panics in the input goroutine on the first key press.
 		PanicMode: os.Getenv("TERMFPS_PANIC"),
 		Textures:  *textures,
+		// Defaults for settings that have no flag (the Settings menu changes them).
+		MinimapAtStart: true,
+		Sound:          true,
+		Volume:         80,
 	}, true
 }

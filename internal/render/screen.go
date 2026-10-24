@@ -25,7 +25,7 @@ func DrawTooSmall(s tcell.Screen) {
 	lines := []string{
 		"Terminal too small",
 		fmt.Sprintf("%dx%d, need %dx%d", w, h, MinCols, MinRows),
-		"Resize or press Esc",
+		"Resize, or Ctrl+C to quit",
 	}
 	top := max((h-len(lines))/2, 0)
 	for i, line := range lines {

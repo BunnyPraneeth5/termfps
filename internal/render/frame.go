@@ -138,3 +138,10 @@ func wallSpan(f *Frame, dist float64) (start, end int) {
 func clamp(v, lo, hi float64) float64 {
 	return math.Min(math.Max(v, lo), hi)
 }
+
+// Dim darkens every pixel to a third, for the paused game behind a menu.
+func Dim(f *Frame) {
+	for i := range f.Pix {
+		f.Pix[i].Gray /= 3
+	}
+}

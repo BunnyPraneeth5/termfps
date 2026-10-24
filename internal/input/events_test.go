@@ -4,6 +4,8 @@ import (
 	"testing"
 
 	"github.com/gdamore/tcell/v2"
+
+	"github.com/BunnyPraneeth5/termfps/internal/ui"
 )
 
 func TestKeyFor(t *testing.T) {
@@ -80,5 +82,28 @@ func TestIsQuit(t *testing.T) {
 	}
 	if IsQuit(tcell.NewEventKey(tcell.KeyRune, 'q', tcell.ModNone)) {
 		t.Error("q (turn left) counts as quit")
+	}
+}
+
+func TestMenuKeyFor(t *testing.T) {
+	cases := []struct {
+		ev   *tcell.EventKey
+		want ui.Key
+	}{
+		{tcell.NewEventKey(tcell.KeyUp, 0, tcell.ModNone), ui.KeyUp},
+		{tcell.NewEventKey(tcell.KeyRune, 'W', tcell.ModNone), ui.KeyUp},
+		{tcell.NewEventKey(tcell.KeyRune, 's', tcell.ModNone), ui.KeyDown},
+		{tcell.NewEventKey(tcell.KeyLeft, 0, tcell.ModNone), ui.KeyLeft},
+		{tcell.NewEventKey(tcell.KeyRune, 'd', tcell.ModNone), ui.KeyRight},
+		{tcell.NewEventKey(tcell.KeyEnter, 0, tcell.ModNone), ui.KeyEnter},
+		{tcell.NewEventKey(tcell.KeyEscape, 0, tcell.ModNone), ui.KeyBack},
+	}
+	for _, c := range cases {
+		if got, ok := MenuKeyFor(c.ev); !ok || got != c.want {
+			t.Errorf("%s: MenuKeyFor = %v, %v; want %v, true", c.ev.Name(), got, ok, c.want)
+		}
+	}
+	if _, ok := MenuKeyFor(tcell.NewEventKey(tcell.KeyRune, ' ', tcell.ModNone)); ok {
+		t.Error("Space counts as a menu key")
 	}
 }

@@ -35,7 +35,8 @@ func newTestApp(t *testing.T) (*App, tcell.SimulationScreen) {
 	if err != nil {
 		t.Fatalf("Parse: %v", err)
 	}
-	a := New(s, m, Config{FPS: 30, KeyMode: "events", PixelAspect: 1}, t0)
+	a := New(s, []*world.Map{m}, Config{FPS: 30, KeyMode: "events", PixelAspect: 1, MinimapAtStart: true}, t0)
+	a.newRun() // start in the game, past the title menu
 	return a, s
 }
 
@@ -68,15 +69,6 @@ func TestStepDrawsGame(t *testing.T) {
 	}
 	if str, _, _ := s.Get(0, 10); str == " " || str == "" {
 		t.Errorf("view cell (0, 10) = %q, want a wall or floor character", str)
-	}
-}
-
-func TestEscAndCtrlCQuit(t *testing.T) {
-	for _, ev := range []*tcell.EventKey{key(tcell.KeyEscape, 0), key(tcell.KeyCtrlC, 0)} {
-		a, _ := newTestApp(t)
-		if !a.step(t0.Add(time.Second/30), []tcell.Event{ev}) {
-			t.Errorf("%v didn't quit", ev.Name())
-		}
 	}
 }
 
@@ -160,6 +152,7 @@ type recordScreen struct {
 }
 
 func (r *recordScreen) key(a *App, ev *tcell.EventKey)         { r.keys++ }
+func (r *recordScreen) click(a *App, x, y int)                 {}
 func (r *recordScreen) tick(a *App, now time.Time, dt float64) { r.ticks++ }
 
 // After switchTo, keys and frames go to the new screen.
@@ -206,7 +199,8 @@ func TestZombieKillsPlayerAndRetry(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Parse: %v", err)
 	}
-	a := New(s, m, Config{FPS: 30, KeyMode: "events", PixelAspect: 1}, t0)
+	a := New(s, []*world.Map{m}, Config{FPS: 30, KeyMode: "events", PixelAspect: 1}, t0)
+	a.newRun()
 	a.state.Mode = game.ModeHalfBlock
 
 	now := t0

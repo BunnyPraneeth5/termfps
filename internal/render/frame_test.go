@@ -126,3 +126,14 @@ func TestDrawFrameEmptyFrame(t *testing.T) {
 		t.Errorf("len(Pix) = %d, want 0", len(f.Pix))
 	}
 }
+
+func TestDim(t *testing.T) {
+	var f Frame
+	f.Resize(2, 1)
+	f.Pix[0] = Pixel{Gray: 240, Tint: TintRed}
+	f.Pix[1] = Pixel{Gray: 2}
+	Dim(&f)
+	if f.Pix[0] != (Pixel{Gray: 80, Tint: TintRed}) || f.Pix[1].Gray != 0 {
+		t.Errorf("Dim: %+v, want gray 80 (tint kept) and 0", f.Pix)
+	}
+}

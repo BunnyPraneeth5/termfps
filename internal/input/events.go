@@ -4,6 +4,8 @@ import (
 	"unicode"
 
 	"github.com/gdamore/tcell/v2"
+
+	"github.com/BunnyPraneeth5/termfps/internal/ui"
 )
 
 // KeyFor maps a tcell key event to a game key. ok is false for keys the game
@@ -78,4 +80,36 @@ func Pump(s tcell.Screen, out chan<- tcell.Event, panicOnKey bool) {
 		}
 		out <- ev
 	}
+}
+
+// MenuKeyFor maps a tcell key event to a menu key: arrows or W/A/S/D,
+// Enter, Esc. Space is left out: it's fire, and a held Space after dying
+// would pick a menu item by accident.
+func MenuKeyFor(ev *tcell.EventKey) (k ui.Key, ok bool) {
+	switch ev.Key() {
+	case tcell.KeyUp:
+		return ui.KeyUp, true
+	case tcell.KeyDown:
+		return ui.KeyDown, true
+	case tcell.KeyLeft:
+		return ui.KeyLeft, true
+	case tcell.KeyRight:
+		return ui.KeyRight, true
+	case tcell.KeyEnter:
+		return ui.KeyEnter, true
+	case tcell.KeyEscape:
+		return ui.KeyBack, true
+	case tcell.KeyRune:
+		switch unicode.ToLower(ev.Rune()) {
+		case 'w':
+			return ui.KeyUp, true
+		case 's':
+			return ui.KeyDown, true
+		case 'a':
+			return ui.KeyLeft, true
+		case 'd':
+			return ui.KeyRight, true
+		}
+	}
+	return 0, false
 }

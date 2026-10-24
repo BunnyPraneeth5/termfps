@@ -1,6 +1,6 @@
 // Package app runs the game: the main loop, the current screen, and the
 // wiring between input, game state and rendering. main.go only does startup
-// (flags, map, terminal) and crash handling, then calls Run.
+// (flags, maps, terminal) and crash handling, then calls Run.
 package app
 
 import (
@@ -18,25 +18,34 @@ import (
 	"github.com/BunnyPraneeth5/termfps/internal/world"
 )
 
-// Config holds the startup options (from command-line flags).
+// Config holds the settings. They start from the command-line flags; the
+// Settings menu changes them while the game runs (P1-11).
 type Config struct {
-	FPS         int     // target frames per second
-	KeyMode     string  // "async" (real key state, Windows) or "events"
-	PixelAspect float64 // pixel height / width
-	PanicMode   string  // TERMFPS_PANIC test switch: "", "1" or "input"
-	Textures    bool    // wall textures on (P1-10); a menu setting in P1-11
+	FPS            int     // target frames per second
+	KeyMode        string  // "async" (real key state, Windows) or "events"
+	PixelAspect    float64 // pixel height / width
+	PanicMode      string  // TERMFPS_PANIC test switch: "", "1" or "input"
+	Textures       bool    // wall textures on (P1-10)
+	MinimapAtStart bool    // each run starts with the minimap shown
+	Sound          bool    // sound on (used from P1-17)
+	Volume         int     // sound volume in percent, 0-100 (used from P1-17)
 }
 
 // App is everything the loop needs between frames.
 type App struct {
-	scr     tcell.Screen
-	cfg     Config
-	level   *world.Map // the map as loaded; each run plays on a fresh copy
-	state   *game.State
-	frame   render.Frame
-	keys    input.Tracker // which movement keys count as held (D12)
-	focused bool          // terminal has focus (async keys only count then)
-	current screen        // what's showing: playing now, menus later (P1-11)
+	scr      tcell.Screen
+	cfg      Config
+	maps     []*world.Map // as loaded; each run plays on a fresh copy
+	mapIndex int          // the map Play starts
+	state    *game.State
+	frame    render.Frame
+	keys     input.Tracker // which movement keys count as held (D12)
+	focused  bool          // terminal has focus (async keys only count then)
+	current  screen        // what's showing: a menu, the game, game over
+
+	// mouseDown is whether the left button was down at the last mouse
+	// event, so holding it clicks once.
+	mouseDown bool
 
 	// sprites is the per-frame list handed to the renderer, reused between
 	// frames so it doesn't allocate.
@@ -64,20 +73,21 @@ const tierNoticeFor = 3 * time.Second
 
 const caution = "Half-block needs a truecolor terminal and more bandwidth. Use ASCII over slow SSH."
 
-// New sets up the app on an initialized screen, starting on the playing
-// screen at time now.
-func New(scr tcell.Screen, m *world.Map, cfg Config, now time.Time) *App {
+// New sets up the app on an initialized screen at time now, showing the
+// title menu. maps must not be empty.
+func New(scr tcell.Screen, maps []*world.Map, cfg Config, now time.Time) *App {
 	a := &App{
 		scr:     scr,
 		cfg:     cfg,
-		level:   m,
-		state:   game.NewState(m.Clone()),
+		maps:    maps,
 		frame:   render.Frame{PixelAspect: cfg.PixelAspect, Textures: cfg.Textures},
 		focused: true,
 		start:   now,
 		last:    now,
 	}
-	a.state.Rand = newRand() // real games differ each time; tests reset it if needed
+	// A state exists from the start, so the render mode has a home before
+	// the first run.
+	a.state = game.NewState(maps[0].Clone())
 	// Half-block needs 24-bit color (D17). tcell reports 1<<24 colors when it
 	// has truecolor, and fewer with TCELL_TRUECOLOR=disable or NO_COLOR.
 	if scr.Colors() < 1<<24 {
@@ -89,20 +99,21 @@ func New(scr tcell.Screen, m *world.Map, cfg Config, now time.Time) *App {
 	if cfg.KeyMode == "async" {
 		scr.EnableFocus()
 	}
+	scr.EnableMouse(tcell.MouseButtonEvents) // clicks only, no motion (D28)
 	// FrameSize(scr.Size()) passes Size's two results as the two arguments.
 	a.frame.Resize(render.FrameSize(scr.Size()))
-	a.switchTo(&playingScreen{})
+	a.switchTo(a.titleMenu())
 	return a
 }
 
-// newRun starts a fresh run on a clean copy of the map, keeping the
-// player's render mode and minimap choice.
+// newRun starts a fresh run on a clean copy of the selected map, keeping
+// the render mode. The minimap starts as the settings say.
 func (a *App) newRun() {
 	old := a.state
-	a.state = game.NewState(a.level.Clone())
+	a.state = game.NewState(a.maps[a.mapIndex].Clone())
 	a.state.Mode = old.Mode
-	a.state.ShowMinimap = old.ShowMinimap
-	a.state.Rand = newRand()
+	a.state.ShowMinimap = a.cfg.MinimapAtStart
+	a.state.Rand = newRand() // real games differ each time
 	a.keys = input.Tracker{}
 	a.switchTo(&playingScreen{})
 }
@@ -135,8 +146,8 @@ func (a *App) switchTo(s screen) {
 // Run starts the input goroutine and runs the frame loop until the player
 // quits. restore puts the terminal back; Run calls it itself only when the
 // input goroutine panics (main's deferred handler covers everything else).
-func Run(scr tcell.Screen, m *world.Map, cfg Config, restore func()) (exitCode int) {
-	a := New(scr, m, cfg, time.Now())
+func Run(scr tcell.Screen, maps []*world.Map, cfg Config, restore func()) (exitCode int) {
+	a := New(scr, maps, cfg, time.Now())
 
 	// A channel passes values between goroutines. The buffer (64) lets the
 	// input goroutine queue events while the main loop is busy drawing.
@@ -160,7 +171,8 @@ func Run(scr tcell.Screen, m *world.Map, cfg Config, restore func()) (exitCode i
 		input.Pump(scr, events, cfg.PanicMode == "input")
 	}()
 
-	ticker := time.NewTicker(time.Second / time.Duration(cfg.FPS))
+	fps := a.cfg.FPS
+	ticker := time.NewTicker(time.Second / time.Duration(fps))
 	defer ticker.Stop()
 
 	var batch []tcell.Event // reused every frame
@@ -188,6 +200,10 @@ func Run(scr tcell.Screen, m *world.Map, cfg Config, restore func()) (exitCode i
 		if a.step(now, batch) {
 			return 0
 		}
+		if a.cfg.FPS != fps { // changed in the Settings menu
+			fps = a.cfg.FPS
+			ticker.Reset(time.Second / time.Duration(fps))
+		}
 	}
 }
 
@@ -209,10 +225,19 @@ func (a *App) step(now time.Time, events []tcell.Event) (quit bool) {
 				return true // Ctrl+C quits from any screen (D24)
 			}
 			a.current.key(a, ev)
+		case *tcell.EventMouse:
+			// A click is the left button going down; tcell also reports
+			// the release (no buttons), which only resets mouseDown.
+			down := ev.Buttons()&tcell.Button1 != 0
+			if down && !a.mouseDown {
+				x, y := ev.Position()
+				a.current.click(a, x, y)
+			}
+			a.mouseDown = down
 		}
-	}
-	if a.quit {
-		return true
+		if a.quit {
+			return true
+		}
 	}
 
 	if a.cfg.PanicMode == "1" && now.Sub(a.start) > time.Second {

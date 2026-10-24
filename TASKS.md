@@ -220,7 +220,7 @@ Estimated: about 5 weekends.
 - `CastRay` also returns where on the wall the ray hit. Wall characters `#` brick, `%` stone, `&` metal map to 16x16 grayscale text textures (embedded). Fog and side shading still apply. Textures on/off flag (setting in P1-11).
 - Acceptance: unit tests for the hit position and texture sampling. On screen: textures look right and line up at corners; turning them off gives the old flat look.
 
-### [ ] P1-11: Menus: start, pause, settings (keyboard + mouse clicks)
+### [~] P1-11: Menus: start, pause, settings (keyboard + mouse clicks)
 - New `internal/ui` menu model (items, selection, values), tested without a terminal, plus drawing.
 - Start: Play, Select map, Settings, Quit. Esc during play -> Pause: Resume, Settings, Restart, Quit to menu (game frozen and dimmed behind). Settings: render mode, FPS 30/60, minimap at start, textures, sound on/off + volume (applies from P1-17), key mode, pixel aspect.
 - Keyboard: Up/Down or W/S, Enter, Left/Right, Esc back. Mouse: click an item to select it. Ctrl+C quits from anywhere.
