@@ -180,3 +180,4 @@ Template:
 - Issues found: tcell drops Shift from upper-case letters (a test expectation of mine assumed it kept it); one of my bash heredoc edits failed before changing anything and was redone from a script file.
 - Not done: on-screen check that nothing changed (user); not pushed.
 - Next: user check of S1; S2 (tcell v3) needs the user's OK for the dependency change first.
+- Update: the user checked S1 on screen (works, nothing changed) and marked it done; S2 approved, including the tcell v2 -> v3 dependency change.

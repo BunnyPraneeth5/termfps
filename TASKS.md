@@ -273,7 +273,7 @@ Ideas and reference from S0ra (YouTube + Discord, 2026-10-23): events-mode input
 
 A separate track from maps and gameplay (D39): finishing what S0ra suggested (P1-14 and P1-15 stay [~] until then). Tasks S1 to Sn; the outline below is from the 2026-10-25 research (libasciic source, crossterm events, tcell releases). Details get confirmed with the user before each one starts.
 
-### [~] S1: Our own terminal layer
+### [x] S1: Our own terminal layer
 - New `internal/term`: our screen interface (size, put a cell, show, clear, sync), our event types (key with pressed / released / repeat, mouse, resize, focus), a tcell v2 adapter, and a fake screen for tests. app, render and ui use only `term`.
 - Why first: tcell v3 removes the simulation screen our tests use, and this layer means switching to tcell v3, or to our own input reader, only touches the adapter.
 - Acceptance: nothing changes on screen; all tests pass on the fake screen; build, vet, gofmt, tests on Windows and Linux CI.
