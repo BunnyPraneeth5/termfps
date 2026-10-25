@@ -71,6 +71,9 @@ func (p *playingScreen) tick(a *App, now time.Time, dt float64) {
 
 	st := a.state
 	game.Update(st, in, dt)
+	if st.HasEvent(game.EventRenderModeChanged) {
+		a.persist() // V changed a setting
+	}
 	if st.HasEvent(game.EventRenderModeChanged) && st.Mode == game.ModeHalfBlock && !a.cautionShown {
 		a.cautionShown = true
 		a.cautionUntil = now.Add(cautionFor)
@@ -78,14 +81,15 @@ func (p *playingScreen) tick(a *App, now time.Time, dt float64) {
 	if st.HasEvent(game.EventTierUp) {
 		a.tierUntil = now.Add(tierNoticeFor)
 	}
-	if n := unlocks(a.unlocked, a.mapIndex, st.Time, len(a.maps)); n > a.unlocked {
-		a.unlocked = n
+	if n := unlocks(a.progress.UnlockedMaps, a.mapIndex, st.Time, len(a.maps)); n > a.progress.UnlockedMaps {
+		a.progress.UnlockedMaps = n
+		a.persist()
 		a.unlockUntil = now.Add(tierNoticeFor)
 	}
 	notice := ""
 	switch {
 	case now.Before(a.unlockUntil):
-		notice = fmt.Sprintf("New map unlocked: %s (Select map in the main menu).", a.maps[a.unlocked-1].Name)
+		notice = fmt.Sprintf("New map unlocked: %s (Select map in the main menu).", a.maps[a.progress.UnlockedMaps-1].Name)
 	case now.Before(a.tierUntil):
 		notice = fmt.Sprintf("TIER %d: enemies are tougher and come faster.", st.Tier)
 	case now.Before(a.cautionUntil) && st.Mode == game.ModeHalfBlock:
@@ -116,6 +120,7 @@ func (p *playingScreen) tick(a *App, now time.Time, dt float64) {
 	a.times.add(frameTimes{draw: t1.Sub(t0), present: t2.Sub(t1), show: time.Since(t2)})
 
 	if st.Player.Dead() {
+		a.endRun() // before the menu, so it shows the updated best
 		a.switchTo(a.gameOverMenu())
 	}
 }

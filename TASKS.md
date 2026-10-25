@@ -232,7 +232,7 @@ Estimated: about 5 weekends.
 - Minimap shows a window around the player when the map doesn't fit.
 - Acceptance: tests: every embedded map parses, every open cell is reachable, header parsing, unlock rule, minimap window. On screen: all four maps play; the minimap scrolls on big ones.
 
-### [ ] P1-13: Saving settings and progress
+### [~] P1-13: Saving settings and progress
 - `%AppData%\termfps\save.json` (`os.UserConfigDir`): settings, unlocked maps, best kills / time / tier per map, total kills. Saved automatically when a setting changes or a run ends.
 - Atomic write (temp file + rename). A damaged file -> message in the menu, the file kept as `save.json.bad`, defaults used.
 - Acceptance: tests (temp dir): save and load round trip, damaged file handling, atomic write. On screen: settings and bests survive a restart.

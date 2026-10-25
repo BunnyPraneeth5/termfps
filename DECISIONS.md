@@ -210,3 +210,9 @@ Format: what, why, trade-off, revisit when.
 - Why: Esc already means "back" everywhere else, so it shouldn't quit by accident on the first screen. Showing the sound settings now keeps the settings list stable for P1-13 saving.
 - Trade-off: while the game runs, the terminal's own mouse text selection doesn't work (most terminals allow Shift+drag to select anyway).
 - Revisit when: P1-16 (mouse in game), or if players miss text selection.
+
+## D34: Save file details (2026-10-25)
+- What: saved settings replace the flag defaults, but a flag given on the command line (`-fps`, `-keys`, `-aspect`, `-textures`) wins for that launch, and the next save stores it. A run counts (bests, total kills) when the player dies, restarts, quits to the menu, or presses Ctrl+C mid-run; each run counts once. Bests are per field (best kills, best time and best tier can come from different runs). Values the game can't use (unknown render mode, FPS out of range, wrong version) make the file "damaged": kept as `save.json.bad`, defaults used, the menu says why. A file that exists but can't be read is left alone (it may only be locked), with a message. If the saved key mode is async on a system without it, events is used and the menu says so.
+- Why: flags are for testing a launch without editing the save; a run quit early is still a run the player played.
+- Trade-off: a mistyped flag value gets saved if a setting is then changed in the menu.
+- Revisit when: settings gain values that need migrating (bump `save.Version`).

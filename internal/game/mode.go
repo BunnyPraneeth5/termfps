@@ -30,3 +30,14 @@ func (m RenderMode) String() string {
 	}
 	return "unknown"
 }
+
+// ParseRenderMode is the reverse of String, for modes read from the save
+// file. ok is false for an unknown name.
+func ParseRenderMode(name string) (m RenderMode, ok bool) {
+	for m := RenderMode(0); m < numModes; m++ {
+		if m.String() == name {
+			return m, true
+		}
+	}
+	return 0, false
+}

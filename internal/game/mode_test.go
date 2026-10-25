@@ -43,3 +43,14 @@ func TestRenderModeString(t *testing.T) {
 		}
 	}
 }
+
+func TestParseRenderMode(t *testing.T) {
+	for m := RenderMode(0); m < numModes; m++ {
+		if got, ok := ParseRenderMode(m.String()); !ok || got != m {
+			t.Errorf("ParseRenderMode(%q) = %v, %v; want %v, true", m.String(), got, ok, m)
+		}
+	}
+	if _, ok := ParseRenderMode("sixel"); ok {
+		t.Error("unknown name parsed")
+	}
+}

@@ -12,6 +12,7 @@ import (
 	"os"
 	"runtime"
 	"runtime/debug"
+	"strings"
 	"sync"
 
 	"github.com/gdamore/tcell/v2"
@@ -19,6 +20,7 @@ import (
 	"github.com/BunnyPraneeth5/termfps/internal/app"
 	"github.com/BunnyPraneeth5/termfps/internal/input"
 	"github.com/BunnyPraneeth5/termfps/internal/render"
+	"github.com/BunnyPraneeth5/termfps/internal/save"
 	"github.com/BunnyPraneeth5/termfps/internal/world"
 )
 
@@ -39,9 +41,19 @@ func main() {
 // process exit code. exitCode is a named result so the deferred panic
 // handler can change it.
 func run() (exitCode int) {
-	cfg, ok := parseFlags()
+	flagCfg, explicit, ok := parseFlags()
 	if !ok {
 		return 2
+	}
+	// Saved settings replace the flag defaults; flags given on the command
+	// line win over both. Save problems are shown in the menu, not here.
+	saved, settings := loadSave()
+	cfg := flagCfg
+	if settings != nil {
+		var note string
+		cfg, note = app.ApplySettings(flagCfg, *settings)
+		cfg = withFlags(cfg, flagCfg, explicit)
+		saved.Message = strings.TrimSpace(saved.Message + " " + note)
 	}
 
 	// Parse the maps before opening the screen, so errors print normally.
@@ -79,12 +91,44 @@ func run() (exitCode int) {
 		restore()
 	}()
 
-	return app.Run(screen, maps, cfg, restore)
+	return app.Run(screen, maps, cfg, saved, restore)
+}
+
+// loadSave opens the save file in the user's config folder (P1-13). It
+// returns the progress and any problem for the menu, plus the saved
+// settings (nil on a first run or when the file couldn't be used).
+func loadSave() (app.Saved, *save.Settings) {
+	path, err := save.DefaultPath()
+	if err != nil {
+		return app.Saved{Message: "Progress and settings won't be saved: " + err.Error()}, nil
+	}
+	store := &save.Store{Path: path}
+	data, problem := save.Load(*store)
+	return app.Saved{Store: store, Progress: data.Progress, Message: problem}, data.Settings
+}
+
+// withFlags copies the settings whose flags were given on the command line
+// (explicit, by flag name) from flagCfg into cfg.
+func withFlags(cfg, flagCfg app.Config, explicit map[string]bool) app.Config {
+	if explicit["fps"] {
+		cfg.FPS = flagCfg.FPS
+	}
+	if explicit["keys"] {
+		cfg.KeyMode = flagCfg.KeyMode
+	}
+	if explicit["aspect"] {
+		cfg.PixelAspect = flagCfg.PixelAspect
+	}
+	if explicit["textures"] {
+		cfg.Textures = flagCfg.Textures
+	}
+	return cfg
 }
 
 // parseFlags reads and checks the command-line flags. On a bad value it
-// prints why and returns ok = false.
-func parseFlags() (cfg app.Config, ok bool) {
+// prints why and returns ok = false. explicit holds the names of the flags
+// given on the command line (not left at their defaults).
+func parseFlags() (cfg app.Config, explicit map[string]bool, ok bool) {
 	targetFPS := flag.Int("fps", 30, "target frames per second (1-240)")
 	// Real key state (async) is the default on Windows, where it exists (D19).
 	defaultKeys := "events"
@@ -95,25 +139,29 @@ func parseFlags() (cfg app.Config, ok bool) {
 	aspect := flag.Float64("aspect", render.DefaultPixelAspect, "pixel height / width, for tuning wall proportions (0.5-2.0)")
 	textures := flag.Bool("textures", true, "wall textures (brick, stone, metal); -textures=false for flat walls")
 	flag.Parse()
+	explicit = map[string]bool{}
+	// flag.Visit calls the function for each flag that was set on the
+	// command line.
+	flag.Visit(func(f *flag.Flag) { explicit[f.Name] = true })
 
 	if *aspect < 0.5 || *aspect > 2.0 {
 		fmt.Fprintf(os.Stderr, "termfps: -aspect must be between 0.5 and 2.0, got %v\n", *aspect)
-		return cfg, false
+		return cfg, nil, false
 	}
 	if *targetFPS < 1 || *targetFPS > 240 {
 		fmt.Fprintf(os.Stderr, "termfps: -fps must be between 1 and 240, got %d\n", *targetFPS)
-		return cfg, false
+		return cfg, nil, false
 	}
 	switch *keyMode {
 	case "events":
 	case "async":
 		if err := input.AsyncSupported(); err != nil {
 			fmt.Fprintln(os.Stderr, "termfps: -keys async:", err)
-			return cfg, false
+			return cfg, nil, false
 		}
 	default:
 		fmt.Fprintf(os.Stderr, "termfps: -keys must be events or async, got %q\n", *keyMode)
-		return cfg, false
+		return cfg, nil, false
 	}
 
 	return app.Config{
@@ -129,7 +177,7 @@ func parseFlags() (cfg app.Config, ok bool) {
 		MinimapAtStart: true,
 		Sound:          true,
 		Volume:         80,
-	}, true
+	}, explicit, true
 }
 
 // loadMaps parses every maps/*.txt file in fsys, in file name order (the

@@ -15,34 +15,44 @@ import (
 	"github.com/BunnyPraneeth5/termfps/internal/game"
 	"github.com/BunnyPraneeth5/termfps/internal/input"
 	"github.com/BunnyPraneeth5/termfps/internal/render"
+	"github.com/BunnyPraneeth5/termfps/internal/save"
 	"github.com/BunnyPraneeth5/termfps/internal/world"
 )
 
 // Config holds the settings. They start from the command-line flags; the
 // Settings menu changes them while the game runs (P1-11).
 type Config struct {
-	FPS            int     // target frames per second
-	KeyMode        string  // "async" (real key state, Windows) or "events"
-	PixelAspect    float64 // pixel height / width
-	PanicMode      string  // TERMFPS_PANIC test switch: "", "1" or "input"
-	Textures       bool    // wall textures on (P1-10)
-	MinimapAtStart bool    // each run starts with the minimap shown
-	Sound          bool    // sound on (used from P1-17)
-	Volume         int     // sound volume in percent, 0-100 (used from P1-17)
+	FPS            int             // target frames per second
+	KeyMode        string          // "async" (real key state, Windows) or "events"
+	PixelAspect    float64         // pixel height / width
+	PanicMode      string          // TERMFPS_PANIC test switch: "", "1" or "input"
+	Textures       bool            // wall textures on (P1-10)
+	Mode           game.RenderMode // render mode at startup (the game state holds it after that)
+	MinimapAtStart bool            // each run starts with the minimap shown
+	Sound          bool            // sound on (used from P1-17)
+	Volume         int             // sound volume in percent, 0-100 (used from P1-17)
 }
 
 // App is everything the loop needs between frames.
 type App struct {
 	scr      tcell.Screen
 	cfg      Config
-	maps     []*world.Map // as loaded; each run plays on a fresh copy
-	mapIndex int          // the map Play starts
-	unlocked int          // how many maps are open, from the first (D26)
+	maps     []*world.Map  // as loaded; each run plays on a fresh copy
+	mapIndex int           // the map Play starts
+	progress save.Progress // unlocked maps, bests, total kills (D25, D26)
+	store    *save.Store   // where progress and settings are saved; nil = not saved
 	state    *game.State
 	frame    render.Frame
 	keys     input.Tracker // which movement keys count as held (D12)
 	focused  bool          // terminal has focus (async keys only count then)
 	current  screen        // what's showing: a menu, the game, game over
+
+	// runActive is true from the start of a run until its result is
+	// recorded, so a run never counts twice.
+	runActive bool
+	// loadMsg is a problem from loading the save file and saveErr the last
+	// failed save; the menus show them.
+	loadMsg, saveErr string
 
 	// mouseDown is whether the left button was down at the last mouse
 	// event, so holding it clicks once.
@@ -87,7 +97,7 @@ func New(scr tcell.Screen, maps []*world.Map, cfg Config, now time.Time) *App {
 		scr:      scr,
 		cfg:      cfg,
 		maps:     maps,
-		unlocked: 1,
+		progress: save.Progress{UnlockedMaps: 1, Best: map[string]save.Best{}},
 		frame:    render.Frame{PixelAspect: cfg.PixelAspect, Textures: cfg.Textures},
 		focused:  true,
 		start:    now,
@@ -96,6 +106,7 @@ func New(scr tcell.Screen, maps []*world.Map, cfg Config, now time.Time) *App {
 	// A state exists from the start, so the render mode has a home before
 	// the first run.
 	a.state = game.NewState(maps[0].Clone())
+	a.state.Mode = cfg.Mode
 	// Half-block needs 24-bit color (D17). tcell reports 1<<24 colors when it
 	// has truecolor, and fewer with TCELL_TRUECOLOR=disable or NO_COLOR.
 	if scr.Colors() < 1<<24 {
@@ -117,12 +128,14 @@ func New(scr tcell.Screen, maps []*world.Map, cfg Config, now time.Time) *App {
 // newRun starts a fresh run on a clean copy of the selected map, keeping
 // the render mode. The minimap starts as the settings say.
 func (a *App) newRun() {
+	a.endRun() // a restarted run still counts
 	old := a.state
 	a.state = game.NewState(a.maps[a.mapIndex].Clone())
 	a.state.Mode = old.Mode
 	a.state.ShowMinimap = a.cfg.MinimapAtStart
 	a.state.Rand = newRand() // real games differ each time
 	a.keys = input.Tracker{}
+	a.runActive = true
 	a.switchTo(&playingScreen{})
 }
 
@@ -154,8 +167,10 @@ func (a *App) switchTo(s screen) {
 // Run starts the input goroutine and runs the frame loop until the player
 // quits. restore puts the terminal back; Run calls it itself only when the
 // input goroutine panics (main's deferred handler covers everything else).
-func Run(scr tcell.Screen, maps []*world.Map, cfg Config, restore func()) (exitCode int) {
+// saved is the save file as loaded at startup (see Saved).
+func Run(scr tcell.Screen, maps []*world.Map, cfg Config, saved Saved, restore func()) (exitCode int) {
 	a := New(scr, maps, cfg, time.Now())
+	a.useSaved(saved)
 
 	// A channel passes values between goroutines. The buffer (64) lets the
 	// input goroutine queue events while the main loop is busy drawing.
@@ -230,6 +245,7 @@ func (a *App) step(now time.Time, events []tcell.Event) (quit bool) {
 			a.focused = ev.Focused
 		case *tcell.EventKey:
 			if ev.Key() == tcell.KeyCtrlC {
+				a.endRun()  // a run quit with Ctrl+C still counts
 				return true // Ctrl+C quits from any screen (D24)
 			}
 			a.current.key(a, ev)

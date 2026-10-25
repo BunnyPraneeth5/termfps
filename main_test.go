@@ -5,6 +5,7 @@ import (
 	"testing"
 	"testing/fstest"
 
+	"github.com/BunnyPraneeth5/termfps/internal/app"
 	"github.com/BunnyPraneeth5/termfps/internal/world"
 )
 
@@ -66,5 +67,16 @@ func TestLoadMapsErrors(t *testing.T) {
 		if _, err := loadMaps(c.fsys); err == nil {
 			t.Errorf("%s: loadMaps succeeded, want an error", c.name)
 		}
+	}
+}
+
+// Flags given on the command line win over saved settings; the others
+// keep the saved value.
+func TestWithFlags(t *testing.T) {
+	saved := app.Config{FPS: 60, KeyMode: "events", PixelAspect: 1.5, Textures: false}
+	flags := app.Config{FPS: 120, KeyMode: "async", PixelAspect: 1.0, Textures: true}
+	got := withFlags(saved, flags, map[string]bool{"fps": true, "textures": true})
+	if got.FPS != 120 || !got.Textures || got.KeyMode != "events" || got.PixelAspect != 1.5 {
+		t.Errorf("withFlags = %+v, want fps and textures from flags, the rest saved", got)
 	}
 }

@@ -24,6 +24,9 @@ type menuScreen struct {
 	// overGame draws the frozen game, dimmed, behind the menu; otherwise
 	// the background is blank.
 	overGame bool
+	// text is the menu's own lines under the title; tick adds the save
+	// problems (if any) after them every frame, so new ones show at once.
+	text []string
 }
 
 func (m *menuScreen) key(a *App, ev *tcell.EventKey) {
@@ -56,6 +59,10 @@ func (m *menuScreen) tick(a *App, now time.Time, dt float64) {
 	} else {
 		a.scr.Clear()
 	}
+	// m.text[:n:n] limits the capacity to n, so append makes a new slice
+	// instead of writing past the end of m.text.
+	n := len(m.text)
+	m.menu.Text = append(m.text[:n:n], a.messages()...)
 	ui.Draw(a.scr, m.menu)
 	a.scr.Show()
 }
@@ -68,7 +75,7 @@ func (a *App) titleMenu() *menuScreen {
 		settings
 		quit
 	)
-	s := &menuScreen{menu: ui.New("TERMFPS", []string{"Survive as long as you can."}, []ui.Item{
+	s := &menuScreen{text: []string{"Survive as long as you can."}, menu: ui.New("TERMFPS", nil, []ui.Item{
 		{Label: "Play"},
 		{Label: "Select map"},
 		{Label: "Settings"},
@@ -98,7 +105,10 @@ func (a *App) mapMenu() *menuScreen {
 	items := make([]ui.Item, 0, len(a.maps)+1)
 	for i, m := range a.maps {
 		it := ui.Item{Label: fmt.Sprintf("%-14s %dx%d", m.Name, m.W, m.H)}
-		if i >= a.unlocked {
+		if b, ok := a.progress.Best[m.Name]; ok { // ok is false if the map has no best yet
+			it.Label += fmt.Sprintf("   best %s, %d kills", render.Clock(b.Time), b.Kills)
+		}
+		if i >= a.progress.UnlockedMaps {
 			it.Disabled = true
 			it.Label += fmt.Sprintf("   locked: survive %s on %s", render.Clock(unlockAfter), a.maps[i-1].Name)
 		}
@@ -147,6 +157,7 @@ func (a *App) pauseMenu() *menuScreen {
 		case restart:
 			a.newRun()
 		case quitToMenu:
+			a.endRun()
 			a.switchTo(a.titleMenu())
 		}
 	}
@@ -168,9 +179,12 @@ func (a *App) gameOverMenu() *menuScreen {
 		mainMenu
 	)
 	st := a.state
-	s := &menuScreen{overGame: true, menu: ui.New("YOU DIED", []string{
+	name := a.maps[a.mapIndex].Name
+	best := a.progress.Best[name] // endRun has already counted this run
+	s := &menuScreen{overGame: true, text: []string{
 		fmt.Sprintf("Kills: %d    Time: %s    Tier: %d", st.Kills, render.Clock(st.Time), st.Tier),
-	}, []ui.Item{
+		fmt.Sprintf("Best on %s: %d kills, %s, tier %d", name, best.Kills, render.Clock(best.Time), best.Tier),
+	}, menu: ui.New("YOU DIED", nil, []ui.Item{
 		{Label: "Try again"},
 		{Label: "Main menu"},
 	})}
@@ -242,13 +256,15 @@ func (a *App) settingsMenu(back *menuScreen) *menuScreen {
 		Value: slices.Index(aspects, a.cfg.PixelAspect)}
 	items[setBack] = ui.Item{Label: "Back"}
 
-	s := &menuScreen{overGame: back.overGame, menu: ui.New("SETTINGS",
-		[]string{"Sound isn't in the game yet; its settings are kept for when it is."}, items)}
+	s := &menuScreen{overGame: back.overGame,
+		text: []string{"Sound isn't in the game yet; its settings are kept for when it is."},
+		menu: ui.New("SETTINGS", nil, items)}
 	s.act = func(a *App, r ui.Result) {
 		it := s.menu.Items[s.menu.Selected]
 		switch {
 		case r == ui.Back || s.menu.Selected == setBack:
 			a.switchTo(back)
+			return
 		case r != ui.Changed:
 			return
 		case s.menu.Selected == setMode:
@@ -275,6 +291,7 @@ func (a *App) settingsMenu(back *menuScreen) *menuScreen {
 			a.cfg.PixelAspect = aspects[it.Value]
 			a.frame.PixelAspect = a.cfg.PixelAspect
 		}
+		a.persist() // saved on every change (D25)
 	}
 	return s
 }

@@ -285,8 +285,8 @@ func TestMapUnlockAndSelect(t *testing.T) {
 	a.state.Spawning = false
 	a.state.Time = unlockAfter - 0.01
 	press(a, &now)
-	if a.unlocked != 2 || !screenHas(s, "New map unlocked: Second") {
-		t.Fatalf("unlocked = %d after 5:00, want 2 with a notice", a.unlocked)
+	if a.progress.UnlockedMaps != 2 || !screenHas(s, "New map unlocked: Second") {
+		t.Fatalf("unlocked = %d after 5:00, want 2 with a notice", a.progress.UnlockedMaps)
 	}
 	press(a, &now, esc, up, enter) // Pause -> Quit to menu
 	press(a, &now, down, enter)    // Select map
