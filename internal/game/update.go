@@ -28,6 +28,10 @@ type Input struct {
 	Reload                  bool // reload asked for this frame
 	ToggleMinimap           bool // one-shot: true only on the frame M was pressed
 	CycleRenderMode         bool // one-shot: true only on the frame V was pressed
+	// TurnSlow and MoveSlow take a fraction (0-1) off the turn and move
+	// speed. Terminal key events use them while a key might still be a
+	// short tap (P1-14). 0 = full speed, so other input can leave them out.
+	TurnSlow, MoveSlow float64
 }
 
 // Update advances the game by dt seconds. All speeds are per second, so the
@@ -81,7 +85,7 @@ func movePlayer(s *State, in Input, dt float64) {
 	p := &s.Player // pointer: changes below modify s.Player itself, not a copy
 
 	turn := axis(in.TurnRight, in.TurnLeft) // right = growing angle (y points down)
-	p.Angle = normalizeAngle(p.Angle + turn*TurnSpeed*dt)
+	p.Angle = normalizeAngle(p.Angle + turn*TurnSpeed*(1-in.TurnSlow)*dt)
 
 	forward := axis(in.Forward, in.Back)
 	strafe := axis(in.StrafeRight, in.StrafeLeft)
@@ -94,8 +98,9 @@ func movePlayer(s *State, in Input, dt float64) {
 	moveY := dirY*forward + rightY*strafe
 	// Forward + strafe together would be sqrt(2) times faster; normalize.
 	length := math.Hypot(moveX, moveY)
-	dx := moveX / length * MoveSpeed * dt
-	dy := moveY / length * MoveSpeed * dt
+	speed := MoveSpeed * (1 - in.MoveSlow)
+	dx := moveX / length * speed * dt
+	dy := moveY / length * speed * dt
 	oldX, oldY := p.X, p.Y
 	p.X, p.Y = world.TryMove(s.Map, p.X, p.Y, dx, dy, Radius)
 	p.Bob = normalizeAngle(p.Bob + math.Hypot(p.X-oldX, p.Y-oldY)*BobPerCell)

@@ -67,3 +67,74 @@ func TestKeysAreIndependent(t *testing.T) {
 		t.Errorf("Input = %+v, want only Forward and TurnLeft", in)
 	}
 }
+
+// holdKey sends a press at start, the first repeat after delay, then
+// repeats every 40ms (25 per second, a Linux default) until end.
+func holdKey(tr *Tracker, k Key, start time.Time, delay time.Duration, end time.Time) time.Time {
+	tr.Press(k, start)
+	last := start
+	for at := start.Add(delay); at.Before(end); at = at.Add(ms(40)) {
+		tr.Press(k, at)
+		last = at
+	}
+	return last
+}
+
+// A held key teaches the Tracker the OS repeat delay; later first presses
+// then stay held through that delay, so a 660ms Linux delay doesn't stop
+// movement just before the repeats start.
+func TestLearnsRepeatDelay(t *testing.T) {
+	var tr Tracker
+	holdKey(&tr, KeyForward, t0, ms(660), t0.Add(ms(1500)))
+	if tr.delay != ms(660) {
+		t.Fatalf("learned delay = %v, want 660ms", tr.delay)
+	}
+	again := t0.Add(5 * time.Second)
+	tr.Press(KeyTurnLeft, again) // a different key: the delay is the same for all
+	if !tr.Held(KeyTurnLeft, again.Add(ms(700))) {
+		t.Error("not held 700ms after a new press, want held (learned 660ms + margin)")
+	}
+	if tr.Held(KeyTurnLeft, again.Add(ms(800))) {
+		t.Error("held 800ms after a press with no repeats, want released")
+	}
+}
+
+// Two taps 400ms apart are not a key repeat: nothing is learned.
+func TestDoubleTapLearnsNothing(t *testing.T) {
+	var tr Tracker
+	tr.Press(KeyForward, t0)
+	tr.Press(KeyForward, t0.Add(ms(400)))
+	tr.Press(KeyForward, t0.Add(ms(900))) // a third tap, not a quick repeat
+	if tr.delay != 0 {
+		t.Errorf("learned delay = %v from taps, want none", tr.delay)
+	}
+}
+
+// While a key might be a tap it's slowed; once repeats arrive the slowdown
+// fades to nothing. Async-style full speed is 0.
+func TestTapSlowsThenFades(t *testing.T) {
+	var tr Tracker
+	tr.Press(KeyTurnRight, t0)
+	in := tr.Input(t0.Add(ms(100)))
+	if !in.TurnRight || in.TurnSlow != TapTurnSlow || in.MoveSlow != 0 {
+		t.Errorf("during the first window: %+v, want TurnSlow %v, MoveSlow 0", in, TapTurnSlow)
+	}
+	last := holdKey(&tr, KeyTurnRight, t0, ms(500), t0.Add(ms(900)))
+	if in := tr.Input(last.Add(ms(10))); in.TurnSlow != 0 {
+		t.Errorf("400ms into repeats: TurnSlow = %v, want 0 (faded)", in.TurnSlow)
+	}
+}
+
+// A tap turns about 25 degrees, not ~99 (S0ra's report, D31).
+func TestTapTurnIsSmall(t *testing.T) {
+	var tr Tracker
+	tr.Press(KeyTurnRight, t0)
+	angle := 0.0
+	for now := t0; tr.Held(KeyTurnRight, now); now = now.Add(time.Second / 60) {
+		in := tr.Input(now)
+		angle += 180 * (1 - in.TurnSlow) / 60 // TurnSpeed is 180 degrees per second
+	}
+	if angle < 15 || angle > 40 {
+		t.Errorf("one tap turned %.0f degrees, want about 25", angle)
+	}
+}

@@ -216,3 +216,9 @@ Format: what, why, trade-off, revisit when.
 - Why: flags are for testing a launch without editing the save; a run quit early is still a run the player played.
 - Trade-off: a mistyped flag value gets saved if a setting is then changed in the menu.
 - Revisit when: settings gain values that need migrating (bump `save.Version`).
+
+## D35: Events-mode tap handling (2026-10-25)
+- What: the Tracker measures the OS repeat delay (first press to first repeat, confirmed by a quick third event) and uses it plus 100ms as the first window; 550ms until measured. While a key has no repeats yet it might be a tap, so turning runs at 25% speed and moving at 40%; once repeats arrive the slowdown fades out over 150ms. A tap now turns about 25-34 degrees and moves about 0.7 cells (was ~99 degrees and 1.65 cells). Async mode is unchanged.
+- Why: S0ra's report (D31). Without key releases, a tap and the start of a hold look the same for the length of the repeat delay; slowing that stretch makes taps small without cutting holds short.
+- Trade-off: every hold starts slowly for the repeat delay (about 0.5-0.66 s). The first hold of a session may still stop briefly on systems whose repeat delay is over 550ms.
+- Revisit when: real key releases are available (kitty keyboard protocol through tcell).

@@ -146,3 +146,18 @@ func TestOppositeKeysCancel(t *testing.T) {
 			x, y, a, s.Player.X, s.Player.Y, s.Player.Angle)
 	}
 }
+
+// TurnSlow and MoveSlow take that fraction off the speed (P1-14).
+func TestSlowInput(t *testing.T) {
+	s := newOpenState(t)
+	Update(s, Input{TurnRight: true, TurnSlow: 0.75}, 1)
+	if want := TurnSpeed * 0.25; math.Abs(s.Player.Angle-want) > 1e-9 {
+		t.Errorf("angle = %v after 1 s at TurnSlow 0.75, want %v", s.Player.Angle, want)
+	}
+	s = newOpenState(t)
+	x0 := s.Player.X
+	Update(s, Input{Forward: true, MoveSlow: 0.5}, 1) // facing east
+	if got, want := s.Player.X-x0, MoveSpeed*0.5; math.Abs(got-want) > 1e-9 {
+		t.Errorf("moved %v in 1 s at MoveSlow 0.5, want %v", got, want)
+	}
+}

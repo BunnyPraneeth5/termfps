@@ -241,7 +241,7 @@ Estimated: about 5 weekends.
 
 Ideas and reference from S0ra (YouTube + Discord, 2026-10-23): events-mode input on Linux and a "Mixed" ASCII render mode. Key release events (needs a tcell change) are left for when Linux/mac support starts.
 
-### [ ] P1-14: Smoother events-mode keys
+### [~] P1-14: Smoother events-mode keys
 - Tracker learns the OS repeat delay from the first press -> first repeat gap and sets FirstWindow to it plus a margin, so holds don't stop just before repeats begin on Linux (600-660ms delays).
 - Turning eases in over the first ~0.4s of a hold, so a single tap turns ~30-50° instead of ~99°. Movement too, if it feels better.
 - README: in events mode only the last pressed key repeats, so moving + turning together is limited; async (Windows) doesn't have this.

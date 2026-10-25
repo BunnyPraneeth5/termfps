@@ -58,7 +58,7 @@ On Windows you can move and turn at the same time.
 | Flag | Default | What it does |
 |---|---|---|
 | `-fps N` | `30` | Target frames per second (1-240) |
-| `-keys async\|events` | `async` on Windows, `events` elsewhere | `async` reads real key state (Windows only, ignored while the window isn't focused). `events` uses terminal key events. In that mode, moving and turning at the same time may not work. |
+| `-keys async\|events` | `async` on Windows, `events` elsewhere | `async` reads real key state (Windows only, ignored while the window isn't focused). `events` uses terminal key events. In that mode terminals only repeat the last key pressed, so moving and turning at the same time may not work, and a quick tap turns and moves a little (about 25 degrees). |
 | `-aspect X` | `1.0` | Pixel height / width (0.5-2.0). Change it if walls look squashed or stretched with your font. |
 | `-textures=false` | on | Flat gray walls instead of brick, stone and metal textures. |
 
