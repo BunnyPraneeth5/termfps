@@ -269,9 +269,27 @@ Ideas and reference from S0ra (YouTube + Discord, 2026-10-23): events-mode input
 - Balancing (playtest tiers 3+, ammo cap, health pickups or not) and a new demo recording move to "Maps and gameplay update" below, to discuss there. Early balancing is in D30.
 - Acceptance: the user reads the README and it matches the game.
 
+# S0ra follow-ups
+
+A separate track from maps and gameplay (D39): finishing what S0ra suggested (P1-14 and P1-15 stay [~] until then). Tasks S1 to Sn; the outline below is from the 2026-10-25 research (libasciic source, crossterm events, tcell releases). Details get confirmed with the user before each one starts.
+
+### [ ] S1: Our own terminal layer
+- New `internal/term`: our screen interface (size, put a cell, show, clear, sync), our event types (key with pressed / released / repeat, mouse, resize, focus), a tcell v2 adapter, and a fake screen for tests. app, render and ui use only `term`.
+- Why first: tcell v3 removes the simulation screen our tests use, and this layer means switching to tcell v3, or to our own input reader, only touches the adapter.
+- Acceptance: nothing changes on screen; all tests pass on the fake screen; build, vet, gofmt, tests on Windows and Linux CI.
+
+### [ ] S2: Real key releases (tcell v3)
+- Spike first (timeboxed): tcell v3.4+ key events (`Pressed()`, `Repeat()`, kitty protocol event types, Windows key-up). Then a v3 adapter for `term`. In events mode, held keys come from press/release, so moving and turning together works and taps are exact. Terminals without releases keep the P1-14 guessing; async stays the Windows default.
+- Needs the user's OK: tcell v2 -> v3 is a dependency change.
+- Acceptance: unit tests for press/release tracking; on screen (user): events mode in Windows Terminal (and, through S0ra, Ghostty or kitty on Linux) moves and turns at the same time.
+
+### [ ] S3: The rest of the Mixed style
+- Color threshold (libasciic's compression): reuse the previous cell's style when no color channel differs by more than a threshold, so tcell sends fewer color codes. Works for mixed and half-block; a setting, off by default. Measure bytes per frame with and without.
+- Adjustable mixed background brightness (0-100%, default 20%) in Settings.
+- Acceptance: unit tests for the threshold and the background setting; bytes-per-frame numbers recorded; on screen (user): mixed looks right at a few thresholds.
+
 # Maps and gameplay update
 
 Not planned yet: tasks M1 to Mn get written once we've discussed them (D38). Ideas to discuss:
 - Map enhancements to make the game feel better and more realistic (props, doors, hazards, per-map mood and enemy mix, custom maps, minimap fog of war, and more).
 - Carried over from P1-18: balancing playtest (tiers 3+, ammo cap, health pickups or not) and a new demo recording.
-- S0ra follow-ups (P1-14, P1-15 still [~]): true key press/release events, and the rest of the Mixed style (color threshold skipping, adjustable background).

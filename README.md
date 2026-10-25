@@ -172,9 +172,11 @@ Planned next (details in [PRD.md](PRD.md) and [TASKS.md](TASKS.md)):
 
 1. **Maps and gameplay update:** better, more realistic maps and more to do
    in them (being discussed).
-2. **Server / client split** inside the game, needed for the next two.
-3. **You vs an AI agent:** play against Claude Code, Codex, opencode or another CLI agent, in modes like hide and seek or a face-to-face duel.
-4. **Multiplayer:** team deathmatch over LAN, then over SSH.
+2. **S0ra follow-ups:** real key press/release events in more terminals, and
+   the rest of the mixed render style.
+3. **Server / client split** inside the game, needed for the next two.
+4. **You vs an AI agent:** play against Claude Code, Codex, opencode or another CLI agent, in modes like hide and seek or a face-to-face duel.
+5. **Multiplayer:** team deathmatch over LAN, then over SSH.
 
 ## Development
 

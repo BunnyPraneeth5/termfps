@@ -241,3 +241,9 @@ Format: what, why, trade-off, revisit when.
 - Why: the user's choice; the next work is about making maps and gameplay feel better and more realistic, which needs discussing first.
 - Trade-off: balancing past tier 2 stays untested until then.
 - Revisit when: the M1-Mn tasks are written.
+
+## D39: S0ra follow-ups are their own track (2026-10-25)
+- What: the S0ra follow-ups move out of "Maps and gameplay update" into a separate TASKS section, S1 to Sn. Outline: S1 our own terminal layer (`internal/term`, tcell v2 adapter, fake screen for tests), S2 real key releases through tcell v3.4+ (spike first; dependency change needs the user's OK), S3 the rest of the libasciic Mixed style (color threshold, adjustable background). P1-14 and P1-15 stay [~] until they're done.
+- Why: the user's choice: finishing S0ra's suggestions is different work from making maps and gameplay better. Research: tcell v3.4.0 (May 2026) added key release reporting, so no fork is needed; v3 also removes the public simulation screen our tests use, which is why S1 comes first. crossterm confirms releases on Unix need the kitty protocol's event-type flags. libasciic's Mixed: max(r,g,b) brightness, background factor 0-1 (default 0.2), and a per-row color threshold that skips repeating similar colors.
+- Trade-off: S1 is a refactor with no visible change; it pays off when S2 or our own input reader lands.
+- Revisit when: S2's spike shows whether tcell v3 is enough.

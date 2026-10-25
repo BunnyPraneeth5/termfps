@@ -114,7 +114,10 @@ Tasks: TASKS.md "P1". Decisions: DECISIONS.md D21-D31.
 **Not in P1:** mouse-look, mid-game saves, a "clear the level" mode, health pickups (unless balancing needs them), multiplayer, AI agents.
 
 ### Maps and gameplay update (M1-Mn, to be discussed)
-Better, more realistic maps and more to do in them, plus the balancing playtest and new demo carried over from P1-18 and the S0ra follow-ups (true key releases, the rest of the Mixed style). Tasks get written in TASKS.md once discussed (D38).
+Better, more realistic maps and more to do in them, plus the balancing playtest and new demo carried over from P1-18. Tasks get written in TASKS.md once discussed (D38).
+
+### S0ra follow-ups (S1-Sn)
+A separate track (D39): our own terminal layer, real key releases through tcell v3, and the rest of the libasciic Mixed style (color threshold, adjustable background). Outline in TASKS.md.
 
 ### P2: server / client split
 The game logic runs as a server and the screen is a client. Both AI opponents (P3) and multiplayer (P4) need this. `world` and `game` already have no terminal code (D8), which is what makes the split possible.
