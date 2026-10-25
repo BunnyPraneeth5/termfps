@@ -195,44 +195,44 @@ Estimated: about 5 weekends.
 - Sprite images stored as text (like maps), embedded.
 - Acceptance: unit tests: a sprite in front of a wall is drawn, one behind a wall isn't, and size shrinks with distance. On screen: a test sprite looks right and hides behind corners.
 
-### [~] P1-06: Zombies, player health, death
+### [x] P1-06: Zombies, player health, death
 - Green melee enemy: chases along a path around walls (a grid distance map from the player, recomputed when the player changes cell), hits when close. Takes several shots.
 - Player HP 100, shown in the HUD. HP 0 -> Game over screen (kills, time) with Retry or Quit.
 - Acceptance: unit tests for pathfinding around a wall, melee range and damage, taking damage from shots, death. On screen: zombies come around corners and kill you if you don't shoot.
 
-### [~] P1-07: Shooter enemies
+### [x] P1-07: Shooter enemies
 - Red ranged enemy: needs line of sight (raycast), keeps some distance, shoots with a cooldown; accuracy drops with distance. Fragile.
 - Acceptance: unit tests: no shot without line of sight, cooldown respected, hit chance falls with distance. On screen: shooters hold distance and hurt you when they see you.
 
-### [~] P1-08: Survival spawner, tiers, score
+### [x] P1-08: Survival spawner, tiers, score
 - Spawns zombies and shooters at random free cells out of the player's sight and at least a few cells away.
 - Tier up every 20 kills or 4 minutes, whichever comes first: more enemy HP, damage, speed, spawn rate, max alive. HUD shows tier, kills, time.
 - Random source is injectable so tests are repeatable.
 - Acceptance: unit tests: never spawns in sight or too close, tier rules (kills and time), scaling applied. On screen: pressure keeps rising.
 
-### [~] P1-09: Ammo pickups
+### [x] P1-09: Ammo pickups
 - Spawn at random free cells every ~20-40 s, at most 3 alive. Walking over one gives +25 spare (up to a cap). Shown as a sprite and a minimap dot.
 - Acceptance: unit tests: spawn timing and limit, pickup radius, cap. On screen: pickups appear and refill ammo.
 
 ## World, menus, maps, saving
 
-### [~] P1-10: Wall textures
+### [x] P1-10: Wall textures
 - `CastRay` also returns where on the wall the ray hit. Wall characters `#` brick, `%` stone, `&` metal map to 16x16 grayscale text textures (embedded). Fog and side shading still apply. Textures on/off flag (setting in P1-11).
 - Acceptance: unit tests for the hit position and texture sampling. On screen: textures look right and line up at corners; turning them off gives the old flat look.
 
-### [~] P1-11: Menus: start, pause, settings (keyboard + mouse clicks)
+### [x] P1-11: Menus: start, pause, settings (keyboard + mouse clicks)
 - New `internal/ui` menu model (items, selection, values), tested without a terminal, plus drawing.
 - Start: Play, Select map, Settings, Quit. Esc during play -> Pause: Resume, Settings, Restart, Quit to menu (game frozen and dimmed behind). Settings: render mode, FPS 30/60, minimap at start, textures, sound on/off + volume (applies from P1-17), key mode, pixel aspect.
 - Keyboard: Up/Down or W/S, Enter, Left/Right, Esc back. Mouse: click an item to select it. Ctrl+C quits from anywhere.
 - Acceptance: unit tests for menu navigation and value changes. On screen: all menus work by keyboard and by clicking; settings take effect right away.
 
-### [~] P1-12: Four maps, map select, unlocks, scrolling minimap
+### [x] P1-12: Four maps, map select, unlocks, scrolling minimap
 - Maps 16x16, 32x32, 64x32, 16x64 in `maps/`, all embedded (directory embed). Optional `; name:` header line.
 - Map select menu; the first map is open, each next one unlocks after surviving 5 minutes on the previous (kept in memory until P1-13).
 - Minimap shows a window around the player when the map doesn't fit.
 - Acceptance: tests: every embedded map parses, every open cell is reachable, header parsing, unlock rule, minimap window. On screen: all four maps play; the minimap scrolls on big ones.
 
-### [~] P1-13: Saving settings and progress
+### [x] P1-13: Saving settings and progress
 - `%AppData%\termfps\save.json` (`os.UserConfigDir`): settings, unlocked maps, best kills / time / tier per map, total kills. Saved automatically when a setting changes or a run ends.
 - Atomic write (temp file + rename). A damaged file -> message in the menu, the file kept as `save.json.bad`, defaults used.
 - Acceptance: tests (temp dir): save and load round trip, damaged file handling, atomic write. On screen: settings and bests survive a restart.
@@ -255,16 +255,23 @@ Ideas and reference from S0ra (YouTube + Discord, 2026-10-23): events-mode input
 
 ## Extras
 
-### [~] P1-16: Mouse in game
+### [x] P1-16: Mouse in game
 - Left-click shoots, right-click reloads. No mouse-look.
 - Acceptance: unit tests for the mouse-button mapping. On screen: clicking shoots and reloads.
 
-### [~] P1-17: Sound (oto)
+### [x] P1-17: Sound (oto)
 - Add `github.com/ebitengine/oto/v3` (approved, D27) behind a small `internal/audio` package. Effects generated in code: gunshot, reload, empty click, zombie groan, enemy shot, hurt, pickup, tier up. Triggered by game events (P1-01). Settings: sound on/off and volume.
 - If audio can't start, the game still runs and the menu shows "sound unavailable: <reason>".
 - Acceptance: tests for the generated waveforms (length, no clipping) and the event -> sound mapping. On screen and ears: sounds play and overlap; volume and mute work.
 
-### [ ] P1-18: Balancing, README, demo
-- Started early (D30, 2026-10-21): zombie 75 HP / 1.5 cells/s / 7-10 damage, calmer arena, slower tier 1, health regeneration. Still to do: playtest tiers 3+, ammo cap, health pickups or not.
-- Tune tiers, damage, HP, spawn rates, ammo cap; decide health pickups or regen. Update the README (controls, menus, survival rules) and record a new demo.
-- Acceptance: the user plays each map for a few minutes and is happy with the difficulty curve.
+### [~] P1-18: Docs update (README, maps, gameplay)
+- Changed 2026-10-25 (D38): docs only. Bring README, ARCHITECTURE and PRD up to date with what P1 built: menus, pause, settings, saving, the four maps and unlocks, mouse, sound, render modes, survival rules, events-mode keys.
+- Balancing (playtest tiers 3+, ammo cap, health pickups or not) and a new demo recording move to "Maps and gameplay update" below, to discuss there. Early balancing is in D30.
+- Acceptance: the user reads the README and it matches the game.
+
+# Maps and gameplay update
+
+Not planned yet: tasks M1 to Mn get written once we've discussed them (D38). Ideas to discuss:
+- Map enhancements to make the game feel better and more realistic (props, doors, hazards, per-map mood and enemy mix, custom maps, minimap fog of war, and more).
+- Carried over from P1-18: balancing playtest (tiers 3+, ammo cap, health pickups or not) and a new demo recording.
+- S0ra follow-ups (P1-14, P1-15 still [~]): true key press/release events, and the rest of the Mixed style (color threshold skipping, adjustable background).

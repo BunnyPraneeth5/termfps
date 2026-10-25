@@ -169,3 +169,8 @@ Template:
 - Issues found: one test expectation about held-fire shot count was off by one shot (the first click's cooldown). Code paths were otherwise as designed.
 - Not done: on-screen (and by-ear) checks for P1-06 to P1-17 (all [~]); README controls (Esc, mouse, menus) still need the P1-18 update; not pushed.
 - Next: user review; then discuss map enhancements and the S0ra follow-ups (true key releases, the rest of the Mixed style), then P1-18.
+
+## 2026-10-25 (status, P1-18 docs)
+- User marked P1-06 to P1-13, P1-16, P1-17 done; P1-14 and P1-15 stay [~] (S0ra follow-ups open). P1-18 changed to docs only (D38): README rewritten for the survival game (controls with mouse and pause, menus, saving, maps and unlocks, playing, sound, options, code layout, roadmap); ARCHITECTURE "P1 design" marked built with the differences (pause redraw, menus, mixed presenter, P1-14 input, save details, sound); PRD and CLAUDE.md updated. New TASKS section "Maps and gameplay update" (M1-Mn), not planned yet; balancing and a new demo moved there.
+- Not done: P1-18 waits for the user to read the README.
+- Next: read S0ra's links, recommend a tcell path for key releases, then discuss M1-Mn.

@@ -18,8 +18,9 @@ termfps/
     game/              player, game state, update logic (no tcell)
     input/             tcell key events -> game.Input (held-key tracking)
     render/            frame buffer, DrawFrame, presenters, minimap, HUD
+    app/ ui/ save/ audio/ assets/   P1 packages, see "P1 design" -> Packages
 ```
-Note: `//go:embed` only sees files in the same package dir or below. We keep the embed in `main.go` and pass the bytes to `world.Parse`.
+Note: `//go:embed` only sees files in the same package dir or below. We keep the embed in `main.go` (`maps/*.txt` into an `embed.FS`) and pass each file to `world.Parse`.
 
 ## Modules
 
@@ -161,6 +162,7 @@ For each column `x`:
 - Half-block: for each cell (x, row), top = Pix[(2*row)*W + x], bottom = Pix[(2*row+1)*W + x]. Draw `▀` with foreground = top gray, background = bottom gray, using `tcell.NewRGBColor`.
 - Shade (stretch, T19): average the two pixels, map to `█▓▒░ ` (bright to dark), default terminal colors.
 - ASCII (stretch, T19): average the two pixels, map to `@%#*+=-:. ` (bright to dark), default terminal colors.
+- Mixed (P1-15, D36): the ASCII character for the averaged gray, foreground = the cell color, background = that color at 20%. Needs truecolor.
 - The text ramps scale brightness 0-230 (`wallBase`, the brightest gray DrawFrame makes) onto the ramp, so dim far walls keep a visible character instead of becoming blank.
 - `game.State.Mode` (`game.RenderMode`) picks the presenter; V cycles it via the one-shot `Input.CycleRenderMode`. The HUD shows the mode. The first time V switches back to half-block, the caution shows for 5 seconds on the row(s) above the HUD (wrapped by sentence below 84 columns).
 - Truecolor: half-block assumes 24-bit color. Checked in the tcell v2.13.10 source: on Windows, `tcell.NewScreen()` uses the VT screen with a built-in `xterm-truecolor` definition, so truecolor is always on (`COLORTERM` and `WT_SESSION` are not consulted). `TCELL_TRUECOLOR=disable` turns it off. The legacy console driver is only a fallback if the VT screen can't start. T6 still confirms on screen.
@@ -174,6 +176,7 @@ For each column `x`:
   - once repeats are arriving, the timeout drops to about 100ms (stops soon after release)
   - Update moves `speed * dt` per frame for every held key. Movement is smooth and FPS independent.
 - Known limit: holding W and then pressing Left stops W's repeats, so W times out. You can't move and turn at the same time with the baseline.
+- P1-14 (D35): the Tracker measures the OS repeat delay and uses it + 100ms as the first window; while a key has no repeats yet, turning runs at 25% and moving at 40% (`Input.TurnSlow`, `MoveSlow`), so a tap stays small.
 - Result (D19): the spike below worked and is the default on Windows (`-keys async`). The held window above is the fallback (`-keys events`) and the default elsewhere.
 - Spike T8 (2-hour timebox): read real key state with Win32 `GetAsyncKeyState` through Go's standard `syscall` package (no new dependency), in a Windows-only file (`keystate_windows.go`; Go builds `_windows.go` files only on Windows). Catch: it reads keys even when another window has focus. Keep the spike only if it works and the focus problem is solvable, and log the result as a decision.
 - Second option for T8 (found in tcell v2.13.10 source): tcell turns on Windows Terminal's win32-input-mode, which does send key-up events, and tcell throws them away (`handleWinKey` in tcell's `input.go`). Getting them would mean patching or forking tcell, or parsing that input ourselves. That's a dependency change, so ask before going this way.
@@ -202,7 +205,7 @@ For each column `x`:
 - Does Windows Terminal render `▀` without gaps between rows? Recent versions draw block characters themselves (`builtinGlyphs` setting). Check in T6.
 - Final `pixelAspect` value for the Windows Terminal font (T11).
 
-## P1 design (planned 2026-10-20, not built yet)
+## P1 design (planned 2026-10-20, built 2026-10-25)
 Spec: PRD "Roadmap" -> P1. Tasks: TASKS.md "P1". The P0 rules above still hold: `world` and `game` never import tcell (and never import audio), movement uses dt, only the main goroutine touches the screen.
 
 ### Packages
@@ -222,9 +225,10 @@ internal/assets      pixel-art images (gun, flash, sprites) and textures as text
 ### Screens
 `app` owns one current screen. Each frame it drains events, gives keys/clicks to the current screen, and draws it.
 - Playing: game.Update, then render (3D, sprites, weapon, minimap, HUD).
-- Paused: no Update. Draw the last Frame dimmed + the pause menu.
+- Paused: no Update. The scene is redrawn from the frozen state each frame (so a resize works), dimmed, with the pause menu on top.
 - Menus (Title, MapSelect, Settings): `ui` menus over a plain background.
-- GameOver: run summary + best, Retry / Menu.
+- GameOver: a menu over the dimmed frozen game: run summary + best, Try again / Main menu.
+All menus are one `menuScreen` type with their own items and act function (`internal/app/menus.go`). Mouse buttons reach screens as press/release per button.
 Async key state is read only on the Playing screen, so a key held while leaving a menu can't leak into the game.
 
 ### Game state additions
@@ -252,7 +256,7 @@ A grid distance map (BFS) from the player's cell, recomputed only when the playe
 `//go:embed maps/*.txt` into an `embed.FS`; every file is parsed at startup (a broken map is an error before the screen opens, like now). Optional first lines starting with `;` are headers (`; name: The Warehouse`). The minimap draws a window centered on the player when the map is bigger than the space it has.
 
 ### Saving
-`os.UserConfigDir()` + `termfps/save.json`. Write to `save.json.tmp`, then rename over `save.json`. On load: missing file = defaults (first run); unreadable file = rename to `save.json.bad`, use defaults, show a message in the menu.
+`os.UserConfigDir()` + `termfps/save.json`. Write to `save.json.tmp`, then rename over `save.json`. On load: missing file = defaults (first run); unparsable or invalid file = rename to `save.json.bad`, use defaults, show a message in the menu; a file that exists but can't be read is left alone, with a message. Flags given on the command line win over saved settings (D34).
 
 ### Sound
-`internal/audio` wraps oto: one context at startup, effects pre-generated as PCM buffers (sine/square waves + noise with envelopes), each event starts a new player so sounds overlap. Volume from settings. If the context fails, audio is disabled and the error is shown in the menu, never silently ignored.
+`internal/audio` wraps oto: one context at startup, effects pre-generated as PCM buffers (sine/square waves + noise with envelopes), each event starts a new player so sounds overlap (max 16). Volume from settings. If the context fails, audio is disabled and the error is shown in the menu, never silently ignored. Audio opens before the screen. Event -> effect mapping in `internal/app/sound.go` (D37).

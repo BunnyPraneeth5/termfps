@@ -61,7 +61,7 @@ Agreed 2026-10-19 (DECISIONS D20). Nothing here is built yet. Each phase gets it
 
 P0 status: core (T1-T18) and stretch T19 are done. Stretch T20 (red targets) moved into P1 as task P1-02 (D29).
 
-### P1: a real single-player game (planned 2026-10-20)
+### P1: a real single-player game (planned 2026-10-20, built 2026-10-25)
 Tasks: TASKS.md "P1". Decisions: DECISIONS.md D21-D31.
 
 **The game: endless survival.** Each map is an arena. Enemies keep coming and get stronger. You play until you die, then try to beat your best.
@@ -112,6 +112,9 @@ Tasks: TASKS.md "P1". Decisions: DECISIONS.md D21-D31.
 **Feedback additions (D31):** smoother events-mode keys (a tap turns a little, holds are smooth on Linux) and a "Mixed" render mode (ASCII character with a dim colored background), from S0ra's feedback.
 
 **Not in P1:** mouse-look, mid-game saves, a "clear the level" mode, health pickups (unless balancing needs them), multiplayer, AI agents.
+
+### Maps and gameplay update (M1-Mn, to be discussed)
+Better, more realistic maps and more to do in them, plus the balancing playtest and new demo carried over from P1-18 and the S0ra follow-ups (true key releases, the rest of the Mixed style). Tasks get written in TASKS.md once discussed (D38).
 
 ### P2: server / client split
 The game logic runs as a server and the screen is a client. Both AI opponents (P3) and multiplayer (P4) need this. `world` and `game` already have no terminal code (D8), which is what makes the split possible.

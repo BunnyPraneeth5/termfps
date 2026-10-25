@@ -235,3 +235,9 @@ Format: what, why, trade-off, revisit when.
 - Dependencies: oto v3.5.1 brings `github.com/ebitengine/purego`, `github.com/jfreymuth/pulse` (pure-Go PulseAudio) and a newer `golang.org/x/sys`. On Linux, oto now loads ALSA/PulseAudio at runtime through purego: no cgo and no ALSA development libraries at build time. This replaces the Linux note in D27 and the CI note in D32 (the Linux CI job needs no extra step). Linux players need ALSA or PulseAudio installed to hear sound.
 - Trade-off: the groan plays for shooter spawns too.
 - Revisit when: a zombie-only cue is wanted (add a game event), or effects need tuning by ear.
+
+## D38: P1-18 becomes docs only; "Maps and gameplay update" next (2026-10-25)
+- What: the user marked P1-01 to P1-13, P1-16 and P1-17 done. P1-14 and P1-15 stay [~] because S0ra's suggestions are only partly done (no true key releases; Mixed without color-threshold skipping or an adjustable background). P1-18 is now a docs update only (README, ARCHITECTURE, PRD). Balancing and a new demo move to a new "Maps and gameplay update" section, numbered M1 to Mn, which gets planned in a later discussion.
+- Why: the user's choice; the next work is about making maps and gameplay feel better and more realistic, which needs discussing first.
+- Trade-off: balancing past tier 2 stays untested until then.
+- Revisit when: the M1-Mn tasks are written.
