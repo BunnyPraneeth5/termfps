@@ -107,7 +107,7 @@ Tasks: TASKS.md "P1". Decisions: DECISIONS.md D21-D31.
 
 **Mouse in the game:** left-click shoots, right-click reloads. No mouse-look: terminals can't lock the mouse.
 
-**Sound:** played through the computer's speakers by the game itself (the terminal can't play sound), using the **oto** audio library. That's a new dependency, approved by the user. Effects are **generated in code** (gunshot, reload, empty click, zombie groan, enemy shot, hurt, pickup, tier up), so there are no sound files and no copyright questions. Settings: sound on/off and volume. Local play only. On Linux, oto needs the ALSA development libraries.
+**Sound:** played through the computer's speakers by the game itself (the terminal can't play sound), using the **oto** audio library. That's a new dependency, approved by the user. Effects are **generated in code** (gunshot, reload, empty click, zombie groan, enemy shot, hurt, pickup, tier up), so there are no sound files and no copyright questions. Settings: sound on/off and volume. Local play only. On Linux, sound needs ALSA or PulseAudio at runtime (no build-time libraries, D37).
 
 **Feedback additions (D31):** smoother events-mode keys (a tap turns a little, holds are smooth on Linux) and a "Mixed" render mode (ASCII character with a dim colored background), from S0ra's feedback.
 

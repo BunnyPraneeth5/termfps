@@ -228,3 +228,10 @@ Format: what, why, trade-off, revisit when.
 - Why: it fills the dark gaps of plain ASCII and gives a textured look, at about half-block's cost (both send two colors per cell; filling tcell's buffer measured 0.58 ms vs 0.88 ms at 120x40).
 - Trade-off: half the vertical resolution of half-block. The optional color rounding (fewer color codes for neighbouring cells) is not built: it would only matter on slow terminals, and needs measuring there first. The half-block caution isn't shown for mixed.
 - Revisit when: someone reports mixed or half-block stuttering on a slow terminal (try the rounding then).
+
+## D37: Sound details (2026-10-25)
+- What: `internal/audio` on oto v3.5.1. Eight effects generated at startup (mono, 44.1 kHz, 16-bit): gunshot (shot fired), reload (reload started: click, click, clack over ~1.1 s), empty click, zombie groan (an enemy spawned; there is no zombie-only event, and it works as an "enemy arrived" cue), enemy shot, hurt, pickup, tier up. Each effect plays at most once per frame; at most 16 at once. Audio is opened before the screen (audio libraries may print warnings); if it fails, the game runs silently and every menu shows "Sound unavailable: <reason>". The Sound and Volume settings now work.
+- Why: D27. Mapping sounds to events keeps `game` free of audio.
+- Dependencies: oto v3.5.1 brings `github.com/ebitengine/purego`, `github.com/jfreymuth/pulse` (pure-Go PulseAudio) and a newer `golang.org/x/sys`. On Linux, oto now loads ALSA/PulseAudio at runtime through purego: no cgo and no ALSA development libraries at build time. This replaces the Linux note in D27 and the CI note in D32 (the Linux CI job needs no extra step). Linux players need ALSA or PulseAudio installed to hear sound.
+- Trade-off: the groan plays for shooter spawns too.
+- Revisit when: a zombie-only cue is wanted (add a game event), or effects need tuning by ear.

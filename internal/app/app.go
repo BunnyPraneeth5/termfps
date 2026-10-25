@@ -12,6 +12,7 @@ import (
 
 	"github.com/gdamore/tcell/v2"
 
+	"github.com/BunnyPraneeth5/termfps/internal/audio"
 	"github.com/BunnyPraneeth5/termfps/internal/game"
 	"github.com/BunnyPraneeth5/termfps/internal/input"
 	"github.com/BunnyPraneeth5/termfps/internal/render"
@@ -29,8 +30,8 @@ type Config struct {
 	Textures       bool            // wall textures on (P1-10)
 	Mode           game.RenderMode // render mode at startup (the game state holds it after that)
 	MinimapAtStart bool            // each run starts with the minimap shown
-	Sound          bool            // sound on (used from P1-17)
-	Volume         int             // sound volume in percent, 0-100 (used from P1-17)
+	Sound          bool            // sound effects on
+	Volume         int             // sound volume in percent, 0-100
 }
 
 // App is everything the loop needs between frames.
@@ -53,6 +54,10 @@ type App struct {
 	// loadMsg is a problem from loading the save file and saveErr the last
 	// failed save; the menus show them.
 	loadMsg, saveErr string
+
+	// sound plays the effects; nil if it couldn't start (soundErr says why).
+	sound    *audio.Player
+	soundErr error
 
 	// leftDown and rightDown are the mouse buttons at the last mouse event,
 	// so a screen hears each press and release once.
@@ -169,10 +174,12 @@ func (a *App) switchTo(s screen) {
 // Run starts the input goroutine and runs the frame loop until the player
 // quits. restore puts the terminal back; Run calls it itself only when the
 // input goroutine panics (main's deferred handler covers everything else).
-// saved is the save file as loaded at startup (see Saved).
-func Run(scr tcell.Screen, maps []*world.Map, cfg Config, saved Saved, restore func()) (exitCode int) {
+// saved is the save file as loaded at startup; snd is the audio player.
+func Run(scr tcell.Screen, maps []*world.Map, cfg Config, saved Saved, snd Sound, restore func()) (exitCode int) {
 	a := New(scr, maps, cfg, time.Now())
 	a.useSaved(saved)
+	a.sound, a.soundErr = snd.Player, snd.Err
+	a.applySound()
 
 	// A channel passes values between goroutines. The buffer (64) lets the
 	// input goroutine queue events while the main loop is busy drawing.

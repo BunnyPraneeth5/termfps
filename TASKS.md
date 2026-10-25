@@ -259,7 +259,7 @@ Ideas and reference from S0ra (YouTube + Discord, 2026-10-23): events-mode input
 - Left-click shoots, right-click reloads. No mouse-look.
 - Acceptance: unit tests for the mouse-button mapping. On screen: clicking shoots and reloads.
 
-### [ ] P1-17: Sound (oto)
+### [~] P1-17: Sound (oto)
 - Add `github.com/ebitengine/oto/v3` (approved, D27) behind a small `internal/audio` package. Effects generated in code: gunshot, reload, empty click, zombie groan, enemy shot, hurt, pickup, tier up. Triggered by game events (P1-01). Settings: sound on/off and volume.
 - If audio can't start, the game still runs and the menu shows "sound unavailable: <reason>".
 - Acceptance: tests for the generated waveforms (length, no clipping) and the event -> sound mapping. On screen and ears: sounds play and overlap; volume and mute work.

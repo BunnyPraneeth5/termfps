@@ -94,10 +94,11 @@ func (a *App) endRun() {
 	a.persist()
 }
 
-// messages are the save problems for the menus, wrapped to fit the box.
+// messages are the save and sound problems for the menus, wrapped to fit
+// the box.
 func (a *App) messages() []string {
 	var out []string
-	for _, m := range []string{a.loadMsg, a.saveErr} {
+	for _, m := range []string{a.loadMsg, a.saveErr, a.soundProblem()} {
 		if m != "" {
 			out = append(out, wrap(m, 60)...)
 		}

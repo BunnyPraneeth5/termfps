@@ -96,6 +96,7 @@ func (p *playingScreen) tick(a *App, now time.Time, dt float64) {
 
 	st := a.state
 	game.Update(st, in, dt)
+	a.playSounds()
 	if st.HasEvent(game.EventRenderModeChanged) {
 		a.persist() // V changed a setting
 	}

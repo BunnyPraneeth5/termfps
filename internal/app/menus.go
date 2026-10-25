@@ -24,8 +24,8 @@ type menuScreen struct {
 	// overGame draws the frozen game, dimmed, behind the menu; otherwise
 	// the background is blank.
 	overGame bool
-	// text is the menu's own lines under the title; tick adds the save
-	// problems (if any) after them every frame, so new ones show at once.
+	// text is the menu's own lines under the title; tick adds the save and
+	// sound problems (if any) after them every frame, so new ones show at once.
 	text []string
 }
 
@@ -260,9 +260,7 @@ func (a *App) settingsMenu(back *menuScreen) *menuScreen {
 		Value: slices.Index(aspects, a.cfg.PixelAspect)}
 	items[setBack] = ui.Item{Label: "Back"}
 
-	s := &menuScreen{overGame: back.overGame,
-		text: []string{"Sound isn't in the game yet; its settings are kept for when it is."},
-		menu: ui.New("SETTINGS", nil, items)}
+	s := &menuScreen{overGame: back.overGame, menu: ui.New("SETTINGS", nil, items)}
 	s.act = func(a *App, r ui.Result) {
 		it := s.menu.Items[s.menu.Selected]
 		switch {
@@ -283,8 +281,10 @@ func (a *App) settingsMenu(back *menuScreen) *menuScreen {
 			a.frame.Textures = a.cfg.Textures
 		case s.menu.Selected == setSound:
 			a.cfg.Sound = it.Value == 1
+			a.applySound()
 		case s.menu.Selected == setVolume:
 			a.cfg.Volume = it.Value * 10
+			a.applySound()
 		case s.menu.Selected == setKeys:
 			a.cfg.KeyMode = keyChoices[it.Value]
 			a.keys = input.Tracker{}

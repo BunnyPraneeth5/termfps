@@ -18,6 +18,7 @@ import (
 	"github.com/gdamore/tcell/v2"
 
 	"github.com/BunnyPraneeth5/termfps/internal/app"
+	"github.com/BunnyPraneeth5/termfps/internal/audio"
 	"github.com/BunnyPraneeth5/termfps/internal/input"
 	"github.com/BunnyPraneeth5/termfps/internal/render"
 	"github.com/BunnyPraneeth5/termfps/internal/save"
@@ -63,6 +64,12 @@ func run() (exitCode int) {
 		return 1
 	}
 
+	// Open audio before the screen: audio libraries may print warnings, which
+	// would land in the game screen. If it fails, the game runs without
+	// sound and the menu says why (D27).
+	player, err := audio.New()
+	snd := app.Sound{Player: player, Err: err}
+
 	screen, err := tcell.NewScreen()
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "termfps: create screen:", err)
@@ -91,7 +98,7 @@ func run() (exitCode int) {
 		restore()
 	}()
 
-	return app.Run(screen, maps, cfg, saved, restore)
+	return app.Run(screen, maps, cfg, saved, snd, restore)
 }
 
 // loadSave opens the save file in the user's config folder (P1-13). It
