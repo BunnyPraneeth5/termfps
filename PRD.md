@@ -114,7 +114,7 @@ Tasks: TASKS.md "P1". Decisions: DECISIONS.md D21-D31.
 **Not in P1:** mouse-look, mid-game saves, a "clear the level" mode, health pickups (unless balancing needs them), multiplayer, AI agents.
 
 ### Maps and gameplay update (M1-Mn, to be discussed)
-Better, more realistic maps and more to do in them, plus the balancing playtest and new demo carried over from P1-18. Tasks get written in TASKS.md once discussed (D38).
+Better, more realistic maps and more to do in them. All ideas are in TASKS.md as M1-M18 (D40): minimap size and border, props, doors, lighting, a redesign of all four maps, new maps, the unlock rule, minimap fog of war, custom maps, medkits and armor, more weapons, more enemy types, smarter enemies, hazards, waves, game feel, 3D sound, and balancing with a new demo last. Order and details are decided before work starts. More weapons would change the "one gun" rule above.
 
 ### S0ra follow-ups (S1-Sn)
 A separate track (D39): our own terminal layer, real key releases through tcell v3, and the rest of the libasciic Mixed style (color threshold, adjustable background). Outline in TASKS.md.

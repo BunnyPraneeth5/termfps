@@ -290,6 +290,62 @@ A separate track from maps and gameplay (D39): finishing what S0ra suggested (P1
 
 # Maps and gameplay update
 
-Not planned yet: tasks M1 to Mn get written once we've discussed them (D38). Ideas to discuss:
-- Map enhancements to make the game feel better and more realistic (props, doors, hazards, per-map mood and enemy mix, custom maps, minimap fog of war, and more).
-- Carried over from P1-18: balancing playtest (tiers 3+, ammo cap, health pickups or not) and a new demo recording.
+All the ideas from the 2026-10-25/26 discussion, added to the plan first (D40). The numbers are IDs, not the order: the order, the batches of five and the details get decided before any of them starts.
+
+## Maps and world
+
+### [ ] M1: Minimap size and border
+- The scrolling window shows at most 16x16 map cells (now 24x16); a 16x16 map like the Arena keeps its full size. A border goes around the minimap so it stands apart from the 3D view.
+
+### [ ] M2: Props
+- Barrels, crates, pillars, lamps, debris, bodies: map characters drawn as sprites. Some block movement and bullets (crates, pillars), some don't (debris).
+
+### [ ] M3: Doors
+- Wolfenstein-style sliding doors: open when you walk up (or press a key), close after a while; enemies open them too.
+
+### [ ] M4: Lighting per map
+- Header lines for fog and darkness; lamps that light nearby walls and floor; some flickering lights.
+
+### [ ] M5: Redesign all four maps
+- Rebuilt from scratch with M2-M4, so every map follows the same design rules: real layouts (rooms, a loading dock, buildings you can enter), cover, landmarks.
+
+### [ ] M6: New maps
+- Two to four more, for example a sewer, an office floor, a hospital, a subway station.
+
+### [ ] M7: Map unlock rule
+- Decide: keep "survive 5:00 to unlock the next map", shorten it, open all maps, or a setting for it.
+
+### [ ] M8: Minimap fog of war
+- The minimap shows only places you've seen.
+
+### [ ] M9: Custom maps
+- A `-map file.txt` flag and a maps folder next to the save file, for your own maps.
+
+## Gameplay
+
+### [ ] M10: Medkits and armor
+- Medkit pickups (heal) and armor (absorbs part of the damage); decide how they work with the slow regeneration.
+
+### [ ] M11: More weapons
+- For example a shotgun (short range, spread) and a rifle (accurate, slow), found as pickups, switched with 1/2/3. Changes the PRD's "one gun" rule.
+
+### [ ] M12: More enemy types
+- For example a fast runner zombie, a slow tank, an exploder that blows up near you.
+
+### [ ] M13: Smarter enemies
+- Enemies hear gunshots and come to the sound; shooters take cover behind props; zombies come from several sides.
+
+### [ ] M14: Hazards
+- Explosive barrels you can shoot (they hurt enemies and you), acid floor.
+
+### [ ] M15: Waves
+- Waves with short breaks between them (reload, loot), as a choice next to the endless survival of now.
+
+### [ ] M16: Game feel
+- Sprint with stamina, a marker showing where a hit came from, a hit marker on the crosshair, screen shake on big hits, footstep sounds.
+
+### [ ] M17: 3D sound
+- Louder when close, quieter far away, left/right stereo, so you hear where enemies are.
+
+### [ ] M18: Balancing and a new demo
+- Carried over from P1-18: playtest tiers 3+, ammo cap, the new pickups and weapons; record a new demo. Always last.

@@ -2,7 +2,7 @@
 (Copy as AGENTS.md if using Antigravity or Codex.)
 
 ## What this is
-Terminal first-person game. Raycaster, mostly monochrome, half-block pixels by default, shade, ASCII and mixed modes with V. The P0 prototype and P1 (single-player survival game) are built; the "S0ra follow-ups" (S1-Sn) are outlined and the "Maps and gameplay update" (M1-Mn) is being discussed. Read PRD.md (Roadmap -> P1) for scope, ARCHITECTURE.md (incl. "P1 design") for design, DECISIONS.md D21-D38 for P1 choices, D11 for rendering and D19 for input.
+Terminal first-person game. Raycaster, mostly monochrome, half-block pixels by default, shade, ASCII and mixed modes with V. The P0 prototype and P1 (single-player survival game) are built; the "S0ra follow-ups" (S1-Sn) are outlined and the "Maps and gameplay update" ideas are in the plan as M1-M18, order not decided yet. Read PRD.md (Roadmap -> P1) for scope, ARCHITECTURE.md (incl. "P1 design") for design, DECISIONS.md D21-D40 for P1 and later choices, D11 for rendering and D19 for input.
 
 ## Stack
 Go (latest stable) + tcell v2, pinned version. `github.com/ebitengine/oto/v3` for sound (approved, D27; added in P1-17 with its own dependencies purego and jfreymuth/pulse, D37). No other dependencies. Windows Terminal + PowerShell is the main test target.
@@ -15,7 +15,7 @@ Go (latest stable) + tcell v2, pinned version. `github.com/ebitengine/oto/v3` fo
 - Built in P1 (ARCHITECTURE "P1 design"): internal/app (loop + screens), internal/ui (menus), internal/save (save.json), internal/audio (oto), internal/assets (pixel art, textures). world and game never import tcell or audio.
 
 ## Rules
-- Stay in scope (PRD Roadmap, TASKS.md: P1, the "S0ra follow-ups" S1-Sn, then "Maps and gameplay update" M1-Mn once planned). If a task needs something out of scope, stop and ask.
+- Stay in scope (PRD Roadmap, TASKS.md: P1, the "S0ra follow-ups" S1-Sn, then "Maps and gameplay update" M1-M18 once ordered). If a task needs something out of scope, stop and ask.
 - No new dependencies without asking. Approved: tcell v2, oto v3.
 - Only touch files the current task needs.
 - world and game packages must never import tcell.
@@ -60,4 +60,4 @@ Append an entry to PROGRESS.md. Log any new decision in DECISIONS.md.
 - Windows Smart App Control (on, on the user's machine) sometimes blocks a freshly built `termfps.exe` ("An Application Control policy has blocked this file"). Not a code problem; a restart has cleared it. Rebuild only when code changed. Agents can't run the exe here either.
 
 ## Current focus
-P1-01 to P1-13, P1-16, P1-17 done. P1-14 and P1-15 stay [~] until the "S0ra follow-ups" track (S1-Sn) is done. P1-18 (docs update) waiting for the user to read the README. Next: discuss the "Maps and gameplay update" (M1-Mn); S1-S3 are outlined, details confirmed before each starts.
+P1-01 to P1-13, P1-16, P1-17 done. P1-14 and P1-15 stay [~] until the "S0ra follow-ups" track (S1-S3) is done. P1-18 (docs update) waiting for the user to read the README. "Maps and gameplay update" ideas are in TASKS.md as M1-M18 (D40); next: decide their order and the first batch of five. Nothing starts before that.

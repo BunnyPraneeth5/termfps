@@ -247,3 +247,9 @@ Format: what, why, trade-off, revisit when.
 - Why: the user's choice: finishing S0ra's suggestions is different work from making maps and gameplay better. Research: tcell v3.4.0 (May 2026) added key release reporting, so no fork is needed; v3 also removes the public simulation screen our tests use, which is why S1 comes first. crossterm confirms releases on Unix need the kitty protocol's event-type flags. libasciic's Mixed: max(r,g,b) brightness, background factor 0-1 (default 0.2), and a per-row color threshold that skips repeating similar colors.
 - Trade-off: S1 is a refactor with no visible change; it pays off when S2 or our own input reader lands.
 - Revisit when: S2's spike shows whether tcell v3 is enough.
+
+## D40: Maps and gameplay ideas go into the plan as M1-M18 (2026-10-26)
+- What: every idea from the discussion is in TASKS.md as M1-M18. The user's input so far: the minimap window shrinks to at most 16x16 cells (a 16x16 map keeps its size) and gets a border (M1); all four maps get redesigned from scratch for consistency (M5); new maps are welcome (M6); medkits and armor (M10), more weapons (M11) and more enemy types (M12) are wanted. The unlock rule is open (M7).
+- Why: the user wants everything in the plan first, then to decide order and details.
+- Trade-off: the numbers are IDs, not the order, so the order has to be written down separately when it's decided.
+- Revisit when: the first batch of five is chosen.
