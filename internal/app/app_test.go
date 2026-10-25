@@ -5,10 +5,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/gdamore/tcell/v2"
-
 	"github.com/BunnyPraneeth5/termfps/internal/game"
 	"github.com/BunnyPraneeth5/termfps/internal/render"
+	"github.com/BunnyPraneeth5/termfps/internal/term"
 	"github.com/BunnyPraneeth5/termfps/internal/world"
 )
 
@@ -21,16 +20,11 @@ const testMap = "##########\n" +
 
 var t0 = time.Date(2026, 1, 1, 0, 0, 0, 0, time.UTC)
 
-// newTestApp runs the app on tcell's in-memory screen (80x24), with
+// newTestApp runs the app on the fake screen (80x24), with
 // terminal key events (async keys would read the real keyboard).
-func newTestApp(t *testing.T) (*App, tcell.SimulationScreen) {
+func newTestApp(t *testing.T) (*App, *term.Fake) {
 	t.Helper()
-	s := tcell.NewSimulationScreen("UTF-8")
-	if err := s.Init(); err != nil {
-		t.Fatalf("simulation screen Init: %v", err)
-	}
-	s.SetSize(80, 24)
-	t.Cleanup(s.Fini) // runs when the test ends
+	s := term.NewFake(80, 24)
 	m, err := world.Parse([]byte(testMap))
 	if err != nil {
 		t.Fatalf("Parse: %v", err)
@@ -40,21 +34,13 @@ func newTestApp(t *testing.T) (*App, tcell.SimulationScreen) {
 	return a, s
 }
 
-func key(k tcell.Key, r rune) *tcell.EventKey {
-	return tcell.NewEventKey(k, r, tcell.ModNone)
+// key is a key press. When is the wall clock, as tcell's NewEventKey set
+// it before S1.
+func key(k term.KeyCode, r rune) term.Key {
+	return term.Key{Code: k, Rune: r, When: time.Now()}
 }
 
-func rowText(s tcell.Screen, row int) string {
-	w, _ := s.Size()
-	var b strings.Builder
-	for x := 0; x < w; x++ {
-		str, _, _ := s.Get(x, row)
-		b.WriteString(str)
-	}
-	return b.String()
-}
-
-// The simulation screen reports 256 colors, so the app starts in ASCII
+// The fake screen has no truecolor, so the app starts in ASCII
 // (D17), draws the view, and shows the HUD.
 func TestStepDrawsGame(t *testing.T) {
 	a, s := newTestApp(t)
@@ -64,10 +50,10 @@ func TestStepDrawsGame(t *testing.T) {
 	if quit := a.step(t0.Add(time.Second/30), nil); quit {
 		t.Fatal("step quit without input")
 	}
-	if hud := rowText(s, 23); !strings.Contains(hud, "FPS") || !strings.Contains(hud, "| ascii") {
+	if hud := s.Row(23); !strings.Contains(hud, "FPS") || !strings.Contains(hud, "| ascii") {
 		t.Errorf("HUD row = %q, want FPS and the mode", hud)
 	}
-	if str, _, _ := s.Get(0, 10); str == " " || str == "" {
+	if str, _ := s.Get(0, 10); str == " " || str == "" {
 		t.Errorf("view cell (0, 10) = %q, want a wall or floor character", str)
 	}
 }
@@ -79,8 +65,8 @@ func TestKeysMovePlayer(t *testing.T) {
 	now := t0
 	for i := 0; i < 10; i++ {
 		now = now.Add(time.Second / 30)
-		ev := tcell.NewEventKey(tcell.KeyRune, 'w', tcell.ModNone)
-		a.step(now, []tcell.Event{ev})
+		ev := term.Key{Code: term.KeyRune, Rune: 'w', When: now}
+		a.step(now, []term.Event{ev})
 	}
 	if a.state.Player.X <= x0 {
 		t.Errorf("x = %v after holding W, want more than %v", a.state.Player.X, x0)
@@ -95,7 +81,7 @@ func TestCautionOnce(t *testing.T) {
 	now := t0
 	press := func() {
 		now = now.Add(time.Second / 30)
-		a.step(now, []tcell.Event{key(tcell.KeyRune, 'v')})
+		a.step(now, []term.Event{key(term.KeyRune, 'v')})
 	}
 	press() // ascii -> mixed
 	if a.cautionShown {
@@ -119,16 +105,16 @@ func TestTooSmallSkipsGame(t *testing.T) {
 	a, s := newTestApp(t)
 	s.SetSize(40, 10)
 	x0 := a.state.Player.X
-	a.step(t0.Add(time.Second/30), []tcell.Event{
-		tcell.NewEventResize(40, 10),
-		key(tcell.KeyRune, 'w'),
+	a.step(t0.Add(time.Second/30), []term.Event{
+		term.Resize{W: 40, H: 10},
+		key(term.KeyRune, 'w'),
 	})
 	if a.state.Player.X != x0 {
 		t.Error("game updated while the terminal was too small")
 	}
 	found := false
 	for row := 0; row < 10; row++ {
-		if strings.Contains(rowText(s, row), "too small") {
+		if strings.Contains(s.Row(row), "too small") {
 			found = true
 		}
 	}
@@ -140,7 +126,7 @@ func TestTooSmallSkipsGame(t *testing.T) {
 func TestResizeResizesFrame(t *testing.T) {
 	a, s := newTestApp(t)
 	s.SetSize(100, 30)
-	a.step(t0.Add(time.Second/30), []tcell.Event{tcell.NewEventResize(100, 30)})
+	a.step(t0.Add(time.Second/30), []term.Event{term.Resize{W: 100, H: 30}})
 	if a.frame.W != 100 || a.frame.H != 58 {
 		t.Errorf("frame = %dx%d after resize to 100x30, want 100x58", a.frame.W, a.frame.H)
 	}
@@ -152,7 +138,7 @@ type recordScreen struct {
 	ticks int
 }
 
-func (r *recordScreen) key(a *App, ev *tcell.EventKey)                   { r.keys++ }
+func (r *recordScreen) key(a *App, ev term.Key)                          { r.keys++ }
 func (r *recordScreen) mouse(a *App, b mouseButton, down bool, x, y int) {}
 func (r *recordScreen) tick(a *App, now time.Time, dt float64)           { r.ticks++ }
 
@@ -161,7 +147,7 @@ func TestSwitchTo(t *testing.T) {
 	a, _ := newTestApp(t)
 	rec := &recordScreen{}
 	a.switchTo(rec)
-	a.step(t0.Add(time.Second/30), []tcell.Event{key(tcell.KeyRune, 'w'), key(tcell.KeyEscape, 0)})
+	a.step(t0.Add(time.Second/30), []term.Event{key(term.KeyRune, 'w'), key(term.KeyEscape, 0)})
 	if rec.keys != 2 || rec.ticks != 1 {
 		t.Errorf("new screen got %d keys and %d ticks, want 2 and 1", rec.keys, rec.ticks)
 	}
@@ -170,18 +156,37 @@ func TestSwitchTo(t *testing.T) {
 	}
 }
 
+// Key releases don't reach screens yet (S2 uses them), and a released
+// Ctrl+C doesn't quit.
+func TestKeyReleaseIgnored(t *testing.T) {
+	a, _ := newTestApp(t)
+	rec := &recordScreen{}
+	a.switchTo(rec)
+	release := func(k term.KeyCode, r rune) term.Key {
+		ev := key(k, r)
+		ev.Action = term.Release
+		return ev
+	}
+	if a.step(t0.Add(time.Second/30), []term.Event{release(term.KeyRune, 'w'), release(term.KeyCtrlC, 0)}) {
+		t.Error("a Ctrl+C release quit the app")
+	}
+	if rec.keys != 0 {
+		t.Errorf("screen got %d keys from releases, want 0", rec.keys)
+	}
+}
+
 // Space fires through the playing screen; R starts a reload; the HUD shows
 // the ammo.
 func TestSpaceFiresAndRReloads(t *testing.T) {
 	a, s := newTestApp(t)
-	a.step(t0.Add(time.Second/30), []tcell.Event{key(tcell.KeyRune, ' ')})
+	a.step(t0.Add(time.Second/30), []term.Event{key(term.KeyRune, ' ')})
 	if got := a.state.Player.Weapon.Mag; got != 24 {
 		t.Errorf("magazine = %d after Space, want 24", got)
 	}
-	if hud := rowText(s, 23); !strings.Contains(hud, "AMMO 24 / 50") {
+	if hud := s.Row(23); !strings.Contains(hud, "AMMO 24 / 50") {
 		t.Errorf("HUD %q, want AMMO 24 / 50", hud)
 	}
-	a.step(t0.Add(2*time.Second/30), []tcell.Event{key(tcell.KeyRune, 'r')})
+	a.step(t0.Add(2*time.Second/30), []term.Event{key(term.KeyRune, 'r')})
 	if !a.state.Player.Weapon.Reloading() {
 		t.Error("R didn't start a reload")
 	}
@@ -190,12 +195,7 @@ func TestSpaceFiresAndRReloads(t *testing.T) {
 // Zombies from the map are drawn (green). Standing next to one, the player
 // dies, the Game over screen shows, and Enter starts a fresh run.
 func TestZombieKillsPlayerAndRetry(t *testing.T) {
-	s := tcell.NewSimulationScreen("UTF-8")
-	if err := s.Init(); err != nil {
-		t.Fatalf("simulation screen Init: %v", err)
-	}
-	s.SetSize(80, 24)
-	t.Cleanup(s.Fini)
+	s := term.NewFake(80, 24)
 	m, err := world.Parse([]byte("##########\n#PZ......#\n##########\n"))
 	if err != nil {
 		t.Fatalf("Parse: %v", err)
@@ -225,14 +225,14 @@ func TestZombieKillsPlayerAndRetry(t *testing.T) {
 	a.step(now, nil) // the Game over screen draws
 	found := false
 	for row := 0; row < 24; row++ {
-		found = found || strings.Contains(rowText(s, row), "YOU DIED")
+		found = found || strings.Contains(s.Row(row), "YOU DIED")
 	}
 	if !found {
 		t.Fatal("no YOU DIED message")
 	}
 
 	now = now.Add(time.Second / 30)
-	a.step(now, []tcell.Event{key(tcell.KeyEnter, 0)})
+	a.step(now, []term.Event{key(term.KeyEnter, 0)})
 	if a.state.Player.HP != game.PlayerMaxHP || len(a.state.Enemies) != 1 || a.state.Mode != game.ModeHalfBlock {
 		t.Errorf("after retry: HP %d, enemies %d, mode %v; want full HP, the map's zombie, mode kept",
 			a.state.Player.HP, len(a.state.Enemies), a.state.Mode)
@@ -245,13 +245,13 @@ func TestCautionHiddenOutsideHalfBlock(t *testing.T) {
 	a, s := newTestApp(t)
 	a.state.Mode = game.ModeMixed
 	now := t0.Add(time.Second / 30)
-	a.step(now, []tcell.Event{key(tcell.KeyRune, 'v')}) // mixed -> half-block: caution on
-	if !strings.Contains(rowText(s, 22)+rowText(s, 21), "Half-block needs") {
+	a.step(now, []term.Event{key(term.KeyRune, 'v')}) // mixed -> half-block: caution on
+	if !strings.Contains(s.Row(22)+s.Row(21), "Half-block needs") {
 		t.Fatal("caution not shown in half-block")
 	}
 	now = now.Add(time.Second / 30)
-	a.step(now, []tcell.Event{key(tcell.KeyRune, 'v')}) // half-block -> shade, within 5 s
-	if strings.Contains(rowText(s, 22)+rowText(s, 21), "Half-block needs") {
+	a.step(now, []term.Event{key(term.KeyRune, 'v')}) // half-block -> shade, within 5 s
+	if strings.Contains(s.Row(22)+s.Row(21), "Half-block needs") {
 		t.Error("caution still shown after switching to shade")
 	}
 }
@@ -264,13 +264,13 @@ func TestTierNotice(t *testing.T) {
 	if a.state.Tier != 2 {
 		t.Fatalf("tier = %d, want 2", a.state.Tier)
 	}
-	if txt := rowText(s, 22) + rowText(s, 21); !strings.Contains(txt, "TIER 2") {
+	if txt := s.Row(22) + s.Row(21); !strings.Contains(txt, "TIER 2") {
 		t.Errorf("no TIER 2 notice above the HUD, got %q", txt)
 	}
 }
 
-func mouseAt(b tcell.ButtonMask) *tcell.EventMouse {
-	return tcell.NewEventMouse(40, 10, b, tcell.ModNone)
+func mouseAt(b term.Buttons) term.Mouse {
+	return term.Mouse{X: 40, Y: 10, Buttons: b}
 }
 
 // Left-click shoots; holding the left button keeps firing at the gun's
@@ -278,15 +278,15 @@ func mouseAt(b tcell.ButtonMask) *tcell.EventMouse {
 func TestMouseShootsAndReloads(t *testing.T) {
 	a, _ := newTestApp(t)
 	now := t0
-	step := func(evs ...tcell.Event) {
+	step := func(evs ...term.Event) {
 		now = now.Add(time.Second / 30)
 		a.step(now, evs)
 	}
-	step(mouseAt(tcell.Button1), mouseAt(tcell.ButtonNone)) // a quick click within one frame
+	step(mouseAt(term.ButtonLeft), mouseAt(0)) // a quick click within one frame
 	if got := a.state.Player.Weapon.Mag; got != 24 {
 		t.Fatalf("magazine = %d after a click, want 24", got)
 	}
-	step(mouseAt(tcell.Button1)) // press and hold
+	step(mouseAt(term.ButtonLeft)) // press and hold
 	for range 30 {
 		step() // one second held, no more events
 	}
@@ -294,14 +294,14 @@ func TestMouseShootsAndReloads(t *testing.T) {
 	if held > 22 { // at least 2 shots: the first click's cooldown delays the next
 		t.Errorf("magazine = %d after holding the button 1 s, want at least 2 more shots", held)
 	}
-	step(mouseAt(tcell.ButtonNone)) // release
+	step(mouseAt(0)) // release
 	for range 30 {
 		step()
 	}
 	if a.state.Player.Weapon.Mag != held {
 		t.Errorf("kept firing after release: magazine %d, was %d", a.state.Player.Weapon.Mag, held)
 	}
-	step(mouseAt(tcell.Button2), mouseAt(tcell.ButtonNone))
+	step(mouseAt(term.ButtonRight), mouseAt(0))
 	if !a.state.Player.Weapon.Reloading() {
 		t.Error("right-click didn't start a reload")
 	}
@@ -312,8 +312,8 @@ func TestMenuClickDoesNotFire(t *testing.T) {
 	a, _ := newTestApp(t)
 	now := t0
 	now = now.Add(time.Second / 30)
-	a.step(now, []tcell.Event{key(tcell.KeyEscape, 0)}) // pause
-	a.resume()                                          // as if Resume was clicked; button still down
+	a.step(now, []term.Event{key(term.KeyEscape, 0)}) // pause
+	a.resume()                                        // as if Resume was clicked; button still down
 	a.leftDown = true
 	for range 10 {
 		now = now.Add(time.Second / 30)

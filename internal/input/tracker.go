@@ -1,6 +1,6 @@
 // Package input turns terminal key events into game.Input.
 //
-// tcell only reports key presses and OS key repeats, never key releases.
+// tcell v2 only reports key presses and OS key repeats, never key releases.
 // The Tracker guesses "still held" from how recently a key's last event came
 // in. See ARCHITECTURE.md "Input approach" and DECISIONS.md D12 and D31.
 package input

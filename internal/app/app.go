@@ -10,13 +10,12 @@ import (
 	"runtime/debug"
 	"time"
 
-	"github.com/gdamore/tcell/v2"
-
 	"github.com/BunnyPraneeth5/termfps/internal/audio"
 	"github.com/BunnyPraneeth5/termfps/internal/game"
 	"github.com/BunnyPraneeth5/termfps/internal/input"
 	"github.com/BunnyPraneeth5/termfps/internal/render"
 	"github.com/BunnyPraneeth5/termfps/internal/save"
+	"github.com/BunnyPraneeth5/termfps/internal/term"
 	"github.com/BunnyPraneeth5/termfps/internal/world"
 )
 
@@ -36,7 +35,7 @@ type Config struct {
 
 // App is everything the loop needs between frames.
 type App struct {
-	scr      tcell.Screen
+	scr      term.Screen
 	cfg      Config
 	maps     []*world.Map  // as loaded; each run plays on a fresh copy
 	mapIndex int           // the map Play starts
@@ -97,7 +96,7 @@ const caution = "Half-block needs a truecolor terminal and more bandwidth. Use A
 
 // New sets up the app on an initialized screen at time now, showing the
 // title menu. maps must not be empty.
-func New(scr tcell.Screen, maps []*world.Map, cfg Config, now time.Time) *App {
+func New(scr term.Screen, maps []*world.Map, cfg Config, now time.Time) *App {
 	a := &App{
 		scr:      scr,
 		cfg:      cfg,
@@ -112,9 +111,8 @@ func New(scr tcell.Screen, maps []*world.Map, cfg Config, now time.Time) *App {
 	// the first run.
 	a.state = game.NewState(maps[0].Clone())
 	a.state.Mode = cfg.Mode
-	// Half-block needs 24-bit color (D17). tcell reports 1<<24 colors when it
-	// has truecolor, and fewer with TCELL_TRUECOLOR=disable or NO_COLOR.
-	if scr.Colors() < 1<<24 {
+	// Half-block needs 24-bit color (D17).
+	if !scr.Truecolor() {
 		a.state.Mode = game.ModeASCII
 	}
 	// Async key state sees keys pressed in any window, so it only counts
@@ -123,7 +121,7 @@ func New(scr tcell.Screen, maps []*world.Map, cfg Config, now time.Time) *App {
 	if cfg.KeyMode == "async" {
 		scr.EnableFocus()
 	}
-	scr.EnableMouse(tcell.MouseButtonEvents) // clicks only, no motion (D28)
+	scr.EnableMouse() // clicks only, no motion (D28)
 	// FrameSize(scr.Size()) passes Size's two results as the two arguments.
 	a.frame.Resize(render.FrameSize(scr.Size()))
 	a.switchTo(a.titleMenu())
@@ -175,7 +173,7 @@ func (a *App) switchTo(s screen) {
 // quits. restore puts the terminal back; Run calls it itself only when the
 // input goroutine panics (main's deferred handler covers everything else).
 // saved is the save file as loaded at startup; snd is the audio player.
-func Run(scr tcell.Screen, maps []*world.Map, cfg Config, saved Saved, snd Sound, restore func()) (exitCode int) {
+func Run(scr term.Screen, maps []*world.Map, cfg Config, saved Saved, snd Sound, restore func()) (exitCode int) {
 	a := New(scr, maps, cfg, time.Now())
 	a.useSaved(saved)
 	a.sound, a.soundErr = snd.Player, snd.Err
@@ -183,7 +181,7 @@ func Run(scr tcell.Screen, maps []*world.Map, cfg Config, saved Saved, snd Sound
 
 	// A channel passes values between goroutines. The buffer (64) lets the
 	// input goroutine queue events while the main loop is busy drawing.
-	events := make(chan tcell.Event, 64)
+	events := make(chan term.Event, 64)
 
 	// inputPanic carries a panic report from the input goroutine to the main
 	// loop. Only the main loop touches the screen, so a crash in the input
@@ -207,7 +205,7 @@ func Run(scr tcell.Screen, maps []*world.Map, cfg Config, saved Saved, snd Sound
 	ticker := time.NewTicker(time.Second / time.Duration(fps))
 	defer ticker.Stop()
 
-	var batch []tcell.Event // reused every frame
+	var batch []term.Event // reused every frame
 	for {
 		<-ticker.C // wait for the next tick (receives from the ticker's channel)
 		now := time.Now()
@@ -241,28 +239,33 @@ func Run(scr tcell.Screen, maps []*world.Map, cfg Config, saved Saved, snd Sound
 
 // step runs one frame at time now with the events that arrived since the
 // last frame. It reports whether the app should quit. Tests call it directly
-// with a simulation screen, without the ticker or the input goroutine.
-func (a *App) step(now time.Time, events []tcell.Event) (quit bool) {
+// with a fake screen, without the ticker or the input goroutine.
+func (a *App) step(now time.Time, events []term.Event) (quit bool) {
 	for _, ev := range events {
 		// A type switch picks a case by the concrete type behind the
-		// tcell.Event interface; ev has that type inside each case.
+		// term.Event interface; ev has that type inside each case.
 		switch ev := ev.(type) {
-		case *tcell.EventResize:
+		case term.Resize:
 			a.scr.Sync()
 			a.frame.Resize(render.FrameSize(a.scr.Size()))
-		case *tcell.EventFocus:
+		case term.Focus:
 			a.focused = ev.Focused
-		case *tcell.EventKey:
-			if ev.Key() == tcell.KeyCtrlC {
+		case term.Key:
+			// Key releases aren't used yet (tcell v2 never sends them);
+			// S2 feeds them to the key tracker.
+			if ev.Action == term.Release {
+				continue
+			}
+			if ev.Code == term.KeyCtrlC {
 				a.endRun()  // a run quit with Ctrl+C still counts
 				return true // Ctrl+C quits from any screen (D24)
 			}
 			a.current.key(a, ev)
-		case *tcell.EventMouse:
+		case term.Mouse:
 			// The screen hears about each button going down or up, not
 			// about every event (holding a button can repeat events).
 			left, right := input.MouseButtons(ev)
-			x, y := ev.Position()
+			x, y := ev.X, ev.Y
 			if left != a.leftDown {
 				a.current.mouse(a, mouseLeft, left, x, y)
 			}

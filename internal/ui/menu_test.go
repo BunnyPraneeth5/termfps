@@ -4,7 +4,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/gdamore/tcell/v2"
+	"github.com/BunnyPraneeth5/termfps/internal/term"
 )
 
 func testMenu() *Menu {
@@ -90,12 +90,7 @@ func TestClick(t *testing.T) {
 
 // Draw puts every item on screen and ItemAt maps their rows back to them.
 func TestDrawAndItemAt(t *testing.T) {
-	s := tcell.NewSimulationScreen("UTF-8")
-	if err := s.Init(); err != nil {
-		t.Fatalf("simulation screen Init: %v", err)
-	}
-	defer s.Fini()
-	s.SetSize(80, 24)
+	s := term.NewFake(80, 24)
 	m := testMenu()
 	if _, ok := m.ItemAt(40, 12); ok {
 		t.Error("ItemAt found an item before the first Draw")
@@ -105,7 +100,7 @@ func TestDrawAndItemAt(t *testing.T) {
 	for i, it := range m.Items {
 		row := -1
 		for y := 0; y < 24; y++ {
-			if strings.Contains(rowText(s, y), it.Label) {
+			if strings.Contains(s.Row(y), it.Label) {
 				row = y
 			}
 		}
@@ -116,29 +111,10 @@ func TestDrawAndItemAt(t *testing.T) {
 			t.Errorf("ItemAt(40, %d) = %d, %v; want %d, true", row, got, ok, i)
 		}
 	}
-	if !strings.Contains(screenText(s), "< 30 >") {
+	if !strings.Contains(s.Text(), "< 30 >") {
 		t.Error("setting value not drawn")
 	}
 	if _, ok := m.ItemAt(0, m.layout.top); ok {
 		t.Error("ItemAt found an item left of the box")
 	}
-}
-
-func rowText(s tcell.Screen, row int) string {
-	w, _ := s.Size()
-	var b strings.Builder
-	for x := 0; x < w; x++ {
-		str, _, _ := s.Get(x, row)
-		b.WriteString(str)
-	}
-	return b.String()
-}
-
-func screenText(s tcell.Screen) string {
-	_, h := s.Size()
-	var b strings.Builder
-	for y := 0; y < h; y++ {
-		b.WriteString(rowText(s, y) + "\n")
-	}
-	return b.String()
 }

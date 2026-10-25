@@ -1,6 +1,6 @@
 // Package ui holds the menus: a menu model (items, selection, values) that
-// doesn't know about the terminal, and Draw, which puts a menu on a tcell
-// screen. Only draw.go imports tcell, so the model is tested without one.
+// doesn't know about the terminal, and Draw, which puts a menu on a
+// term.Screen. Only draw.go uses term, so the model is tested without one.
 package ui
 
 // Key is a menu key, independent of the physical key that produced it.

@@ -4,7 +4,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/gdamore/tcell/v2"
+	"github.com/BunnyPraneeth5/termfps/internal/term"
 )
 
 func TestTooSmall(t *testing.T) {
@@ -26,22 +26,12 @@ func TestTooSmall(t *testing.T) {
 	}
 }
 
-// rowText reads one screen row as a string.
-func rowText(s tcell.Screen, cols, row int) string {
-	var b strings.Builder
-	for x := 0; x < cols; x++ {
-		str, _, _ := s.Get(x, row)
-		b.WriteString(str)
-	}
-	return b.String()
-}
-
 func TestDrawTooSmallShowsSize(t *testing.T) {
-	s := newSimScreen(t, 40, 10)
+	s := term.NewFake(40, 10)
 	DrawTooSmall(s)
 	found := false
 	for row := 0; row < 10; row++ {
-		if strings.Contains(rowText(s, 40, row), "40x10, need 80x24") {
+		if strings.Contains(s.Row(row), "40x10, need 80x24") {
 			found = true
 		}
 	}
@@ -53,7 +43,7 @@ func TestDrawTooSmallShowsSize(t *testing.T) {
 // Tiny screens must not panic; the message is just clipped.
 func TestDrawTooSmallTinyScreens(t *testing.T) {
 	for _, size := range [][2]int{{1, 1}, {5, 2}, {12, 3}} {
-		s := newSimScreen(t, size[0], size[1])
+		s := term.NewFake(size[0], size[1])
 		DrawTooSmall(s)
 	}
 }

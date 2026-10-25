@@ -3,7 +3,7 @@ package render
 import (
 	"math"
 
-	"github.com/gdamore/tcell/v2"
+	"github.com/BunnyPraneeth5/termfps/internal/term"
 )
 
 // halfBlock is the upper half block. Its foreground color fills the top
@@ -11,24 +11,25 @@ import (
 const halfBlock = "▀"
 
 // PresentHalfBlock writes the Frame to the screen, two pixels per cell:
-// top pixel = foreground, bottom pixel = background. It only fills tcell's
+// top pixel = foreground, bottom pixel = background. It only fills the screen's
 // buffer; the caller sends it to the terminal with Show.
-func PresentHalfBlock(s tcell.Screen, f *Frame) {
+func PresentHalfBlock(s term.Screen, f *Frame) {
 	rows := f.H / 2
 	for row := 0; row < rows; row++ {
 		top := f.Pix[(2*row)*f.W : (2*row+1)*f.W]
 		bottom := f.Pix[(2*row+1)*f.W : (2*row+2)*f.W]
 		for x := 0; x < f.W; x++ {
-			style := tcell.StyleDefault.
-				Foreground(rgbColor(top[x].Gray, top[x].Tint)).
-				Background(rgbColor(bottom[x].Gray, bottom[x].Tint))
+			style := term.Style{
+				Fg: rgbColor(top[x].Gray, top[x].Tint),
+				Bg: rgbColor(bottom[x].Gray, bottom[x].Tint),
+			}
 			s.Put(x, row, halfBlock, style)
 		}
 	}
 }
 
 // Character ramps for the text presenters, brightest first. Strings (not
-// runes) so tcell's Put can use them without allocating.
+// runes) so Put can use them without allocating.
 var (
 	shadeRamp = []string{"█", "▓", "▒", "░", " "}
 	asciiRamp = []string{"@", "%", "#", "*", "+", "=", "-", ":", ".", " "}
@@ -37,29 +38,26 @@ var (
 // PresentShade writes the Frame as one shade block per cell (stretch T19).
 // It uses the terminal's default colors (basic colors for tinted cells), so
 // it works without truecolor.
-func PresentShade(s tcell.Screen, f *Frame) {
+func PresentShade(s term.Screen, f *Frame) {
 	presentRamp(s, f, shadeRamp)
 }
 
 // PresentASCII writes the Frame as one ASCII character per cell (stretch
 // T19). Default colors and plain characters: the lightest mode for slow
 // connections.
-func PresentASCII(s tcell.Screen, f *Frame) {
+func PresentASCII(s term.Screen, f *Frame) {
 	presentRamp(s, f, asciiRamp)
 }
 
 // presentRamp averages the two pixels of each cell and picks a character.
-func presentRamp(s tcell.Screen, f *Frame, ramp []string) {
+func presentRamp(s term.Screen, f *Frame, ramp []string) {
 	rows := f.H / 2
 	for row := 0; row < rows; row++ {
 		top := f.Pix[(2*row)*f.W : (2*row+1)*f.W]
 		bottom := f.Pix[(2*row+1)*f.W : (2*row+2)*f.W]
 		for x := 0; x < f.W; x++ {
 			avg := uint8((int(top[x].Gray) + int(bottom[x].Gray)) / 2)
-			style := tcell.StyleDefault
-			if c, ok := basicColor(cellTint(top[x], bottom[x])); ok {
-				style = style.Foreground(c)
-			}
+			style := term.Style{Fg: basicColor(cellTint(top[x], bottom[x]))}
 			s.Put(x, row, ramp[rampIndex(avg, len(ramp))], style)
 		}
 	}
@@ -75,9 +73,8 @@ func rampIndex(g uint8, n int) int {
 }
 
 // grayColor turns a brightness into a 24-bit gray.
-func grayColor(g uint8) tcell.Color {
-	v := int32(g)
-	return tcell.NewRGBColor(v, v, v)
+func grayColor(g uint8) term.Color {
+	return term.RGB(g, g, g)
 }
 
 // mixedBackground is how bright the cell background is in the Mixed mode,
@@ -90,7 +87,7 @@ const mixedBackground = 0.2
 // between characters fill in (P1-15). The style is from S0ra's libasciic
 // "Mixed" mode (D31). It needs truecolor, like half-block, and costs about
 // the same: both send a foreground and a background color per cell.
-func PresentMixed(s tcell.Screen, f *Frame) {
+func PresentMixed(s term.Screen, f *Frame) {
 	rows := f.H / 2
 	for row := 0; row < rows; row++ {
 		top := f.Pix[(2*row)*f.W : (2*row+1)*f.W]
@@ -98,9 +95,10 @@ func PresentMixed(s tcell.Screen, f *Frame) {
 		for x := 0; x < f.W; x++ {
 			avg := uint8((int(top[x].Gray) + int(bottom[x].Gray)) / 2)
 			tint := cellTint(top[x], bottom[x])
-			style := tcell.StyleDefault.
-				Foreground(rgbColor(avg, tint)).
-				Background(rgbColor(toGray(float64(avg)*mixedBackground), tint))
+			style := term.Style{
+				Fg: rgbColor(avg, tint),
+				Bg: rgbColor(toGray(float64(avg)*mixedBackground), tint),
+			}
 			s.Put(x, row, asciiRamp[rampIndex(avg, len(asciiRamp))], style)
 		}
 	}

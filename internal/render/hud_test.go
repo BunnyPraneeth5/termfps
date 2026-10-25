@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/BunnyPraneeth5/termfps/internal/game"
+	"github.com/BunnyPraneeth5/termfps/internal/term"
 )
 
 func sampleHUD() HUD {
@@ -22,9 +23,9 @@ func sampleHUD() HUD {
 
 func hudLine(t *testing.T, cols int, h HUD) string {
 	t.Helper()
-	s := newSimScreen(t, cols, 24)
+	s := term.NewFake(cols, 24)
 	DrawHUD(s, h)
-	return strings.TrimRight(rowText(s, cols, 23), " ")
+	return strings.TrimRight(s.Row(23), " ")
 }
 
 func TestHUDCoreAt80Columns(t *testing.T) {
@@ -83,15 +84,15 @@ func TestHUDShowsMode(t *testing.T) {
 func TestHUDNoticeWrapsAbove(t *testing.T) {
 	h := sampleHUD()
 	h.Notice = "Half-block needs a truecolor terminal and more bandwidth. Use ASCII over slow SSH."
-	s := newSimScreen(t, 80, 24)
+	s := term.NewFake(80, 24)
 	DrawHUD(s, h)
-	if got := strings.TrimSpace(rowText(s, 80, 21)); got != "Half-block needs a truecolor terminal and more bandwidth." {
+	if got := strings.TrimSpace(s.Row(21)); got != "Half-block needs a truecolor terminal and more bandwidth." {
 		t.Errorf("row 21 = %q, want the first sentence", got)
 	}
-	if got := strings.TrimSpace(rowText(s, 80, 22)); got != "Use ASCII over slow SSH." {
+	if got := strings.TrimSpace(s.Row(22)); got != "Use ASCII over slow SSH." {
 		t.Errorf("row 22 = %q, want the second sentence", got)
 	}
-	if got := strings.TrimSpace(rowText(s, 80, 20)); got != "" {
+	if got := strings.TrimSpace(s.Row(20)); got != "" {
 		t.Errorf("row 20 = %q, want untouched", got)
 	}
 }
@@ -99,12 +100,12 @@ func TestHUDNoticeWrapsAbove(t *testing.T) {
 func TestHUDNoticeOneLineWhenWide(t *testing.T) {
 	h := sampleHUD()
 	h.Notice = "Half-block needs a truecolor terminal and more bandwidth. Use ASCII over slow SSH."
-	s := newSimScreen(t, 120, 24)
+	s := term.NewFake(120, 24)
 	DrawHUD(s, h)
-	if got := strings.TrimSpace(rowText(s, 120, 22)); got != h.Notice {
+	if got := strings.TrimSpace(s.Row(22)); got != h.Notice {
 		t.Errorf("row 22 = %q, want the whole notice on one line", got)
 	}
-	if got := strings.TrimSpace(rowText(s, 120, 21)); got != "" {
+	if got := strings.TrimSpace(s.Row(21)); got != "" {
 		t.Errorf("row 21 = %q, want untouched", got)
 	}
 }
@@ -137,10 +138,10 @@ func TestHUDMinimapHidden(t *testing.T) {
 
 // The HUD only writes the last row, so it can't overlap the minimap.
 func TestHUDOnlyLastRow(t *testing.T) {
-	s := newSimScreen(t, 80, 24)
+	s := term.NewFake(80, 24)
 	DrawHUD(s, sampleHUD())
 	for row := 0; row < 23; row++ {
-		if txt := strings.TrimSpace(rowText(s, 80, row)); txt != "" {
+		if txt := strings.TrimSpace(s.Row(row)); txt != "" {
 			t.Fatalf("row %d has %q, want empty", row, txt)
 		}
 	}
@@ -164,11 +165,11 @@ func TestHUDHealthFirst(t *testing.T) {
 
 // DrawMessage centers its lines in a box with swapped colors.
 func TestDrawMessage(t *testing.T) {
-	s := newSimScreen(t, 80, 24)
+	s := term.NewFake(80, 24)
 	DrawMessage(s, []string{"YOU DIED", "Enter: try again"})
 	found := 0
 	for row := 0; row < 24; row++ {
-		txt := rowText(s, 80, row)
+		txt := s.Row(row)
 		for _, want := range []string{"YOU DIED", "Enter: try again"} {
 			if i := strings.Index(txt, want); i >= 0 {
 				found++
@@ -176,7 +177,7 @@ func TestDrawMessage(t *testing.T) {
 				if center < 36 || center > 44 {
 					t.Errorf("%q centered at column %d, want about 40", want, center)
 				}
-				if _, style, _ := s.Get(i, row); style != noticeStyle {
+				if _, style := s.Get(i, row); style != noticeStyle {
 					t.Errorf("%q not in the box style", want)
 				}
 			}

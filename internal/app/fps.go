@@ -52,8 +52,8 @@ func (c *fpsCounter) value() float64 {
 // ARCHITECTURE "Performance budget").
 type frameTimes struct {
 	draw    time.Duration // DrawFrame: rays into the pixel buffer
-	present time.Duration // presenter, minimap, HUD: into tcell's cell buffer
-	show    time.Duration // Show: tcell sends changed cells to the terminal
+	present time.Duration // presenter, minimap, HUD: into the screen's cell buffer
+	show    time.Duration // Show: changed cells go to the terminal
 }
 
 // timeAverager averages frame timings over the FPS counter's windows.

@@ -12,6 +12,7 @@ Go (latest stable) + tcell v2, pinned version. `github.com/ebitengine/oto/v3` fo
 - internal/game: player, state, update. No tcell.
 - internal/input: tcell events -> game.Input (held-key tracking).
 - internal/render: Frame buffer, DrawFrame, presenters, minimap, HUD. DrawFrame has no tcell; only presenters, minimap, and HUD touch the screen.
+- internal/term (S1, D41): our Screen interface, Style/Color, events (Key with Press/Repeat/Release, Mouse, Resize, Focus). tcell.go is the tcell v2 adapter and the only file that imports tcell; Fake is the test screen. app, render, ui and input use only term.
 - Built in P1 (ARCHITECTURE "P1 design"): internal/app (loop + screens), internal/ui (menus), internal/save (save.json), internal/audio (oto), internal/assets (pixel art, textures). world and game never import tcell or audio.
 
 ## Rules

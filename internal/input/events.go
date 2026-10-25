@@ -3,26 +3,25 @@ package input
 import (
 	"unicode"
 
-	"github.com/gdamore/tcell/v2"
-
+	"github.com/BunnyPraneeth5/termfps/internal/term"
 	"github.com/BunnyPraneeth5/termfps/internal/ui"
 )
 
-// KeyFor maps a tcell key event to a game key. ok is false for keys the game
+// KeyFor maps a key event to a game key. ok is false for keys the game
 // doesn't use for movement. Letters are compared lower-cased, so Shift and
 // Caps Lock don't break them.
-func KeyFor(ev *tcell.EventKey) (k Key, ok bool) {
-	switch ev.Key() {
-	case tcell.KeyUp:
+func KeyFor(ev term.Key) (k Key, ok bool) {
+	switch ev.Code {
+	case term.KeyUp:
 		return KeyForward, true
-	case tcell.KeyDown:
+	case term.KeyDown:
 		return KeyBack, true
-	case tcell.KeyLeft:
+	case term.KeyLeft:
 		return KeyTurnLeft, true
-	case tcell.KeyRight:
+	case term.KeyRight:
 		return KeyTurnRight, true
-	case tcell.KeyRune:
-		switch unicode.ToLower(ev.Rune()) {
+	case term.KeyRune:
+		switch unicode.ToLower(ev.Rune) {
 		case 'w':
 			return KeyForward, true
 		case 's':
@@ -41,66 +40,66 @@ func KeyFor(ev *tcell.EventKey) (k Key, ok bool) {
 }
 
 // IsToggleMinimap reports whether the key is M (either case).
-func IsToggleMinimap(ev *tcell.EventKey) bool {
-	return ev.Key() == tcell.KeyRune && unicode.ToLower(ev.Rune()) == 'm'
+func IsToggleMinimap(ev term.Key) bool {
+	return ev.Code == term.KeyRune && unicode.ToLower(ev.Rune) == 'm'
 }
 
 // IsFire reports whether the key is Space (fire).
-func IsFire(ev *tcell.EventKey) bool {
-	return ev.Key() == tcell.KeyRune && ev.Rune() == ' '
+func IsFire(ev term.Key) bool {
+	return ev.Code == term.KeyRune && ev.Rune == ' '
 }
 
 // IsReload reports whether the key is R (either case).
-func IsReload(ev *tcell.EventKey) bool {
-	return ev.Key() == tcell.KeyRune && unicode.ToLower(ev.Rune()) == 'r'
+func IsReload(ev term.Key) bool {
+	return ev.Code == term.KeyRune && unicode.ToLower(ev.Rune) == 'r'
 }
 
 // IsCycleRenderMode reports whether the key is V (either case).
-func IsCycleRenderMode(ev *tcell.EventKey) bool {
-	return ev.Key() == tcell.KeyRune && unicode.ToLower(ev.Rune()) == 'v'
+func IsCycleRenderMode(ev term.Key) bool {
+	return ev.Code == term.KeyRune && unicode.ToLower(ev.Rune) == 'v'
 }
 
 // IsQuit reports whether the key is Esc or Ctrl+C.
-func IsQuit(ev *tcell.EventKey) bool {
-	return ev.Key() == tcell.KeyEscape || ev.Key() == tcell.KeyCtrlC
+func IsQuit(ev term.Key) bool {
+	return ev.Code == term.KeyEscape || ev.Code == term.KeyCtrlC
 }
 
 // Pump runs on its own goroutine. It reads screen events and sends them to
 // out. It only sends; it never touches game state. It returns when the
 // screen is finalized (PollEvent returns nil). panicOnKey is the
 // TERMFPS_PANIC=input test switch.
-func Pump(s tcell.Screen, out chan<- tcell.Event, panicOnKey bool) {
+func Pump(s term.Screen, out chan<- term.Event, panicOnKey bool) {
 	for {
 		ev := s.PollEvent()
 		if ev == nil {
 			return
 		}
-		if _, isKey := ev.(*tcell.EventKey); isKey && panicOnKey {
+		if _, isKey := ev.(term.Key); isKey && panicOnKey {
 			panic("forced test panic in input goroutine (TERMFPS_PANIC=input)")
 		}
 		out <- ev
 	}
 }
 
-// MenuKeyFor maps a tcell key event to a menu key: arrows or W/A/S/D,
+// MenuKeyFor maps a key event to a menu key: arrows or W/A/S/D,
 // Enter, Esc. Space is left out: it's fire, and a held Space after dying
 // would pick a menu item by accident.
-func MenuKeyFor(ev *tcell.EventKey) (k ui.Key, ok bool) {
-	switch ev.Key() {
-	case tcell.KeyUp:
+func MenuKeyFor(ev term.Key) (k ui.Key, ok bool) {
+	switch ev.Code {
+	case term.KeyUp:
 		return ui.KeyUp, true
-	case tcell.KeyDown:
+	case term.KeyDown:
 		return ui.KeyDown, true
-	case tcell.KeyLeft:
+	case term.KeyLeft:
 		return ui.KeyLeft, true
-	case tcell.KeyRight:
+	case term.KeyRight:
 		return ui.KeyRight, true
-	case tcell.KeyEnter:
+	case term.KeyEnter:
 		return ui.KeyEnter, true
-	case tcell.KeyEscape:
+	case term.KeyEscape:
 		return ui.KeyBack, true
-	case tcell.KeyRune:
-		switch unicode.ToLower(ev.Rune()) {
+	case term.KeyRune:
+		switch unicode.ToLower(ev.Rune) {
 		case 'w':
 			return ui.KeyUp, true
 		case 's':
@@ -115,10 +114,9 @@ func MenuKeyFor(ev *tcell.EventKey) (k ui.Key, ok bool) {
 }
 
 // MouseButtons reports which of the game's mouse buttons are down in a
-// mouse event: left (shoot, pick menu items) and right (reload). tcell
-// sends an event for each press and release; after a release, the
+// mouse event: left (shoot, pick menu items) and right (reload). The
+// terminal sends an event for each press and release; after a release, the
 // released button is no longer in the event.
-func MouseButtons(ev *tcell.EventMouse) (left, right bool) {
-	b := ev.Buttons()
-	return b&tcell.Button1 != 0, b&tcell.Button2 != 0 // Button2 is the right button
+func MouseButtons(ev term.Mouse) (left, right bool) {
+	return ev.Buttons&term.ButtonLeft != 0, ev.Buttons&term.ButtonRight != 0
 }

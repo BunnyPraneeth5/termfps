@@ -6,9 +6,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/gdamore/tcell/v2"
-
 	"github.com/BunnyPraneeth5/termfps/internal/game"
+	"github.com/BunnyPraneeth5/termfps/internal/term"
 )
 
 // HUD is everything shown on the bottom row.
@@ -34,11 +33,11 @@ var compass = [8]string{"E", "SE", "S", "SW", "W", "NW", "N", "NE"}
 // key mode) are added in order only while they fit whole, so nothing is cut
 // off mid-word at 80 columns. A Notice goes on the row(s) just above, over
 // the bottom of the 3D view, never over the minimap (which sits at the top).
-func DrawHUD(s tcell.Screen, h HUD) {
+func DrawHUD(s term.Screen, h HUD) {
 	w, rows := s.Size()
 	y := rows - 1
 	for x := 0; x < w; x++ {
-		s.SetContent(x, y, ' ', nil, tcell.StyleDefault)
+		s.Put(x, y, " ", term.Style{})
 	}
 
 	p := h.Player
@@ -63,7 +62,7 @@ func DrawHUD(s tcell.Screen, h HUD) {
 		}
 		line += e
 	}
-	s.PutStr(0, y, line)
+	term.PutStr(s, 0, y, line, term.Style{})
 
 	if h.Notice != "" {
 		lines := wrapSentences(h.Notice, w-2) // one space of padding each side
@@ -72,14 +71,14 @@ func DrawHUD(s tcell.Screen, h HUD) {
 			if row < 0 {
 				continue
 			}
-			s.PutStrStyled(0, row, " "+l+" ", noticeStyle)
+			term.PutStr(s, 0, row, " "+l+" ", noticeStyle)
 		}
 	}
 }
 
 // noticeStyle is reversed (swapped colors) so it stands out in every
 // render mode, with or without truecolor.
-var noticeStyle = tcell.StyleDefault.Reverse(true)
+var noticeStyle = term.Style{Reverse: true}
 
 // wrapSentences returns text as one line if it fits in width, otherwise
 // one line per sentence (split after ". "). A sentence still too long is
@@ -98,7 +97,7 @@ func wrapSentences(text string, width int) []string {
 // DrawMessage draws lines in a centered box with swapped colors (so it
 // stands out in every render mode), over whatever is on screen. Used for
 // Game over now, menus later.
-func DrawMessage(s tcell.Screen, lines []string) {
+func DrawMessage(s term.Screen, lines []string) {
 	w, h := s.Size()
 	width := 0
 	for _, l := range lines {
@@ -108,13 +107,13 @@ func DrawMessage(s tcell.Screen, lines []string) {
 	top := max((h-len(lines)-2)/2, 0)
 	left := max((w-width)/2, 0)
 	blank := strings.Repeat(" ", width)
-	s.PutStrStyled(left, top, blank, noticeStyle)
+	term.PutStr(s, left, top, blank, noticeStyle)
 	for i, l := range lines {
 		pad := (width - len([]rune(l))) / 2
 		row := strings.Repeat(" ", pad) + l + strings.Repeat(" ", width-pad-len([]rune(l)))
-		s.PutStrStyled(left, top+1+i, row, noticeStyle)
+		term.PutStr(s, left, top+1+i, row, noticeStyle)
 	}
-	s.PutStrStyled(left, top+1+len(lines), blank, noticeStyle)
+	term.PutStr(s, left, top+1+len(lines), blank, noticeStyle)
 }
 
 // Clock formats seconds as m:ss (e.g. 3:07).

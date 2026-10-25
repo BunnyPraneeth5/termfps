@@ -3,7 +3,7 @@ package render
 import (
 	"fmt"
 
-	"github.com/gdamore/tcell/v2"
+	"github.com/BunnyPraneeth5/termfps/internal/term"
 )
 
 // Smallest terminal the game draws in (ARCHITECTURE "Performance budget").
@@ -19,7 +19,7 @@ func TooSmall(cols, rows int) bool {
 
 // DrawTooSmall clears the screen and asks the user to resize. Lines are
 // centered and clipped to the screen, so any size (even 1x1) is safe.
-func DrawTooSmall(s tcell.Screen) {
+func DrawTooSmall(s term.Screen) {
 	s.Clear()
 	w, h := s.Size()
 	lines := []string{
@@ -29,6 +29,6 @@ func DrawTooSmall(s tcell.Screen) {
 	}
 	top := max((h-len(lines))/2, 0)
 	for i, line := range lines {
-		s.PutStr(max((w-len(line))/2, 0), top+i, line) // PutStr clips at the right edge
+		term.PutStr(s, max((w-len(line))/2, 0), top+i, line, term.Style{}) // PutStr clips at the edges
 	}
 }

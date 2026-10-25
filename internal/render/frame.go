@@ -1,5 +1,5 @@
-// Package render turns game state into pixels (DrawFrame, no tcell) and
-// pixels into terminal cells (presenters, which use tcell).
+// Package render turns game state into pixels (DrawFrame, no screen) and
+// pixels into terminal cells (presenters, which draw on a term.Screen).
 package render
 
 import (
@@ -64,7 +64,7 @@ const (
 )
 
 // DrawFrame casts one ray per column and fills f with ceiling, wall and floor.
-// It doesn't use tcell. A Frame with no pixels is left as is.
+// It doesn't touch the screen. A Frame with no pixels is left as is.
 func DrawFrame(s *game.State, f *Frame) {
 	if f.W <= 0 || f.H <= 0 {
 		return

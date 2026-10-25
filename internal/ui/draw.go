@@ -5,24 +5,24 @@ import (
 	"strings"
 	"unicode/utf8"
 
-	"github.com/gdamore/tcell/v2"
+	"github.com/BunnyPraneeth5/termfps/internal/term"
 )
 
 // Menu styles: a reversed box (like the in-game notices), the selected item
 // in normal colors so it stands out, disabled items dim.
 var (
-	boxStyle      = tcell.StyleDefault.Reverse(true)
-	selectedStyle = tcell.StyleDefault.Bold(true)
-	disabledStyle = tcell.StyleDefault.Reverse(true).Dim(true)
+	boxStyle      = term.Style{Reverse: true}
+	selectedStyle = term.Style{Bold: true}
+	disabledStyle = term.Style{Reverse: true, Dim: true}
 )
 
 // hint is the key help under every menu.
 const hint = "Up/Down select   Left/Right change   Enter choose   Esc back"
 
 // Draw puts the menu in a box centered on the screen and remembers where the
-// items went, so ItemAt can map clicks to items. It only fills tcell's
+// items went, so ItemAt can map clicks to items. It only fills the screen's
 // buffer; the caller sends it to the terminal with Show.
-func Draw(s tcell.Screen, m *Menu) {
+func Draw(s term.Screen, m *Menu) {
 	labels := itemLines(m)
 
 	lines := []string{m.Title, ""}
@@ -43,7 +43,7 @@ func Draw(s tcell.Screen, m *Menu) {
 	w, h := s.Size()
 	top := max((h-len(lines)-2)/2, 0)
 	left := max((w-width)/2, 0)
-	s.PutStrStyled(left, top, strings.Repeat(" ", width), boxStyle)
+	term.PutStr(s, left, top, strings.Repeat(" ", width), boxStyle)
 	for i, l := range lines {
 		style := boxStyle
 		row := padCenter(l, width)
@@ -57,9 +57,9 @@ func Draw(s tcell.Screen, m *Menu) {
 				style = selectedStyle
 			}
 		}
-		s.PutStrStyled(left, top+1+i, row, style)
+		term.PutStr(s, left, top+1+i, row, style)
 	}
-	s.PutStrStyled(left, top+1+len(lines), strings.Repeat(" ", width), boxStyle)
+	term.PutStr(s, left, top+1+len(lines), strings.Repeat(" ", width), boxStyle)
 
 	m.layout = layout{x: left, w: width, top: top + 1 + firstItem, n: len(labels)}
 }

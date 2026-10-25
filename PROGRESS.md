@@ -174,3 +174,9 @@ Template:
 - User marked P1-06 to P1-13, P1-16, P1-17 done; P1-14 and P1-15 stay [~] (S0ra follow-ups open). P1-18 changed to docs only (D38): README rewritten for the survival game (controls with mouse and pause, menus, saving, maps and unlocks, playing, sound, options, code layout, roadmap); ARCHITECTURE "P1 design" marked built with the differences (pause redraw, menus, mixed presenter, P1-14 input, save details, sound); PRD and CLAUDE.md updated. New TASKS section "Maps and gameplay update" (M1-Mn), not planned yet; balancing and a new demo moved there.
 - Not done: P1-18 waits for the user to read the README.
 - Next: read S0ra's links, recommend a tcell path for key releases, then discuss M1-Mn.
+
+## 2026-10-26 (S1)
+- Done (one commit; build, vet, gofmt, tests pass; 227 top-level tests; `GOOS=linux go vet` clean): S1, our own terminal layer (D41). New `internal/term`: Screen interface, Style/Color, events (Key with Press/Repeat/Release, Mouse, Resize, Focus), tcell v2 adapter (`term.Open`, the only tcell import), and `term.Fake` for tests. app, render, ui, input and main use only `term`; every test that used tcell's simulation screen runs on the Fake. New tests: adapter style/color/event conversion and PollEvent against tcell's simulation screen, the Fake, PutStr clipping, `input.Pump` stopping when the screen closes, key releases ignored by the app. Benchmark: presenters on the Fake ~0.09 ms, filling tcell's buffer through the adapter ~0.85 ms (0 allocations).
+- Issues found: tcell drops Shift from upper-case letters (a test expectation of mine assumed it kept it); one of my bash heredoc edits failed before changing anything and was redone from a script file.
+- Not done: on-screen check that nothing changed (user); not pushed.
+- Next: user check of S1; S2 (tcell v3) needs the user's OK for the dependency change first.

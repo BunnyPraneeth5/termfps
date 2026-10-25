@@ -1,25 +1,24 @@
 package render
 
 import (
-	"github.com/gdamore/tcell/v2"
-
 	"github.com/BunnyPraneeth5/termfps/internal/game"
+	"github.com/BunnyPraneeth5/termfps/internal/term"
 	"github.com/BunnyPraneeth5/termfps/internal/world"
 )
 
 // Minimap colors: light walls (all textures alike) on a dark floor, white
 // player arrow.
 var (
-	minimapWall   = tcell.StyleDefault.Background(grayColor(140))
-	minimapTarget = tcell.StyleDefault.Background(rgbColor(170, TintRed))
-	minimapFloor  = tcell.StyleDefault.Background(grayColor(25))
-	minimapPlayer = tcell.StyleDefault.Background(grayColor(25)).Foreground(grayColor(255)).Bold(true)
-	minimapAmmo   = tcell.StyleDefault.Background(grayColor(25)).Foreground(rgbColor(230, TintYellow))
+	minimapWall   = term.Style{Bg: grayColor(140)}
+	minimapTarget = term.Style{Bg: rgbColor(170, TintRed)}
+	minimapFloor  = term.Style{Bg: grayColor(25)}
+	minimapPlayer = term.Style{Bg: grayColor(25), Fg: grayColor(255), Bold: true}
+	minimapAmmo   = term.Style{Bg: grayColor(25), Fg: rgbColor(230, TintYellow)}
 )
 
 // arrows point in 8 directions, starting east and turning clockwise on
 // screen (y points down): E, SE, S, SW, W, NW, N, NE.
-var arrows = [8]rune{'→', '↘', '↓', '↙', '←', '↖', '↑', '↗'}
+var arrows = [8]string{"→", "↘", "↓", "↙", "←", "↖", "↑", "↗"}
 
 // minimapCellWidth: each map cell is 2 columns wide, so cells look about
 // square (terminal cells are about twice as tall as wide).
@@ -38,7 +37,7 @@ const (
 // When the map is bigger than the space it gets, it shows a window around
 // the player. It returns false (and draws nothing) when the screen is too
 // small for even a small window above the HUD row.
-func DrawMinimap(s tcell.Screen, st *game.State) bool {
+func DrawMinimap(s term.Screen, st *game.State) bool {
 	m := st.Map
 	w, h := s.Size()
 	viewW := min(m.W, minimapMaxW, (w-1)/minimapCellWidth) // one column of margin
@@ -56,17 +55,17 @@ func DrawMinimap(s tcell.Screen, st *game.State) bool {
 			sx := x0 + vx*minimapCellWidth
 			switch {
 			case x == px && y == py:
-				s.SetContent(sx, vy, arrowFor(st.Player.Angle), nil, minimapPlayer)
-				s.SetContent(sx+1, vy, ' ', nil, minimapFloor)
+				s.Put(sx, vy, arrowFor(st.Player.Angle), minimapPlayer)
+				s.Put(sx+1, vy, " ", minimapFloor)
 			case m.At(x, y) == world.Target:
-				s.SetContent(sx, vy, ' ', nil, minimapTarget)
-				s.SetContent(sx+1, vy, ' ', nil, minimapTarget)
+				s.Put(sx, vy, " ", minimapTarget)
+				s.Put(sx+1, vy, " ", minimapTarget)
 			case m.At(x, y).Solid():
-				s.SetContent(sx, vy, ' ', nil, minimapWall)
-				s.SetContent(sx+1, vy, ' ', nil, minimapWall)
+				s.Put(sx, vy, " ", minimapWall)
+				s.Put(sx+1, vy, " ", minimapWall)
 			default:
-				s.SetContent(sx, vy, ' ', nil, minimapFloor)
-				s.SetContent(sx+1, vy, ' ', nil, minimapFloor)
+				s.Put(sx, vy, " ", minimapFloor)
+				s.Put(sx+1, vy, " ", minimapFloor)
 			}
 		}
 	}
@@ -78,7 +77,7 @@ func DrawMinimap(s tcell.Screen, st *game.State) bool {
 		if int(pk.X) == px && int(pk.Y) == py {
 			continue // the player's arrow wins
 		}
-		s.SetContent(x0+vx*minimapCellWidth, vy, '●', nil, minimapAmmo)
+		s.Put(x0+vx*minimapCellWidth, vy, "●", minimapAmmo)
 	}
 	return true
 }
@@ -93,6 +92,6 @@ func minimapWindow(mapW, mapH, viewW, viewH, px, py int) (ox, oy int) {
 }
 
 // arrowFor picks the arrow closest to the facing angle.
-func arrowFor(angle float64) rune {
+func arrowFor(angle float64) string {
 	return arrows[dirIndex(angle)]
 }

@@ -4,11 +4,10 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/gdamore/tcell/v2"
-
 	"github.com/BunnyPraneeth5/termfps/internal/game"
 	"github.com/BunnyPraneeth5/termfps/internal/input"
 	"github.com/BunnyPraneeth5/termfps/internal/render"
+	"github.com/BunnyPraneeth5/termfps/internal/term"
 )
 
 // screen is one mode of the app: the game itself, or a menu (menus.go).
@@ -16,7 +15,7 @@ import (
 // so the app can switch between very different screens the same way.
 type screen interface {
 	// key handles one key press. It may set a.quit or switch screens.
-	key(a *App, ev *tcell.EventKey)
+	key(a *App, ev term.Key)
 	// mouse handles a mouse button going down (down = true) or up, with the
 	// pointer on screen cell (x, y).
 	mouse(a *App, b mouseButton, down bool, x, y int)
@@ -48,7 +47,7 @@ type playingScreen struct {
 	shooting bool
 }
 
-func (p *playingScreen) key(a *App, ev *tcell.EventKey) {
+func (p *playingScreen) key(a *App, ev term.Key) {
 	switch {
 	case input.IsQuit(ev): // Esc pauses (Ctrl+C is handled for every screen in step)
 		a.switchTo(a.pauseMenu())
@@ -62,7 +61,7 @@ func (p *playingScreen) key(a *App, ev *tcell.EventKey) {
 		p.reload = true
 	default:
 		if k, ok := input.KeyFor(ev); ok {
-			a.keys.Press(k, ev.When())
+			a.keys.Press(k, ev.When)
 		}
 	}
 }

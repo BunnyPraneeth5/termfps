@@ -218,6 +218,7 @@ internal/game        + weapon/ammo, enemies, pickups, spawner + tiers, score, pe
 internal/render      + Pixel.Tint, depth buffer, sprites, textures, weapon overlay, crosshair
 internal/input       + Space, R, mouse buttons, menu keys
 internal/save        save.json load/save (encoding/json, atomic write)
+internal/term        our screen interface, styles and events; tcell v2 adapter (the only tcell import) and a fake screen for tests (S1, D41)
 internal/audio       oto player + generated effects (P1-17)
 internal/assets      pixel-art images (gun, flash, sprites) and textures as text files, embedded; format in render.ParseImage
 ```

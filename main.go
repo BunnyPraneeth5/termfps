@@ -15,13 +15,12 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/gdamore/tcell/v2"
-
 	"github.com/BunnyPraneeth5/termfps/internal/app"
 	"github.com/BunnyPraneeth5/termfps/internal/audio"
 	"github.com/BunnyPraneeth5/termfps/internal/input"
 	"github.com/BunnyPraneeth5/termfps/internal/render"
 	"github.com/BunnyPraneeth5/termfps/internal/save"
+	"github.com/BunnyPraneeth5/termfps/internal/term"
 	"github.com/BunnyPraneeth5/termfps/internal/world"
 )
 
@@ -70,13 +69,9 @@ func run() (exitCode int) {
 	player, err := audio.New()
 	snd := app.Sound{Player: player, Err: err}
 
-	screen, err := tcell.NewScreen()
+	screen, err := term.Open()
 	if err != nil {
-		fmt.Fprintln(os.Stderr, "termfps: create screen:", err)
-		return 1
-	}
-	if err := screen.Init(); err != nil {
-		fmt.Fprintln(os.Stderr, "termfps: init screen:", err)
+		fmt.Fprintln(os.Stderr, "termfps:", err) // "create screen: ..." or "init screen: ..."
 		return 1
 	}
 

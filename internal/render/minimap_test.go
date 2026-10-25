@@ -6,16 +6,17 @@ import (
 	"testing"
 
 	"github.com/BunnyPraneeth5/termfps/internal/game"
+	"github.com/BunnyPraneeth5/termfps/internal/term"
 	"github.com/BunnyPraneeth5/termfps/internal/world"
 )
 
 func TestArrowFor(t *testing.T) {
 	cases := []struct {
 		deg  float64
-		want rune
+		want string
 	}{
-		{0, '→'}, {45, '↘'}, {90, '↓'}, {135, '↙'}, {180, '←'},
-		{225, '↖'}, {270, '↑'}, {315, '↗'}, {359, '→'}, {20, '→'}, {25, '↘'},
+		{0, "→"}, {45, "↘"}, {90, "↓"}, {135, "↙"}, {180, "←"},
+		{225, "↖"}, {270, "↑"}, {315, "↗"}, {359, "→"}, {20, "→"}, {25, "↘"},
 	}
 	for _, c := range cases {
 		if got := arrowFor(c.deg * math.Pi / 180); got != c.want {
@@ -27,7 +28,7 @@ func TestArrowFor(t *testing.T) {
 // room (5 wide, 7 tall) with the player at (1, 3). On an 80x24 screen the
 // minimap is 10 columns wide and starts at x = 80 - 10 - 1 = 69.
 func TestDrawMinimapLayout(t *testing.T) {
-	scr := newSimScreen(t, 80, 24)
+	scr := term.NewFake(80, 24)
 	m, err := world.Parse([]byte(room))
 	if err != nil {
 		t.Fatalf("Parse: %v", err)
@@ -40,27 +41,27 @@ func TestDrawMinimapLayout(t *testing.T) {
 	}
 	const x0 = 69
 	// Player arrow at cell (1, 3) -> column 69 + 2 = 71, row 3.
-	if str, _, _ := scr.Get(x0+2, 3); str != "↓" {
+	if str, _ := scr.Get(x0+2, 3); str != "↓" {
 		t.Errorf("player cell = %q, want ↓ (facing south)", str)
 	}
 	// Top-left map cell is a wall: both columns use the wall style.
 	for _, x := range []int{x0, x0 + 1} {
-		if _, style, _ := scr.Get(x, 0); style != minimapWall {
+		if _, style := scr.Get(x, 0); style != minimapWall {
 			t.Errorf("(%d, 0) is not wall-styled", x)
 		}
 	}
 	// Cell (2, 1) is floor.
-	if _, style, _ := scr.Get(x0+4, 1); style != minimapFloor {
+	if _, style := scr.Get(x0+4, 1); style != minimapFloor {
 		t.Error("cell (2, 1) is not floor-styled")
 	}
 	// Nothing on the HUD row, nothing left of the minimap on row 0.
-	if _, style, _ := scr.Get(x0-1, 0); style == minimapWall || style == minimapFloor {
+	if _, style := scr.Get(x0-1, 0); style == minimapWall || style == minimapFloor {
 		t.Error("minimap drew left of its area")
 	}
 }
 
 func TestDrawMinimapTooSmall(t *testing.T) {
-	scr := newSimScreen(t, 10, 7) // map needs 11 columns and 8 rows
+	scr := term.NewFake(10, 7) // map needs 11 columns and 8 rows
 	m, err := world.Parse([]byte(room))
 	if err != nil {
 		t.Fatalf("Parse: %v", err)
@@ -72,7 +73,7 @@ func TestDrawMinimapTooSmall(t *testing.T) {
 
 // Ammo boxes show as yellow dots on the minimap.
 func TestDrawMinimapPickup(t *testing.T) {
-	scr := newSimScreen(t, 80, 24)
+	scr := term.NewFake(80, 24)
 	m, err := world.Parse([]byte(room))
 	if err != nil {
 		t.Fatalf("Parse: %v", err)
@@ -81,7 +82,7 @@ func TestDrawMinimapPickup(t *testing.T) {
 	st.Pickups = []game.Pickup{{X: 2.5, Y: 4.5, Amount: 25}}
 	DrawMinimap(scr, st)
 	const x0 = 69 // 80 - 5*2 - 1
-	if str, style, _ := scr.Get(x0+2*2, 4); str != "●" || style != minimapAmmo {
+	if str, style := scr.Get(x0+2*2, 4); str != "●" || style != minimapAmmo {
 		t.Errorf("box cell = %q, want a yellow dot", str)
 	}
 }
@@ -109,7 +110,7 @@ func TestMinimapWindow(t *testing.T) {
 // On a map bigger than the minimap's space, it shows a 24x16 window around
 // the player, and the player's arrow is inside it.
 func TestDrawMinimapScrolls(t *testing.T) {
-	scr := newSimScreen(t, 80, 24)
+	scr := term.NewFake(80, 24)
 	var b strings.Builder
 	for y := 0; y < 32; y++ {
 		for x := 0; x < 64; x++ {
@@ -134,14 +135,14 @@ func TestDrawMinimapScrolls(t *testing.T) {
 	}
 	// Window origin: x 40-12 = 28, y 20-8 = 12. Player at view cell (12, 8).
 	const x0 = 80 - 24*2 - 1
-	if str, _, _ := scr.Get(x0+12*2, 8); str != "→" {
+	if str, _ := scr.Get(x0+12*2, 8); str != "→" {
 		t.Errorf("view cell (12, 8) = %q, want the player's arrow →", str)
 	}
 	// Row 16 and below belong to the 3D view, not the minimap.
-	if _, style, _ := scr.Get(x0, 16); style == minimapFloor || style == minimapWall {
+	if _, style := scr.Get(x0, 16); style == minimapFloor || style == minimapWall {
 		t.Error("minimap drew more than 16 rows")
 	}
-	if _, style, _ := scr.Get(x0-1, 0); style == minimapFloor || style == minimapWall {
+	if _, style := scr.Get(x0-1, 0); style == minimapFloor || style == minimapWall {
 		t.Error("minimap drew more than 24 cells across")
 	}
 }

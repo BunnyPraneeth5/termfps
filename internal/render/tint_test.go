@@ -3,16 +3,15 @@ package render
 import (
 	"testing"
 
-	"github.com/gdamore/tcell/v2"
-
 	"github.com/BunnyPraneeth5/termfps/internal/game"
+	"github.com/BunnyPraneeth5/termfps/internal/term"
 	"github.com/BunnyPraneeth5/termfps/internal/world"
 )
 
 func TestRGBColor(t *testing.T) {
 	cases := []struct {
 		tint    Tint
-		r, g, b int32
+		r, g, b uint8
 	}{
 		{TintNone, 200, 200, 200},
 		{TintRed, 200, 50, 50},
@@ -20,7 +19,7 @@ func TestRGBColor(t *testing.T) {
 		{TintYellow, 200, 200, 50},
 	}
 	for _, c := range cases {
-		r, g, b := rgbColor(200, c.tint).RGB()
+		r, g, b, _ := rgbColor(200, c.tint).RGB()
 		if r != c.r || g != c.g || b != c.b {
 			t.Errorf("rgbColor(200, %d) = (%d, %d, %d), want (%d, %d, %d)", c.tint, r, g, b, c.r, c.g, c.b)
 		}
@@ -59,32 +58,32 @@ func TestDrawFrameTintsTargets(t *testing.T) {
 // Text presenters color tinted cells with the basic terminal color and
 // leave plain cells in the default style.
 func TestTextPresentersUseBasicColor(t *testing.T) {
-	for _, present := range []func(tcell.Screen, *Frame){PresentShade, PresentASCII} {
-		s := newSimScreen(t, 4, 3)
+	for _, present := range []func(term.Screen, *Frame){PresentShade, PresentASCII} {
+		s := term.NewFake(4, 3)
 		f := newFrame(4, 3)
 		for i := range f.Pix {
 			f.Pix[i] = Pixel{Gray: 200}
 		}
 		f.Pix[0*f.W+1].Tint = TintRed // top pixel of cell (1, 0)
 		present(s, f)
-		_, style, _ := s.Get(1, 0)
-		if fg, _, _ := style.Decompose(); fg != tcell.ColorRed {
+		_, style := s.Get(1, 0)
+		if fg := style.Fg; fg != term.ColorRed {
 			t.Errorf("tinted cell foreground = %v, want red", fg)
 		}
-		if _, style, _ := s.Get(2, 0); style != tcell.StyleDefault {
+		if _, style := s.Get(2, 0); style != (term.Style{}) {
 			t.Errorf("plain cell style = %v, want default", style)
 		}
 	}
 }
 
 func TestHalfBlockUsesTint(t *testing.T) {
-	s := newSimScreen(t, 4, 3)
+	s := term.NewFake(4, 3)
 	f := newFrame(4, 3)
 	f.Pix[0*f.W+1] = Pixel{Gray: 200, Tint: TintRed}
 	PresentHalfBlock(s, f)
-	_, style, _ := s.Get(1, 0)
-	fg, _, _ := style.Decompose()
-	if r, g, _ := fg.RGB(); r != 200 || g != 50 {
+	_, style := s.Get(1, 0)
+	fg := style.Fg
+	if r, g, _, _ := fg.RGB(); r != 200 || g != 50 {
 		t.Errorf("tinted top pixel = (%d, %d, _), want (200, 50, _)", r, g)
 	}
 }

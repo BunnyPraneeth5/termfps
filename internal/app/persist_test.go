@@ -6,10 +6,9 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/gdamore/tcell/v2"
-
 	"github.com/BunnyPraneeth5/termfps/internal/game"
 	"github.com/BunnyPraneeth5/termfps/internal/save"
+	"github.com/BunnyPraneeth5/termfps/internal/term"
 )
 
 // withStore makes the app save into a temp folder.
@@ -65,7 +64,7 @@ func TestAbandonedRunsCountOnce(t *testing.T) {
 	press(a, &now, esc, up, enter) // Quit to menu: counts 4
 	press(a, &now, enter)          // Play again
 	a.state.Kills = 5
-	press(a, &now, key(tcell.KeyCtrlC, 0)) // counts 5
+	press(a, &now, key(term.KeyCtrlC, 0)) // counts 5
 	d, _ := save.Load(store)
 	if d.Progress.TotalKills != 12 {
 		t.Errorf("total kills = %d, want 3+4+5 = 12", d.Progress.TotalKills)

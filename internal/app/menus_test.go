@@ -5,21 +5,15 @@ import (
 	"testing"
 	"time"
 
-	"github.com/gdamore/tcell/v2"
-
 	"github.com/BunnyPraneeth5/termfps/internal/game"
+	"github.com/BunnyPraneeth5/termfps/internal/term"
 	"github.com/BunnyPraneeth5/termfps/internal/world"
 )
 
 // newMenuApp is like newTestApp but stays on the title menu.
-func newMenuApp(t *testing.T) (*App, tcell.SimulationScreen) {
+func newMenuApp(t *testing.T) (*App, *term.Fake) {
 	t.Helper()
-	s := tcell.NewSimulationScreen("UTF-8")
-	if err := s.Init(); err != nil {
-		t.Fatalf("simulation screen Init: %v", err)
-	}
-	s.SetSize(80, 24)
-	t.Cleanup(s.Fini)
+	s := term.NewFake(80, 24)
 	m, err := world.Parse([]byte(testMap))
 	if err != nil {
 		t.Fatalf("Parse: %v", err)
@@ -29,19 +23,19 @@ func newMenuApp(t *testing.T) (*App, tcell.SimulationScreen) {
 }
 
 // press runs one frame with the given keys and returns whether it quit.
-func press(a *App, now *time.Time, evs ...*tcell.EventKey) bool {
+func press(a *App, now *time.Time, evs ...term.Key) bool {
 	*now = now.Add(time.Second / 30)
-	batch := make([]tcell.Event, len(evs))
+	batch := make([]term.Event, len(evs))
 	for i, ev := range evs {
 		batch[i] = ev
 	}
 	return a.step(*now, batch)
 }
 
-func screenHas(s tcell.Screen, text string) bool {
+func screenHas(s *term.Fake, text string) bool {
 	_, h := s.Size()
 	for row := 0; row < h; row++ {
-		if strings.Contains(rowText(s, row), text) {
+		if strings.Contains(s.Row(row), text) {
 			return true
 		}
 	}
@@ -49,11 +43,11 @@ func screenHas(s tcell.Screen, text string) bool {
 }
 
 var (
-	up    = key(tcell.KeyUp, 0)
-	down  = key(tcell.KeyDown, 0)
-	right = key(tcell.KeyRight, 0)
-	enter = key(tcell.KeyEnter, 0)
-	esc   = key(tcell.KeyEscape, 0)
+	up    = key(term.KeyUp, 0)
+	down  = key(term.KeyDown, 0)
+	right = key(term.KeyRight, 0)
+	enter = key(term.KeyEnter, 0)
+	esc   = key(term.KeyEscape, 0)
 )
 
 // The app starts on the title menu; Play starts the game.
@@ -81,11 +75,11 @@ func TestTitleQuitAndCtrlC(t *testing.T) {
 		t.Error("Quit didn't quit")
 	}
 	a, _ = newMenuApp(t)
-	if !press(a, &now, key(tcell.KeyCtrlC, 0)) {
+	if !press(a, &now, key(term.KeyCtrlC, 0)) {
 		t.Error("Ctrl+C didn't quit from the menu")
 	}
 	a, _ = newTestApp(t)
-	if !press(a, &now, key(tcell.KeyCtrlC, 0)) {
+	if !press(a, &now, key(term.KeyCtrlC, 0)) {
 		t.Error("Ctrl+C didn't quit from the game")
 	}
 }
@@ -102,7 +96,7 @@ func TestPauseFreezesGame(t *testing.T) {
 	}
 	time0, x0 := a.state.Time, a.state.Player.X
 	for range 10 {
-		press(a, &now, key(tcell.KeyRune, 'w'))
+		press(a, &now, key(term.KeyRune, 'w'))
 	}
 	if a.state.Time != time0 || a.state.Player.X != x0 {
 		t.Error("game updated while paused")
@@ -200,7 +194,7 @@ func TestMenuClick(t *testing.T) {
 	_, h := s.Size()
 	row := -1
 	for y := 0; y < h; y++ {
-		if strings.Contains(rowText(s, y), "Settings") {
+		if strings.Contains(s.Row(y), "Settings") {
 			row = y
 		}
 	}
@@ -208,9 +202,9 @@ func TestMenuClick(t *testing.T) {
 		t.Fatal("Settings item not on screen")
 	}
 	now = now.Add(time.Second / 30)
-	a.step(now, []tcell.Event{
-		tcell.NewEventMouse(40, row, tcell.Button1, tcell.ModNone),
-		tcell.NewEventMouse(40, row, tcell.ButtonNone, tcell.ModNone),
+	a.step(now, []term.Event{
+		term.Mouse{X: 40, Y: row, Buttons: term.ButtonLeft},
+		term.Mouse{X: 40, Y: row},
 	})
 	if !screenHas(s, "SETTINGS") {
 		t.Error("clicking Settings didn't open the settings menu")
@@ -256,12 +250,7 @@ func TestUnlockRule(t *testing.T) {
 // Locked maps are dimmed and can't be picked; surviving 5 minutes opens the
 // next one, with a notice, and then it can be played.
 func TestMapUnlockAndSelect(t *testing.T) {
-	s := tcell.NewSimulationScreen("UTF-8")
-	if err := s.Init(); err != nil {
-		t.Fatalf("simulation screen Init: %v", err)
-	}
-	s.SetSize(80, 24)
-	t.Cleanup(s.Fini)
+	s := term.NewFake(80, 24)
 	var maps []*world.Map
 	for _, name := range []string{"First", "Second"} {
 		m, err := world.Parse([]byte("; name: " + name + "\n" + testMap))

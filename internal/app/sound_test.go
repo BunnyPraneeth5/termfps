@@ -5,10 +5,9 @@ import (
 	"slices"
 	"testing"
 
-	"github.com/gdamore/tcell/v2"
-
 	"github.com/BunnyPraneeth5/termfps/internal/audio"
 	"github.com/BunnyPraneeth5/termfps/internal/game"
+	"github.com/BunnyPraneeth5/termfps/internal/term"
 )
 
 func TestSoundsFor(t *testing.T) {
@@ -51,7 +50,7 @@ func TestSoundUnavailableShowsInMenu(t *testing.T) {
 	}
 	a.newRun()
 	a.state.Player.Weapon.Mag = 25
-	press(a, &now, key(tcell.KeyRune, ' ')) // fire with no player: no crash
+	press(a, &now, key(term.KeyRune, ' ')) // fire with no player: no crash
 	if a.state.Player.Weapon.Mag != 24 {
 		t.Error("Space didn't fire without a sound player")
 	}

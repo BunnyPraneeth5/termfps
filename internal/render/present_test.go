@@ -3,26 +3,13 @@ package render
 import (
 	"testing"
 
-	"github.com/gdamore/tcell/v2"
+	"github.com/BunnyPraneeth5/termfps/internal/term"
 )
-
-// newSimScreen returns tcell's in-memory screen, so presenters can be tested
-// without a real terminal.
-func newSimScreen(t testing.TB, cols, rows int) tcell.SimulationScreen {
-	t.Helper()
-	s := tcell.NewSimulationScreen("UTF-8")
-	if err := s.Init(); err != nil {
-		t.Fatalf("simulation screen Init: %v", err)
-	}
-	s.SetSize(cols, rows)
-	t.Cleanup(s.Fini) // runs when the test ends
-	return s
-}
 
 // A top pixel of 255 over a bottom pixel of 0 must give a white foreground
 // and black background. Swapping them would flip every cell upside down.
 func TestPresentHalfBlockTopIsForeground(t *testing.T) {
-	s := newSimScreen(t, 4, 3) // Frame 4 x 4 (2 view rows + HUD row)
+	s := term.NewFake(4, 3) // Frame 4 x 4 (2 view rows + HUD row)
 	f := newFrame(4, 3)
 	for x := 0; x < f.W; x++ {
 		f.Pix[0*f.W+x].Gray = 255 // view row 0, top
@@ -34,21 +21,21 @@ func TestPresentHalfBlockTopIsForeground(t *testing.T) {
 
 	cases := []struct {
 		row    int
-		fg, bg int32
+		fg, bg uint8
 	}{
 		{0, 255, 0},
 		{1, 10, 200},
 	}
 	for _, c := range cases {
-		str, style, _ := s.Get(2, c.row)
+		str, style := s.Get(2, c.row)
 		if str != string(halfBlock) {
 			t.Errorf("row %d: cell = %q, want %q", c.row, str, string(halfBlock))
 		}
-		fg, bg, _ := style.Decompose()
-		if r, _, _ := fg.RGB(); r != c.fg {
+		fg, bg := style.Fg, style.Bg
+		if r, _, _, _ := fg.RGB(); r != c.fg {
 			t.Errorf("row %d: foreground gray = %d, want %d", c.row, r, c.fg)
 		}
-		if r, _, _ := bg.RGB(); r != c.bg {
+		if r, _, _, _ := bg.RGB(); r != c.bg {
 			t.Errorf("row %d: background gray = %d, want %d", c.row, r, c.bg)
 		}
 	}
@@ -56,10 +43,10 @@ func TestPresentHalfBlockTopIsForeground(t *testing.T) {
 
 // The HUD row (the last one) is not touched by the presenter.
 func TestPresentHalfBlockLeavesHUDRow(t *testing.T) {
-	s := newSimScreen(t, 4, 3)
+	s := term.NewFake(4, 3)
 	f := newFrame(4, 3)
 	PresentHalfBlock(s, f)
-	if str, _, _ := s.Get(0, 2); str == string(halfBlock) {
+	if str, _ := s.Get(0, 2); str == string(halfBlock) {
 		t.Error("presenter drew on the HUD row")
 	}
 }
@@ -91,7 +78,7 @@ func TestRampIndex(t *testing.T) {
 func TestTextPresenters(t *testing.T) {
 	cases := []struct {
 		name    string
-		present func(tcell.Screen, *Frame)
+		present func(term.Screen, *Frame)
 		bright  string // character for a close wall
 		dark    string // character for black
 	}{
@@ -100,7 +87,7 @@ func TestTextPresenters(t *testing.T) {
 	}
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
-			s := newSimScreen(t, 4, 3)
+			s := term.NewFake(4, 3)
 			f := newFrame(4, 3)
 			for x := 0; x < f.W; x++ {
 				f.Pix[0*f.W+x].Gray = 230 // row 0: both pixels bright
@@ -111,16 +98,16 @@ func TestTextPresenters(t *testing.T) {
 			f.Pix[0*f.W+3].Gray = 0 // cell (3, 0): bright over black averages to the middle
 			c.present(s, f)
 
-			if str, style, _ := s.Get(1, 0); str != c.bright || style != tcell.StyleDefault {
+			if str, style := s.Get(1, 0); str != c.bright || style != (term.Style{}) {
 				t.Errorf("bright cell = %q (style %v), want %q with default style", str, style, c.bright)
 			}
-			if str, _, _ := s.Get(1, 1); str != c.dark {
+			if str, _ := s.Get(1, 1); str != c.dark {
 				t.Errorf("dark cell = %q, want %q", str, c.dark)
 			}
-			if str, _, _ := s.Get(3, 0); str == c.bright || str == c.dark {
+			if str, _ := s.Get(3, 0); str == c.bright || str == c.dark {
 				t.Errorf("mixed cell = %q, want a middle character", str)
 			}
-			if str, _, _ := s.Get(0, 2); str == c.bright {
+			if str, _ := s.Get(0, 2); str == c.bright {
 				t.Error("presenter drew on the HUD row")
 			}
 		})
@@ -129,6 +116,8 @@ func TestTextPresenters(t *testing.T) {
 
 // Benchmarks for the T6/T17 budget at 120x40. Run with:
 // go test -bench . ./internal/render
+// The presenter benchmarks run on the Fake screen, so they measure our code
+// only; term's BenchmarkTcellPut120x40 measures filling tcell's buffer.
 func BenchmarkDrawFrame120x40(b *testing.B) {
 	s := newState(b, 2.0, 3.5)
 	f := newFrame(120, 40)
@@ -138,7 +127,7 @@ func BenchmarkDrawFrame120x40(b *testing.B) {
 }
 
 func BenchmarkPresentHalfBlock120x40(b *testing.B) {
-	scr := newSimScreen(b, 120, 40)
+	scr := term.NewFake(120, 40)
 	f := newFrame(120, 40)
 	DrawFrame(newState(b, 2.0, 3.5), f)
 	for b.Loop() {
@@ -149,7 +138,7 @@ func BenchmarkPresentHalfBlock120x40(b *testing.B) {
 // Mixed: the ASCII ramp character in the pixel color, on the same color
 // at a fifth of the brightness; tints carry over.
 func TestPresentMixed(t *testing.T) {
-	s := newSimScreen(t, 3, 2)
+	s := term.NewFake(3, 2)
 	f := newFrame(3, 2)
 	f.Pix[0] = Pixel{Gray: 230}
 	f.Pix[f.W] = Pixel{Gray: 230}
@@ -157,26 +146,26 @@ func TestPresentMixed(t *testing.T) {
 	f.Pix[f.W+1] = Pixel{Gray: 100}
 	PresentMixed(s, f)
 
-	str, style, _ := s.Get(0, 0)
-	fg, bg, _ := style.Decompose() // Decompose splits a style into its colors and attributes
+	str, style := s.Get(0, 0)
+	fg, bg := style.Fg, style.Bg
 	if str != "@" || fg != rgbColor(230, TintNone) || bg != rgbColor(46, TintNone) {
 		t.Errorf("bright cell = %q fg %v bg %v; want @ in gray 230 on gray 46", str, fg, bg)
 	}
-	str, style, _ = s.Get(1, 0)
-	fg, bg, _ = style.Decompose()
+	str, style = s.Get(1, 0)
+	fg, bg = style.Fg, style.Bg
 	if str != asciiRamp[rampIndex(100, len(asciiRamp))] || fg != rgbColor(100, TintRed) || bg != rgbColor(20, TintRed) {
 		t.Errorf("red cell = %q fg %v bg %v; want the ramp character, red 100 on red 20", str, fg, bg)
 	}
-	if str, _, _ := s.Get(2, 0); str != " " {
+	if str, _ := s.Get(2, 0); str != " " {
 		t.Errorf("black cell = %q, want a space", str)
 	}
-	if str, _, _ := s.Get(0, 1); str == "@" {
+	if str, _ := s.Get(0, 1); str == "@" {
 		t.Error("presenter drew on the HUD row")
 	}
 }
 
 func BenchmarkPresentMixed120x40(b *testing.B) {
-	scr := newSimScreen(b, 120, 40)
+	scr := term.NewFake(120, 40)
 	f := newFrame(120, 40)
 	DrawFrame(newState(b, 2.0, 3.5), f)
 	for b.Loop() {

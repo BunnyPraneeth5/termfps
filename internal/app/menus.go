@@ -5,11 +5,10 @@ import (
 	"slices"
 	"time"
 
-	"github.com/gdamore/tcell/v2"
-
 	"github.com/BunnyPraneeth5/termfps/internal/game"
 	"github.com/BunnyPraneeth5/termfps/internal/input"
 	"github.com/BunnyPraneeth5/termfps/internal/render"
+	"github.com/BunnyPraneeth5/termfps/internal/term"
 	"github.com/BunnyPraneeth5/termfps/internal/ui"
 )
 
@@ -29,7 +28,7 @@ type menuScreen struct {
 	text []string
 }
 
-func (m *menuScreen) key(a *App, ev *tcell.EventKey) {
+func (m *menuScreen) key(a *App, ev term.Key) {
 	k, ok := input.MenuKeyFor(ev)
 	if !ok {
 		return
