@@ -79,3 +79,29 @@ func grayColor(g uint8) tcell.Color {
 	v := int32(g)
 	return tcell.NewRGBColor(v, v, v)
 }
+
+// mixedBackground is how bright the cell background is in the Mixed mode,
+// as a fraction of the character's color.
+const mixedBackground = 0.2
+
+// PresentMixed writes the Frame as one ASCII character per cell, like
+// PresentASCII, but in truecolor: the character in the cell's color on a
+// background of the same color at a fifth of the brightness, so dark gaps
+// between characters fill in (P1-15). The style is from S0ra's libasciic
+// "Mixed" mode (D31). It needs truecolor, like half-block, and costs about
+// the same: both send a foreground and a background color per cell.
+func PresentMixed(s tcell.Screen, f *Frame) {
+	rows := f.H / 2
+	for row := 0; row < rows; row++ {
+		top := f.Pix[(2*row)*f.W : (2*row+1)*f.W]
+		bottom := f.Pix[(2*row+1)*f.W : (2*row+2)*f.W]
+		for x := 0; x < f.W; x++ {
+			avg := uint8((int(top[x].Gray) + int(bottom[x].Gray)) / 2)
+			tint := cellTint(top[x], bottom[x])
+			style := tcell.StyleDefault.
+				Foreground(rgbColor(avg, tint)).
+				Background(rgbColor(toGray(float64(avg)*mixedBackground), tint))
+			s.Put(x, row, asciiRamp[rampIndex(avg, len(asciiRamp))], style)
+		}
+	}
+}

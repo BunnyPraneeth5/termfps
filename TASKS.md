@@ -247,7 +247,7 @@ Ideas and reference from S0ra (YouTube + Discord, 2026-10-23): events-mode input
 - README: in events mode only the last pressed key repeats, so moving + turning together is limited; async (Windows) doesn't have this.
 - Acceptance: unit tests for the learned window and the ease-in (fake times). On screen (user, `-keys events`): a tap turns a small amount, holding is smooth.
 
-### [ ] P1-15: "Mixed" render mode
+### [~] P1-15: "Mixed" render mode
 - New RenderMode after ASCII in the V cycle: per cell, ASCII ramp character from the averaged gray, fg = pixel color, bg = pixel color x 0.2. Needs truecolor (same fallback as half-block).
 - Optional: round colors to steps so neighbouring cells share a style and tcell sends fewer color codes; measure bytes per frame with and without, keep only if it helps.
 - Credit S0ra / libasciic in README.

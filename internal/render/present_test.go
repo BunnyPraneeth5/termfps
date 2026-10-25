@@ -145,3 +145,41 @@ func BenchmarkPresentHalfBlock120x40(b *testing.B) {
 		PresentHalfBlock(scr, f)
 	}
 }
+
+// Mixed: the ASCII ramp character in the pixel color, on the same color
+// at a fifth of the brightness; tints carry over.
+func TestPresentMixed(t *testing.T) {
+	s := newSimScreen(t, 3, 2)
+	f := newFrame(3, 2)
+	f.Pix[0] = Pixel{Gray: 230}
+	f.Pix[f.W] = Pixel{Gray: 230}
+	f.Pix[1] = Pixel{Gray: 100, Tint: TintRed}
+	f.Pix[f.W+1] = Pixel{Gray: 100}
+	PresentMixed(s, f)
+
+	str, style, _ := s.Get(0, 0)
+	fg, bg, _ := style.Decompose() // Decompose splits a style into its colors and attributes
+	if str != "@" || fg != rgbColor(230, TintNone) || bg != rgbColor(46, TintNone) {
+		t.Errorf("bright cell = %q fg %v bg %v; want @ in gray 230 on gray 46", str, fg, bg)
+	}
+	str, style, _ = s.Get(1, 0)
+	fg, bg, _ = style.Decompose()
+	if str != asciiRamp[rampIndex(100, len(asciiRamp))] || fg != rgbColor(100, TintRed) || bg != rgbColor(20, TintRed) {
+		t.Errorf("red cell = %q fg %v bg %v; want the ramp character, red 100 on red 20", str, fg, bg)
+	}
+	if str, _, _ := s.Get(2, 0); str != " " {
+		t.Errorf("black cell = %q, want a space", str)
+	}
+	if str, _, _ := s.Get(0, 1); str == "@" {
+		t.Error("presenter drew on the HUD row")
+	}
+}
+
+func BenchmarkPresentMixed120x40(b *testing.B) {
+	scr := newSimScreen(b, 120, 40)
+	f := newFrame(120, 40)
+	DrawFrame(newState(b, 2.0, 3.5), f)
+	for b.Loop() {
+		PresentMixed(scr, f)
+	}
+}

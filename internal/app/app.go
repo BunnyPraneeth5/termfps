@@ -154,6 +154,8 @@ func (a *App) present() {
 		render.PresentShade(a.scr, &a.frame)
 	case game.ModeASCII:
 		render.PresentASCII(a.scr, &a.frame)
+	case game.ModeMixed:
+		render.PresentMixed(a.scr, &a.frame)
 	default:
 		panic(fmt.Sprintf("unknown render mode %d", a.state.Mode))
 	}

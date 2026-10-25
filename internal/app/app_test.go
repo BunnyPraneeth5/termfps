@@ -91,24 +91,25 @@ func TestKeysMovePlayer(t *testing.T) {
 // half-block, and never again.
 func TestCautionOnce(t *testing.T) {
 	a, _ := newTestApp(t)
-	a.state.Mode = game.ModeShade
+	a.state.Mode = game.ModeASCII
 	now := t0
 	press := func() {
 		now = now.Add(time.Second / 30)
 		a.step(now, []tcell.Event{key(tcell.KeyRune, 'v')})
 	}
-	press() // shade -> ascii
+	press() // ascii -> mixed
 	if a.cautionShown {
 		t.Fatal("caution shown before half-block")
 	}
-	press() // ascii -> half-block
+	press() // mixed -> half-block
 	if !a.cautionShown || !a.cautionUntil.After(now) {
 		t.Fatal("no caution when switching to half-block")
 	}
 	until := a.cautionUntil
 	press()
 	press()
-	press() // around again to half-block
+	press()
+	press() // around again to half-block (4 modes)
 	if a.cautionUntil != until {
 		t.Error("caution shown a second time")
 	}
@@ -242,9 +243,9 @@ func TestZombieKillsPlayerAndRetry(t *testing.T) {
 // (bug seen in the user's video: the caution stayed on in shade mode).
 func TestCautionHiddenOutsideHalfBlock(t *testing.T) {
 	a, s := newTestApp(t)
-	a.state.Mode = game.ModeASCII
+	a.state.Mode = game.ModeMixed
 	now := t0.Add(time.Second / 30)
-	a.step(now, []tcell.Event{key(tcell.KeyRune, 'v')}) // ascii -> half-block: caution on
+	a.step(now, []tcell.Event{key(tcell.KeyRune, 'v')}) // mixed -> half-block: caution on
 	if !strings.Contains(rowText(s, 22)+rowText(s, 21), "Half-block needs") {
 		t.Fatal("caution not shown in half-block")
 	}

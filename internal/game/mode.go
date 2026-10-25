@@ -8,10 +8,12 @@ const (
 	ModeHalfBlock RenderMode = iota // two 24-bit gray pixels per cell (default)
 	ModeShade                       // one shade block per cell: █▓▒░
 	ModeASCII                       // one ASCII character per cell: @%#*+=-:.
+	ModeMixed                       // ASCII character in the pixel color on a dim fill of it (P1-15)
 	numModes                        // not a mode: how many modes there are
 )
 
-// Next returns the mode after m: half-block -> shade -> ASCII -> half-block.
+// Next returns the mode after m: half-block -> shade -> ASCII -> mixed ->
+// half-block.
 func (m RenderMode) Next() RenderMode {
 	return (m + 1) % numModes
 }
@@ -27,6 +29,8 @@ func (m RenderMode) String() string {
 		return "shade"
 	case ModeASCII:
 		return "ascii"
+	case ModeMixed:
+		return "mixed"
 	}
 	return "unknown"
 }

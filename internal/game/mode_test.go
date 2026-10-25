@@ -7,7 +7,7 @@ func TestRenderModeCycle(t *testing.T) {
 	if s.Mode != ModeHalfBlock {
 		t.Fatalf("start mode = %v, want half-block", s.Mode)
 	}
-	want := []RenderMode{ModeShade, ModeASCII, ModeHalfBlock, ModeShade}
+	want := []RenderMode{ModeShade, ModeASCII, ModeMixed, ModeHalfBlock, ModeShade}
 	for i, w := range want {
 		Update(s, Input{CycleRenderMode: true}, 1.0/30)
 		if s.Mode != w {
@@ -35,7 +35,7 @@ func TestRenderModeChangedEvent(t *testing.T) {
 
 func TestRenderModeString(t *testing.T) {
 	cases := map[RenderMode]string{
-		ModeHalfBlock: "half-block", ModeShade: "shade", ModeASCII: "ascii", RenderMode(9): "unknown",
+		ModeHalfBlock: "half-block", ModeShade: "shade", ModeASCII: "ascii", ModeMixed: "mixed", RenderMode(9): "unknown",
 	}
 	for m, want := range cases {
 		if got := m.String(); got != want {

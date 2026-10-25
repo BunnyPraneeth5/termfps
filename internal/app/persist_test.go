@@ -77,13 +77,13 @@ func TestSettingChangeSaves(t *testing.T) {
 	a, _ := newMenuApp(t)
 	store := withStore(t, a)
 	now := t0
-	press(a, &now, down, down, enter, right) // Settings, render mode ascii -> half-block
+	press(a, &now, down, down, enter, right) // Settings, render mode ascii -> mixed
 	d, problem := save.Load(store)
 	if problem != "" || d.Settings == nil {
 		t.Fatalf("nothing saved after a setting change (problem %q)", problem)
 	}
-	if d.Settings.RenderMode != "half-block" || d.Settings.FPS != 30 || d.Settings.Volume != 80 {
-		t.Errorf("saved settings %+v, want half-block, 30 FPS, volume 80", *d.Settings)
+	if d.Settings.RenderMode != "mixed" || d.Settings.FPS != 30 || d.Settings.Volume != 80 {
+		t.Errorf("saved settings %+v, want mixed, 30 FPS, volume 80", *d.Settings)
 	}
 }
 

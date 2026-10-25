@@ -144,10 +144,10 @@ func TestSettingsApplyRightAway(t *testing.T) {
 	if !screenHas(s, "SETTINGS") {
 		t.Fatal("settings menu not shown")
 	}
-	// Render mode starts at ascii (256-color screen); Right wraps to half-block.
+	// Render mode starts at ascii (256-color screen); Right goes to mixed.
 	press(a, &now, right)
-	if a.state.Mode != game.ModeHalfBlock {
-		t.Errorf("mode = %v after Right, want half-block", a.state.Mode)
+	if a.state.Mode != game.ModeMixed {
+		t.Errorf("mode = %v after Right, want mixed", a.state.Mode)
 	}
 	press(a, &now, down, right) // FPS 30 -> 60
 	if a.cfg.FPS != 60 {

@@ -48,7 +48,7 @@ they haven't been tested yet.
 | `Space` | Shoot (hold for 3 shots per second) |
 | `R` | Reload (the gun also reloads by itself when empty) |
 | `M` | Show / hide the minimap |
-| `V` | Switch render mode: half-block → shade → ASCII |
+| `V` | Switch render mode: half-block → shade → ASCII → mixed |
 | `Esc` / `Ctrl+C` | Quit |
 
 On Windows you can move and turn at the same time.
@@ -84,8 +84,9 @@ Example: `.\termfps.exe -fps 60 -aspect 0.9`
 
 - **3D view:** walls fade with distance, and north/south faces are drawn
   darker so corners stand out. Ceiling near black, floor brightening toward you.
-  Three looks, switched with `V`: half-block pixels (24-bit gray, the default),
-  shade blocks (`█▓▒░`), and ASCII (`@%#*+=-:.`).
+  Four looks, switched with `V`: half-block pixels (24-bit gray, the default),
+  shade blocks (`█▓▒░`), ASCII (`@%#*+=-:.`), and mixed: ASCII characters in
+  color on a dim fill of the same color (needs truecolor, like half-block).
 - **Minimap** (top right): walls, floor, and an arrow showing where you are
   and which way you face.
 - **HUD** (bottom line): health, ammo, kills, tier, time survived, facing
@@ -130,7 +131,7 @@ Code layout:
 | `internal/world` | Map parsing, raycasting (DDA), collision |
 | `internal/game` | Player, movement and turning (no terminal code) |
 | `internal/input` | Keys to game input, real key state on Windows |
-| `internal/render` | Pixel frame, shading, presenters (half-block, shade, ASCII), minimap, HUD |
+| `internal/render` | Pixel frame, shading, presenters (half-block, shade, ASCII, mixed), minimap, HUD |
 | `maps/arena.txt` | The map, built into the binary |
 
 Map files use `#` (brick), `%` (stone) and `&` (metal) for walls, `.` for
@@ -142,4 +143,7 @@ Design notes live in [PRD.md](PRD.md), [ARCHITECTURE.md](ARCHITECTURE.md) and
 [DECISIONS.md](DECISIONS.md). Progress is in [TASKS.md](TASKS.md) and
 [PROGRESS.md](PROGRESS.md).
 
-Built with [tcell](https://github.com/gdamore/tcell).
+Built with [tcell](https://github.com/gdamore/tcell). The mixed render mode is
+S0ra's idea, from the "Mixed" style in their image-to-ASCII library
+[libasciic](https://docs.rs/libasciic) (MIT); S0ra also reported the events-mode
+input problems fixed in P1-14.

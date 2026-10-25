@@ -222,3 +222,9 @@ Format: what, why, trade-off, revisit when.
 - Why: S0ra's report (D31). Without key releases, a tap and the start of a hold look the same for the length of the repeat delay; slowing that stretch makes taps small without cutting holds short.
 - Trade-off: every hold starts slowly for the repeat delay (about 0.5-0.66 s). The first hold of a session may still stop briefly on systems whose repeat delay is over 550ms.
 - Revisit when: real key releases are available (kitty keyboard protocol through tcell).
+
+## D36: Mixed render mode (2026-10-25)
+- What: a fourth render mode, after ASCII in the V cycle: the ASCII ramp character (from the cell's average gray, as in ASCII mode) in the cell's color, on a background of that color at 20% brightness. Tints carry over. Needs truecolor; without it the game still starts in ASCII. Idea: S0ra's libasciic "Mixed" style (D31), credited in the README.
+- Why: it fills the dark gaps of plain ASCII and gives a textured look, at about half-block's cost (both send two colors per cell; filling tcell's buffer measured 0.58 ms vs 0.88 ms at 120x40).
+- Trade-off: half the vertical resolution of half-block. The optional color rounding (fewer color codes for neighbouring cells) is not built: it would only matter on slow terminals, and needs measuring there first. The half-block caution isn't shown for mixed.
+- Revisit when: someone reports mixed or half-block stuttering on a slow terminal (try the rounding then).
