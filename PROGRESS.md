@@ -161,3 +161,11 @@ Template:
 - Issues found: a shadowed `err` in save.Load hid damaged-file errors (caught by the test before commit); four app tests assumed three render modes; one README line edit of mine landed a line off and was fixed before committing.
 - Not done: on-screen checks for P1-06 to P1-15 (all [~]); README still says Esc quits and lists `maps/arena.txt` (P1-18); not pushed.
 - Next: user review (P1-06 to P1-10, P1-11 to P1-15), then P1-16 (mouse in game).
+
+## 2026-10-25 (P1-16, P1-17)
+- Done (one commit each; build, vet, gofmt, tests pass; 218 top-level tests; Linux and macOS builds cross-compile):
+  - P1-16 `edc231e`: mouse in game: left-click shoots (held = keeps firing at the gun's rate), right-click reloads; a button still held from a menu click doesn't fire. `input.MouseButtons` mapping; screens now get mouse press/release per button.
+  - P1-17 `d8c9517`: `internal/audio` on oto v3.5.1: eight effects generated in code at startup, played from game events (each once per frame, max 16 at once); Sound and Volume settings work; if audio can't start the game runs silently and the menus say why. On Linux oto loads ALSA/PulseAudio at runtime via purego, so no cgo or ALSA dev libraries and no CI change (D37).
+- Issues found: one test expectation about held-fire shot count was off by one shot (the first click's cooldown). Code paths were otherwise as designed.
+- Not done: on-screen (and by-ear) checks for P1-06 to P1-17 (all [~]); README controls (Esc, mouse, menus) still need the P1-18 update; not pushed.
+- Next: user review; then discuss map enhancements and the S0ra follow-ups (true key releases, the rest of the Mixed style), then P1-18.

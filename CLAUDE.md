@@ -5,7 +5,7 @@
 Terminal first-person game. Raycaster, mostly monochrome, half-block pixels by default, shade and ASCII modes with V. The P0 prototype is done; P1 (single-player survival game) is planned. Read PRD.md (Roadmap -> P1) for scope, ARCHITECTURE.md (incl. "P1 design") for design, DECISIONS.md D21-D31 for P1 choices, D11 for rendering and D19 for input.
 
 ## Stack
-Go (latest stable) + tcell v2, pinned version. P1-17 adds `github.com/ebitengine/oto/v3` for sound (approved, D27). No other dependencies. Windows Terminal + PowerShell is the main test target.
+Go (latest stable) + tcell v2, pinned version. `github.com/ebitengine/oto/v3` for sound (approved, D27; added in P1-17 with its own dependencies purego and jfreymuth/pulse, D37). No other dependencies. Windows Terminal + PowerShell is the main test target.
 
 ## Modules
 - internal/world: map parse, collision, raycast (`CastRay`). No tcell.
@@ -16,7 +16,7 @@ Go (latest stable) + tcell v2, pinned version. P1-17 adds `github.com/ebitengine
 
 ## Rules
 - Stay in P1 scope (PRD Roadmap -> P1, TASKS.md P1). If a task needs something out of scope, stop and ask.
-- No new dependencies without asking. Approved: tcell v2, oto v3 (only from P1-17).
+- No new dependencies without asking. Approved: tcell v2, oto v3.
 - Only touch files the current task needs.
 - world and game packages must never import tcell.
 - Movement and turning use dt (per second), never per frame or per key event.
@@ -60,4 +60,4 @@ Append an entry to PROGRESS.md. Log any new decision in DECISIONS.md.
 - Windows Smart App Control (on, on the user's machine) sometimes blocks a freshly built `termfps.exe` ("An Application Control policy has blocked this file"). Not a code problem; a restart has cleared it. Rebuild only when code changed. Agents can't run the exe here either.
 
 ## Current focus
-P1-01 to P1-05 done (reviewed). P1-06 to P1-15 coded and committed, waiting for the user's on-screen review (P1-06 to P1-10, then P1-11 to P1-15). Next after review: P1-16 (mouse in game), then P1-17 (sound), P1-18 (balancing, README).
+P1-01 to P1-05 done (reviewed). P1-06 to P1-17 coded and committed, waiting for the user's on-screen review. Next: P1-18 (balancing, README, demo), then the map enhancements and S0ra follow-ups the user wants to discuss.
