@@ -152,3 +152,12 @@ Template:
 - Issues found: one of my test expectations missed that the restart frame runs one tick; two shell edits of mine garbled a line and were fixed before committing. Code paths were otherwise as designed.
 - Not done: on-screen checks for P1-06 to P1-12 (marked [~]); README still says Esc quits and lists `maps/arena.txt` (README update is part of P1-18); not pushed.
 - Next: user review, then P1-13 (saving settings and progress).
+
+## 2026-10-25 (P1-13 to P1-15)
+- Done (one commit each; build, vet, gofmt, tests pass; 209 top-level tests):
+  - P1-13 `05150e6`: `internal/save` (save.json in `os.UserConfigDir()/termfps`, atomic write via `.tmp` + rename, damaged file kept as `save.json.bad` with a menu message, unreadable file left alone). Saved: settings (render mode included), unlocked maps, best kills/time/tier per map, total kills. Saved on every setting change, V, map unlock and run end (death, restart, quit to menu, Ctrl+C mid-run; each run once). Flags given on the command line win over saved settings (D34). Game over and map select show bests.
+  - P1-14 `9242576`: Tracker learns the OS repeat delay (press -> first repeat, confirmed by a quick third event) and uses it + 100ms as the first window; turning at 25% and moving at 40% while a key might be a tap, fading to full speed 150ms after repeats start. A tap turns ~25-34° (was ~99°). README note on events mode (D35).
+  - P1-15 `9b90bd0`: Mixed render mode (ASCII character in color on a 20% fill of it), after ASCII in the V cycle and in Settings; credit to S0ra / libasciic in README (D36). Buffer fill 0.58 ms vs half-block 0.88 ms at 120x40. Color rounding not built (needs measuring on a slow terminal first).
+- Issues found: a shadowed `err` in save.Load hid damaged-file errors (caught by the test before commit); four app tests assumed three render modes; one README line edit of mine landed a line off and was fixed before committing.
+- Not done: on-screen checks for P1-06 to P1-15 (all [~]); README still says Esc quits and lists `maps/arena.txt` (P1-18); not pushed.
+- Next: user review (P1-06 to P1-10, P1-11 to P1-15), then P1-16 (mouse in game).
