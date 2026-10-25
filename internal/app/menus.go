@@ -39,7 +39,11 @@ func (m *menuScreen) key(a *App, ev *tcell.EventKey) {
 	}
 }
 
-func (m *menuScreen) click(a *App, x, y int) {
+// mouse: pressing the left button on an item picks it.
+func (m *menuScreen) mouse(a *App, b mouseButton, down bool, x, y int) {
+	if b != mouseLeft || !down {
+		return
+	}
 	i, ok := m.menu.ItemAt(x, y)
 	if !ok {
 		return

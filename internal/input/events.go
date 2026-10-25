@@ -113,3 +113,12 @@ func MenuKeyFor(ev *tcell.EventKey) (k ui.Key, ok bool) {
 	}
 	return 0, false
 }
+
+// MouseButtons reports which of the game's mouse buttons are down in a
+// mouse event: left (shoot, pick menu items) and right (reload). tcell
+// sends an event for each press and release; after a release, the
+// released button is no longer in the event.
+func MouseButtons(ev *tcell.EventMouse) (left, right bool) {
+	b := ev.Buttons()
+	return b&tcell.Button1 != 0, b&tcell.Button2 != 0 // Button2 is the right button
+}

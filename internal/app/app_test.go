@@ -152,9 +152,9 @@ type recordScreen struct {
 	ticks int
 }
 
-func (r *recordScreen) key(a *App, ev *tcell.EventKey)         { r.keys++ }
-func (r *recordScreen) click(a *App, x, y int)                 {}
-func (r *recordScreen) tick(a *App, now time.Time, dt float64) { r.ticks++ }
+func (r *recordScreen) key(a *App, ev *tcell.EventKey)                   { r.keys++ }
+func (r *recordScreen) mouse(a *App, b mouseButton, down bool, x, y int) {}
+func (r *recordScreen) tick(a *App, now time.Time, dt float64)           { r.ticks++ }
 
 // After switchTo, keys and frames go to the new screen.
 func TestSwitchTo(t *testing.T) {
@@ -266,5 +266,60 @@ func TestTierNotice(t *testing.T) {
 	}
 	if txt := rowText(s, 22) + rowText(s, 21); !strings.Contains(txt, "TIER 2") {
 		t.Errorf("no TIER 2 notice above the HUD, got %q", txt)
+	}
+}
+
+func mouseAt(b tcell.ButtonMask) *tcell.EventMouse {
+	return tcell.NewEventMouse(40, 10, b, tcell.ModNone)
+}
+
+// Left-click shoots; holding the left button keeps firing at the gun's
+// rate; releasing stops. Right-click reloads (P1-16).
+func TestMouseShootsAndReloads(t *testing.T) {
+	a, _ := newTestApp(t)
+	now := t0
+	step := func(evs ...tcell.Event) {
+		now = now.Add(time.Second / 30)
+		a.step(now, evs)
+	}
+	step(mouseAt(tcell.Button1), mouseAt(tcell.ButtonNone)) // a quick click within one frame
+	if got := a.state.Player.Weapon.Mag; got != 24 {
+		t.Fatalf("magazine = %d after a click, want 24", got)
+	}
+	step(mouseAt(tcell.Button1)) // press and hold
+	for range 30 {
+		step() // one second held, no more events
+	}
+	held := a.state.Player.Weapon.Mag
+	if held > 22 { // at least 2 shots: the first click's cooldown delays the next
+		t.Errorf("magazine = %d after holding the button 1 s, want at least 2 more shots", held)
+	}
+	step(mouseAt(tcell.ButtonNone)) // release
+	for range 30 {
+		step()
+	}
+	if a.state.Player.Weapon.Mag != held {
+		t.Errorf("kept firing after release: magazine %d, was %d", a.state.Player.Weapon.Mag, held)
+	}
+	step(mouseAt(tcell.Button2), mouseAt(tcell.ButtonNone))
+	if !a.state.Player.Weapon.Reloading() {
+		t.Error("right-click didn't start a reload")
+	}
+}
+
+// A button still held from clicking a menu item doesn't fire in the game.
+func TestMenuClickDoesNotFire(t *testing.T) {
+	a, _ := newTestApp(t)
+	now := t0
+	now = now.Add(time.Second / 30)
+	a.step(now, []tcell.Event{key(tcell.KeyEscape, 0)}) // pause
+	a.resume()                                          // as if Resume was clicked; button still down
+	a.leftDown = true
+	for range 10 {
+		now = now.Add(time.Second / 30)
+		a.step(now, nil)
+	}
+	if got := a.state.Player.Weapon.Mag; got != 25 {
+		t.Errorf("magazine = %d, want 25: a held button from the menu fired", got)
 	}
 }

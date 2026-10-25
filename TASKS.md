@@ -255,7 +255,7 @@ Ideas and reference from S0ra (YouTube + Discord, 2026-10-23): events-mode input
 
 ## Extras
 
-### [ ] P1-16: Mouse in game
+### [~] P1-16: Mouse in game
 - Left-click shoots, right-click reloads. No mouse-look.
 - Acceptance: unit tests for the mouse-button mapping. On screen: clicking shoots and reloads.
 

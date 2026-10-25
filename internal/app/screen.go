@@ -17,11 +17,20 @@ import (
 type screen interface {
 	// key handles one key press. It may set a.quit or switch screens.
 	key(a *App, ev *tcell.EventKey)
-	// click handles a left click on screen cell (x, y).
-	click(a *App, x, y int)
+	// mouse handles a mouse button going down (down = true) or up, with the
+	// pointer on screen cell (x, y).
+	mouse(a *App, b mouseButton, down bool, x, y int)
 	// tick advances one frame (dt seconds) and draws it.
 	tick(a *App, now time.Time, dt float64)
 }
+
+// mouseButton is a mouse button the game uses (D28).
+type mouseButton int
+
+const (
+	mouseLeft  mouseButton = iota // shoot; pick menu items
+	mouseRight                    // reload
+)
 
 // playingScreen is the game itself: 3D view, minimap and HUD.
 type playingScreen struct {
@@ -32,6 +41,11 @@ type playingScreen struct {
 	cycleMode     bool
 	fire          bool
 	reload        bool
+
+	// shooting is true while the left button, pressed during the game, is
+	// held: it fires like holding Space. A button still held from a menu
+	// click doesn't count, since this screen didn't see it go down.
+	shooting bool
 }
 
 func (p *playingScreen) key(a *App, ev *tcell.EventKey) {
@@ -53,8 +67,19 @@ func (p *playingScreen) key(a *App, ev *tcell.EventKey) {
 	}
 }
 
-// click does nothing in the game yet; P1-16 adds shooting and reloading.
-func (p *playingScreen) click(a *App, x, y int) {}
+// mouse: the left button shoots (held = keeps firing), the right button
+// reloads (P1-16). There's no mouse-look (D28), so the position is unused.
+func (p *playingScreen) mouse(a *App, b mouseButton, down bool, x, y int) {
+	switch {
+	case b == mouseLeft && down:
+		p.fire = true // a click shorter than a frame still fires once
+		p.shooting = true
+	case b == mouseLeft:
+		p.shooting = false
+	case b == mouseRight && down:
+		p.reload = true
+	}
+}
 
 func (p *playingScreen) tick(a *App, now time.Time, dt float64) {
 	var in game.Input
@@ -65,7 +90,7 @@ func (p *playingScreen) tick(a *App, now time.Time, dt float64) {
 		in = input.AsyncInput()
 	}
 	in.ToggleMinimap, in.CycleRenderMode = p.toggleMinimap, p.cycleMode
-	in.Fire = in.Fire || p.fire
+	in.Fire = in.Fire || p.fire || p.shooting
 	in.Reload = in.Reload || p.reload
 	p.toggleMinimap, p.cycleMode, p.fire, p.reload = false, false, false, false
 

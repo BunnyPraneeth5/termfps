@@ -54,9 +54,9 @@ type App struct {
 	// failed save; the menus show them.
 	loadMsg, saveErr string
 
-	// mouseDown is whether the left button was down at the last mouse
-	// event, so holding it clicks once.
-	mouseDown bool
+	// leftDown and rightDown are the mouse buttons at the last mouse event,
+	// so a screen hears each press and release once.
+	leftDown, rightDown bool
 
 	// sprites is the per-frame list handed to the renderer, reused between
 	// frames so it doesn't allocate.
@@ -252,14 +252,17 @@ func (a *App) step(now time.Time, events []tcell.Event) (quit bool) {
 			}
 			a.current.key(a, ev)
 		case *tcell.EventMouse:
-			// A click is the left button going down; tcell also reports
-			// the release (no buttons), which only resets mouseDown.
-			down := ev.Buttons()&tcell.Button1 != 0
-			if down && !a.mouseDown {
-				x, y := ev.Position()
-				a.current.click(a, x, y)
+			// The screen hears about each button going down or up, not
+			// about every event (holding a button can repeat events).
+			left, right := input.MouseButtons(ev)
+			x, y := ev.Position()
+			if left != a.leftDown {
+				a.current.mouse(a, mouseLeft, left, x, y)
 			}
-			a.mouseDown = down
+			if right != a.rightDown {
+				a.current.mouse(a, mouseRight, right, x, y)
+			}
+			a.leftDown, a.rightDown = left, right
 		}
 		if a.quit {
 			return true

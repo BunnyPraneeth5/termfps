@@ -107,3 +107,22 @@ func TestMenuKeyFor(t *testing.T) {
 		t.Error("Space counts as a menu key")
 	}
 }
+
+func TestMouseButtons(t *testing.T) {
+	cases := []struct {
+		buttons     tcell.ButtonMask
+		left, right bool
+	}{
+		{tcell.Button1, true, false},
+		{tcell.Button2, false, true},
+		{tcell.Button1 | tcell.Button2, true, true},
+		{tcell.ButtonNone, false, false},              // a release
+		{tcell.Button3 | tcell.WheelUp, false, false}, // middle button and wheel are unused
+	}
+	for _, c := range cases {
+		l, r := MouseButtons(tcell.NewEventMouse(5, 5, c.buttons, tcell.ModNone))
+		if l != c.left || r != c.right {
+			t.Errorf("buttons %v: left %v right %v, want %v %v", c.buttons, l, r, c.left, c.right)
+		}
+	}
+}
