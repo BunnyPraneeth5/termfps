@@ -132,7 +132,7 @@ area around you and scrolls as you move.
 - **3D view:** walls fade with distance, and north/south faces are drawn
   darker so corners stand out. Ceiling near black, floor brightening toward you.
   Four looks, switched with `V` or in Settings: half-block pixels (the
-  default), shade blocks (`█▓▒░`), ASCII (`@%#*+=-:.`), and mixed: ASCII
+  default), shade blocks (`█▓▒░`), ASCII (`@%#&8*o+=~-:,.`), and mixed: ASCII
   characters in color on a dim fill of the same color.
 - **Minimap** (top right): walls, floor, red blocks, ammo boxes, and an arrow
   showing where you are and which way you face.

@@ -7,7 +7,7 @@ type RenderMode int
 const (
 	ModeHalfBlock RenderMode = iota // two 24-bit gray pixels per cell (default)
 	ModeShade                       // one shade block per cell: █▓▒░
-	ModeASCII                       // one ASCII character per cell: @%#*+=-:.
+	ModeASCII                       // one ASCII character per cell: @%#&8*o+=~-:,.`
 	ModeMixed                       // ASCII character in the pixel color on a dim fill of it (P1-15)
 	numModes                        // not a mode: how many modes there are
 )

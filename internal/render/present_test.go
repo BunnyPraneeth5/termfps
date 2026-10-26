@@ -268,3 +268,26 @@ func TestCloseStyle(t *testing.T) {
 		}
 	}
 }
+
+// The ASCII ramp (ASCII and mixed modes) has 16 distinct one-cell
+// characters from "@" to blank, and the grays a frame has (0 to wallBase)
+// reach every step (V5).
+func TestASCIIRamp(t *testing.T) {
+	if len(asciiRamp) != 16 || asciiRamp[0] != "@" || asciiRamp[15] != " " {
+		t.Fatalf("ramp %q: want 16 steps from @ to blank", asciiRamp)
+	}
+	seen := map[string]bool{}
+	for _, c := range asciiRamp {
+		if len(c) != 1 || c[0] < ' ' || c[0] > '~' || seen[c] {
+			t.Errorf("ramp step %q: want a distinct printable ASCII character", c)
+		}
+		seen[c] = true
+	}
+	used := map[int]bool{}
+	for g := 0; g <= wallBase; g++ {
+		used[rampIndex(uint8(g), len(asciiRamp))] = true
+	}
+	if len(used) != len(asciiRamp) {
+		t.Errorf("grays 0-%d use %d of %d ramp steps", int(wallBase), len(used), len(asciiRamp))
+	}
+}

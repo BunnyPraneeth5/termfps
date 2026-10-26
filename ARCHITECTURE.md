@@ -164,7 +164,7 @@ For each column `x`:
 ## Presenters
 - Half-block: for each cell (x, row), top = Pix[(2*row)*W + x], bottom = Pix[(2*row+1)*W + x]. Draw `▀` with foreground = top gray, background = bottom gray, using `tcell.NewRGBColor`.
 - Shade (stretch, T19): average the two pixels, map to `█▓▒░ ` (bright to dark), default terminal colors.
-- ASCII (stretch, T19): average the two pixels, map to `@%#*+=-:. ` (bright to dark), default terminal colors.
+- ASCII (stretch, T19): average the two pixels, map to the 16-step `asciiRamp` (V5; `@` brightest down to blank), default terminal colors.
 - Mixed (P1-15, D36): the ASCII character for the averaged gray, foreground = the cell color, background = that color at `Frame.MixedBackground` (default 20%, Settings 0-100%, S3). Needs truecolor.
 - Color threshold (S3, D43): half-block and mixed reuse the style of the cell to the left when every RGB channel of both colors is within `Frame.ColorThreshold` of it (compared with the style actually used, so drift stays within the threshold; each row starts fresh; tints never merge into gray). tcell then sends no color code for that cell. Off by default; Settings: off, 4, 8, 16, 32.
 - The text ramps scale brightness 0-230 (`wallBase`, the brightest gray DrawFrame makes) onto the ramp, so dim far walls keep a visible character instead of becoming blank.

@@ -61,7 +61,9 @@ func absDiff(a, b uint8) uint8 {
 // runes) so Put can use them without allocating.
 var (
 	shadeRamp = []string{"█", "▓", "▒", "░", " "}
-	asciiRamp = []string{"@", "%", "#", "*", "+", "=", "-", ":", ".", " "}
+	// 16 steps (V5, was 10) for smoother shading in ASCII and mixed,
+	// ordered by how much of the cell each character fills.
+	asciiRamp = []string{"@", "%", "#", "&", "8", "*", "o", "+", "=", "~", "-", ":", ",", ".", "`", " "}
 )
 
 // PresentShade writes the Frame as one shade block per cell (stretch T19).

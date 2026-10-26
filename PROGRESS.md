@@ -208,3 +208,10 @@ Template:
 - Not done: `go test ./...` by the user; on-screen check of run 1 (user); not pushed.
 - Next: user runs the tests and checks run 1 on screen; then run 2 (V4, V5).
 - Update: the user ran the tests and checked run 1 on screen ("ok done"); V1-V3 marked done. Run 2 next, then the user tests and pushes.
+
+## 2026-10-27 (Visual quality run 2: V4, V5)
+- Done (one commit each; build, vet, gofmt clean):
+  - V4 `c47cf28`: brick, stone and metal redrawn at 32x32 by a generator script (running-bond brick with lit/shaded edges, irregular stones that tile across cells, riveted brushed metal); mipmaps get 6 levels. Texture tests updated for 32x32.
+  - V5: ASCII/mixed ramp lengthened from 10 to 16 steps (`@%#&8*o+=~-:,.` and backtick, blank). Test: 16 distinct printable characters, every step reachable from grays 0-230.
+- Tests: app, term and the rest pass; Smart App Control blocked the render and main test binaries this run (not worked around). The app tests draw frames and parse the new textures at startup, so V4's assets load; the render tests (texture sizes, mipmaps, ramp) have not run.
+- Not done: `go test ./...` by the user; on-screen check of run 2 (user); push (after the user's test, per their plan).

@@ -308,7 +308,7 @@ A separate track (D44): the user asked for better visuals. Five tasks in two run
 - Brick, stone and metal redrawn at 32x32 (more detail up close; V3's mipmaps keep them calm far away).
 - Acceptance: textures parse, tests pass; on screen (user).
 
-### [ ] V5: Finer ASCII and mixed shading
+### [~] V5: Finer ASCII and mixed shading
 - A longer brightness ramp for the ASCII and mixed modes, so shading has more steps.
 - Acceptance: unit tests (ramp order, full range used); on screen (user).
 
