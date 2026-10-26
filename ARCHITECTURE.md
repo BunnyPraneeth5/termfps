@@ -157,6 +157,7 @@ For each column `x`:
 - Floor: dark at the horizon, brighter toward the bottom of the screen.
 - Ceiling: near black.
 - With textures on (V1, D44): floor and ceiling are cast. Pixel row y at `offset` rows from the middle sees the floor (below) or ceiling (above) at perpendicular distance `W / (4 * PlaneLen * aspect * offset)`, the distance whose wall would end on that row, so floor and walls meet without a seam. The world point is player + ray * distance; its position inside its cell picks the texel of a 16x16 tile (floor) or panel (ceiling) texture. Brightness is `base / (1 + k*distance)` like walls (floor base 120, about the old 80 at the bottom; ceiling base 45). With textures off, the flat gradient above.
+- Wall edges (V2): each column's wall covers rows `top` to `top + height` (floats). A pixel row the wall only partly covers mixes the wall pixel with the floor or ceiling pixel by the covered fraction (tint from whichever covers more), so wall tops and bottoms don't step.
 - Compute in float64, clamp to 0-255, then convert to `uint8`. Go does not panic on an out-of-range float -> uint8 conversion; it gives a garbage value.
 
 ## Presenters

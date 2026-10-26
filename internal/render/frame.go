@@ -95,8 +95,8 @@ func DrawFrame(s *game.State, f *Frame) {
 		hit := world.CastRay(s.Map, p.X, p.Y, rayX, rayY)
 
 		f.ZBuf[x] = hit.PerpDist
-		start, end := wallSpan(f, hit.PerpDist)
 		top, height := wallLine(f, hit.PerpDist)
+		bottom := top + height
 		wall := Pixel{Gray: wallShade(hit.PerpDist, hit.Side)}
 		if hit.Cell == world.Target {
 			wall.Tint = TintRed
@@ -110,21 +110,56 @@ func DrawFrame(s *game.State, f *Frame) {
 		}
 
 		for y := 0; y < f.H; y++ {
+			// cov is how much of this pixel row the wall covers: 1 inside the
+			// wall, 0 above or below it, in between on its top and bottom
+			// edge (V2).
+			cov := coverage(y, top, bottom)
+			if cov <= 0 {
+				f.Pix[y*f.W+x] = backgroundPixel(f, p, rayX, rayY, y)
+				continue
+			}
 			px := wall
-			switch {
-			case (y < start || y >= end) && f.Textures:
-				px = castPixel(f, p, rayX, rayY, y) // textured ceiling above, floor below
-			case y < start || y >= end:
-				px = Pixel{Gray: backgroundShade(y, f.H)} // flat ceiling above, floor below
-			case tex != nil:
+			if tex != nil {
 				// Where this pixel falls on the wall, 0 (top) to 1 (bottom).
 				v := (float64(y) + 0.5 - top) / height
 				ty := min(max(int(v*float64(tex.H)), 0), tex.H-1)
 				px.Gray = texturedGray(wall.Gray, tex.Pix[ty*tex.W+tx].Gray)
 			}
+			if cov < 1 {
+				// An edge pixel: mix the wall with the floor or ceiling behind
+				// it, so wall edges don't step from pixel to pixel.
+				px = blendPixel(backgroundPixel(f, p, rayX, rayY, y), px, cov)
+			}
 			f.Pix[y*f.W+x] = px // sets the tint too, so no color is left from last frame
 		}
 	}
+}
+
+// backgroundPixel is the ceiling (above the middle) or floor (below) in
+// row y of the column whose ray is (rayX, rayY): cast and textured with
+// textures on, the flat gradient with them off.
+func backgroundPixel(f *Frame, p game.Player, rayX, rayY float64, y int) Pixel {
+	if f.Textures {
+		return castPixel(f, p, rayX, rayY, y)
+	}
+	return Pixel{Gray: backgroundShade(y, f.H)}
+}
+
+// coverage returns how much of pixel row y (from y to y+1) lies between
+// top and bottom, from 0 to 1.
+func coverage(y int, top, bottom float64) float64 {
+	fy := float64(y)
+	return clamp(math.Min(fy+1, bottom)-math.Max(fy, top), 0, 1)
+}
+
+// blendPixel mixes front over back: cov = 1 is all front, 0 all back. The
+// tint goes with whichever covers most of the pixel.
+func blendPixel(back, front Pixel, cov float64) Pixel {
+	out := Pixel{Gray: toGray(float64(back.Gray)*(1-cov) + float64(front.Gray)*cov), Tint: back.Tint}
+	if cov >= 0.5 {
+		out.Tint = front.Tint
+	}
+	return out
 }
 
 // castPixel returns the floor (below the middle) or ceiling (above) pixel
@@ -167,19 +202,6 @@ func wallLine(f *Frame, dist float64) (top, height float64) {
 	dist = math.Max(dist, minPerpDist)
 	height = float64(f.W) / (2 * game.PlaneLen * f.PixelAspect * dist)
 	return float64(f.H)/2 - height/2, height
-}
-
-// wallSpan returns the pixel rows [start, end) a wall at perpendicular
-// distance dist covers in f, centered vertically.
-func wallSpan(f *Frame, dist float64) (start, end int) {
-	dist = math.Max(dist, minPerpDist)
-	lineHeight := float64(f.W) / (2 * game.PlaneLen * f.PixelAspect * dist)
-	center := float64(f.H) / 2
-	// Clamp in float before converting: up close lineHeight is huge, and
-	// converting an out-of-range float to int gives a garbage value.
-	start = int(clamp(math.Round(center-lineHeight/2), 0, float64(f.H)))
-	end = int(clamp(math.Round(center+lineHeight/2), 0, float64(f.H)))
-	return start, end
 }
 
 func clamp(v, lo, hi float64) float64 {

@@ -296,7 +296,7 @@ A separate track (D44): the user asked for better visuals. Five tasks in two run
 - Floor and ceiling casting (Lodev's method, matched to the wall math): a tile texture on the floor and a panel texture on the ceiling, with the same distance fog as walls. The floor stays darker than close walls and the ceiling stays dim. With wall textures off (Settings), floor and ceiling stay the flat gradient.
 - Acceptance: unit tests (floor pixels follow world position, fog with distance, textures-off unchanged); render benchmark within budget; on screen (user): the floor reads as a surface that moves correctly when walking and turning.
 
-### [ ] V2: Smooth wall edges
+### [~] V2: Smooth wall edges
 - The top and bottom pixel of each wall column blend wall and floor/ceiling by how much of the pixel the wall covers, so wall edges don't step.
 - Acceptance: unit tests (coverage blending, full pixels unchanged); on screen (user): wall tops and bottoms look smoother in half-block.
 

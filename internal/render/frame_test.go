@@ -1,6 +1,7 @@
 package render
 
 import (
+	"math"
 	"testing"
 
 	"github.com/BunnyPraneeth5/termfps/internal/game"
@@ -35,21 +36,76 @@ func newFrame(cols, rows int) *Frame {
 
 // Taller pixels (aspect 2) make walls half as many pixels tall.
 // At 120x78, distance 2: 120 / (2*0.66*aspect*2) = 45.45 / aspect pixels.
-func TestWallSpanPixelAspect(t *testing.T) {
+func TestWallLinePixelAspect(t *testing.T) {
 	f := newFrame(120, 40)
 	cases := []struct {
-		aspect     float64
-		start, end int
+		aspect, height float64
 	}{
-		{1.0, 16, 62}, // 45.45 tall around center 39
-		{2.0, 28, 50}, // 22.7 tall
-		{0.5, 0, 78},  // 90.9 tall, clamped to the frame
+		{1.0, 45.45}, // around center 39
+		{2.0, 22.73},
+		{0.5, 90.91}, // taller than the frame: starts above it
 	}
 	for _, c := range cases {
 		f.PixelAspect = c.aspect
-		if s, e := wallSpan(f, 2); s != c.start || e != c.end {
-			t.Errorf("aspect %v: span = [%d, %d), want [%d, %d)", c.aspect, s, e, c.start, c.end)
+		top, height := wallLine(f, 2)
+		if math.Abs(height-c.height) > 0.01 || math.Abs(top-(39-c.height/2)) > 0.01 {
+			t.Errorf("aspect %v: top %.2f height %.2f, want height %.2f around row 39", c.aspect, top, height, c.height)
 		}
+	}
+}
+
+func TestCoverage(t *testing.T) {
+	cases := []struct {
+		y           int
+		top, bottom float64
+		want        float64
+	}{
+		{5, 2, 10, 1},       // inside
+		{1, 2, 10, 0},       // above
+		{10, 2, 10, 0},      // below (bottom is exclusive)
+		{2, 2.25, 10, 0.75}, // top edge
+		{9, 2, 9.5, 0.5},    // bottom edge
+		{3, 3.2, 3.6, 0.4},  // a wall thinner than a pixel
+	}
+	for _, c := range cases {
+		if got := coverage(c.y, c.top, c.bottom); math.Abs(got-c.want) > 1e-9 {
+			t.Errorf("coverage(%d, %v, %v) = %v, want %v", c.y, c.top, c.bottom, got, c.want)
+		}
+	}
+}
+
+func TestBlendPixel(t *testing.T) {
+	floor, wall := Pixel{Gray: 40}, Pixel{Gray: 200, Tint: TintRed}
+	if got := blendPixel(floor, wall, 0.25); got != (Pixel{Gray: 80}) {
+		t.Errorf("25%% wall = %+v, want gray 80, no tint", got)
+	}
+	if got := blendPixel(floor, wall, 0.75); got != (Pixel{Gray: 160, Tint: TintRed}) {
+		t.Errorf("75%% wall = %+v, want gray 160, red", got)
+	}
+}
+
+// The pixels at a wall's top and bottom edge are between the wall and the
+// ceiling or floor; the ones inside are the full wall shade.
+func TestDrawFrameSmoothEdges(t *testing.T) {
+	f := newFrame(120, 40)
+	DrawFrame(newState(t, 1.5, 3.5), f) // east wall 2.5 away, textures off
+	x := f.W / 2
+	top, height := wallLine(f, 2.5)
+	wallGray := wallShade(2.5, 0)
+	edge := int(top) // partly covered: top isn't a whole row
+	if frac := top - math.Floor(top); frac == 0 {
+		t.Fatalf("test needs a wall edge inside a pixel, top = %v", top)
+	}
+	got := f.Pix[edge*f.W+x].Gray
+	if bg := backgroundShade(edge, f.H); got <= bg || got >= wallGray {
+		t.Errorf("top edge pixel = %d, want between ceiling %d and wall %d", got, bg, wallGray)
+	}
+	if inside := f.Pix[(edge+1)*f.W+x].Gray; inside != wallGray {
+		t.Errorf("pixel below the edge = %d, want the wall's %d", inside, wallGray)
+	}
+	bottom := int(top + height)
+	if got, bg := f.Pix[bottom*f.W+x].Gray, backgroundShade(bottom, f.H); got <= bg || got >= wallGray {
+		t.Errorf("bottom edge pixel = %d, want between floor %d and wall %d", got, bg, wallGray)
 	}
 }
 
