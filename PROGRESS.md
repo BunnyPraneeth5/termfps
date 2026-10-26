@@ -197,3 +197,13 @@ Template:
 - Not done: on-screen check (user): mixed background at a few values, thresholds 4/8/16 in half-block and mixed; not pushed.
 - Next: user's on-screen check, then push (the user's plan). Then visual-quality recommendations for the user to choose from.
 - Update: after checking S3, the user asked to push S1-S3; S3 marked done, and with it P1-14 and P1-15 (they stayed [~] until the S0ra track was done). Pushed to GitHub.
+
+## 2026-10-27 (Visual quality run 1: V1-V3)
+- Pushed S1-S3 to GitHub (0deb67e); S3, P1-14 and P1-15 marked done. Added the Visual quality track V1-V5 (D44).
+- Done (one commit each; build, vet, gofmt clean):
+  - V1 `5e897c5`: textured floor (tiles) and ceiling (panels) by floor casting, same projection and fog as walls; textures off keeps the flat gradient. Tests: floor rows meet wall edges, floor fixed to the world, shading. DrawFrame with textures ~1.5 ms at 120x40.
+  - V2 `015727a`: smooth wall edges: partly covered top/bottom pixels blend wall and floor/ceiling. `wallSpan` replaced by wallLine's float edges. Tests: coverage, blend, edge pixels in DrawFrame.
+  - V3: mipmaps for wall, floor and ceiling textures; level chosen per sample from texture pixels per screen pixel (walls also across columns at grazing angles). Tests: levels, level choice, grazing estimate, far corridor floor is one even gray.
+- Tests: V1's ran and passed (all packages but main, blocked). For V2 and V3, Smart App Control blocked the render, app and term test binaries; the other packages pass. Not worked around (CLAUDE.md); V2 and V3 tests have not run yet.
+- Not done: `go test ./...` by the user; on-screen check of run 1 (user); not pushed.
+- Next: user runs the tests and checks run 1 on screen; then run 2 (V4, V5).

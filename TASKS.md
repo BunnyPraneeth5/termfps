@@ -300,7 +300,7 @@ A separate track (D44): the user asked for better visuals. Five tasks in two run
 - The top and bottom pixel of each wall column blend wall and floor/ceiling by how much of the pixel the wall covers, so wall edges don't step.
 - Acceptance: unit tests (coverage blending, full pixels unchanged); on screen (user): wall tops and bottoms look smoother in half-block.
 
-### [ ] V3: Less shimmer on far walls and the floor
+### [~] V3: Less shimmer on far walls and the floor
 - Mipmaps: each texture also gets half, quarter, ... size versions (box-averaged); far walls and far floor sample the version that matches how many texture pixels one screen pixel covers, so patterns don't flicker when turning.
 - Acceptance: unit tests (mip levels, level choice by distance); on screen (user): far walls and the floor near the horizon flicker less when turning.
 

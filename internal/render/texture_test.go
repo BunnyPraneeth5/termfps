@@ -28,7 +28,7 @@ func TestTextureAssetsParse(t *testing.T) {
 }
 
 func TestWallTextureByCell(t *testing.T) {
-	if wallTexture(world.Wall) != brickTexture || wallTexture(world.Stone) != stoneTexture || wallTexture(world.Metal) != metalTexture {
+	if wallTexture(world.Wall)[0] != brickTexture || wallTexture(world.Stone)[0] != stoneTexture || wallTexture(world.Metal)[0] != metalTexture {
 		t.Error("wrong texture for a wall type")
 	}
 	if wallTexture(world.Target) != nil {
@@ -90,5 +90,82 @@ func BenchmarkDrawFrameTextured120x40(b *testing.B) {
 	f.Textures = true
 	for b.Loop() {
 		DrawFrame(s, f)
+	}
+}
+
+// Each mipmap level is half the size of the one before, down to 1x1, and
+// averages 2x2 pixels of it (V3).
+func TestNewMipmap(t *testing.T) {
+	m := newMipmap(brickTexture)
+	for i, want := range []int{16, 8, 4, 2, 1} {
+		if i >= len(m) || m[i].W != want || m[i].H != want {
+			t.Fatalf("level %d: want %dx%d, have %d levels", i, want, want, len(m))
+		}
+	}
+	p := brickTexture.Pix
+	sum := int(p[0].Gray) + int(p[1].Gray) + int(p[16].Gray) + int(p[17].Gray)
+	if got := int(m[1].Pix[0].Gray); got != (sum+2)/4 {
+		t.Errorf("level 1 pixel (0, 0) = %d, want the average %d", got, (sum+2)/4)
+	}
+}
+
+func TestMipmapLevel(t *testing.T) {
+	m := newMipmap(brickTexture)
+	cases := []struct {
+		texels float64
+		size   int
+	}{
+		{0.3, 16}, {1.9, 16}, {2, 8}, {4, 4}, {7.9, 4}, {1000, 1},
+	}
+	for _, c := range cases {
+		if got := m.level(c.texels).W; got != c.size {
+			t.Errorf("level(%v) is %d wide, want %d", c.texels, got, c.size)
+		}
+	}
+}
+
+// Down a column the estimate is texture height / wall height; at a
+// grazing angle, neighbor columns hit far apart on the same face, which
+// wins. A different face doesn't count.
+func TestWallTexels(t *testing.T) {
+	hit := world.Hit{Side: 0, MapX: 5, MapY: 3, WallX: 0.9}
+	if got := wallTexels(brickTexture, 4, hit, world.Hit{}, false); got != 4 {
+		t.Errorf("16-pixel texture on a 4-pixel wall = %v texels, want 4", got)
+	}
+	prev := world.Hit{Side: 0, MapX: 5, MapY: 2, WallX: 0.4} // 1.5 cells along the same face
+	if got := wallTexels(brickTexture, 40, hit, prev, true); got != 24 {
+		t.Errorf("grazing: %v texels, want 1.5 cells * 16 = 24", got)
+	}
+	other := world.Hit{Side: 0, MapX: 7, MapY: 2, WallX: 0.4} // another face
+	if got := wallTexels(brickTexture, 40, hit, other, true); got != 0.4 {
+		t.Errorf("different face: %v texels, want only the column's 0.4", got)
+	}
+}
+
+// Far down a corridor, the floor samples a small mipmap level, so one row
+// of it is an even gray instead of a flickering pattern.
+func TestFarFloorIsAveraged(t *testing.T) {
+	corridor := "################################\n" +
+		"#P.............................#\n" +
+		"#..............................#\n" +
+		"################################\n"
+	m, err := world.Parse([]byte(corridor))
+	if err != nil {
+		t.Fatal(err)
+	}
+	s := game.NewState(m)
+	s.Player.X, s.Player.Y = 1.5, 2.0 // middle of the corridor, facing east
+	f := newFrame(120, 40)
+	f.Textures = true
+	DrawFrame(s, f)
+	y := 41 // just below the far end wall: floor about 18 cells away
+	if d, ceiling := castDist(f, y); ceiling || d < 15 {
+		t.Fatalf("row %d is at %v (ceiling %v), want far floor", y, d, ceiling)
+	}
+	first := f.Pix[y*f.W+50].Gray
+	for x := 50; x < 70; x++ {
+		if g := f.Pix[y*f.W+x].Gray; g != first {
+			t.Fatalf("far floor row: column %d = %d, column 50 = %d; want one even gray", x, g, first)
+		}
 	}
 }

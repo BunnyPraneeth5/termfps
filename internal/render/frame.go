@@ -87,6 +87,7 @@ func DrawFrame(s *game.State, f *Frame) {
 	p := s.Player
 	dirX, dirY := p.Dir()
 	planeX, planeY := p.Plane()
+	var prev world.Hit // the previous column's hit, for texture filtering
 
 	for x := 0; x < f.W; x++ {
 		// cameraX goes from -1 (left edge) to almost +1 (right edge).
@@ -104,10 +105,12 @@ func DrawFrame(s *game.State, f *Frame) {
 		var tex *Image
 		tx := 0
 		if f.Textures {
-			if tex = wallTexture(hit.Cell); tex != nil {
+			if mips := wallTexture(hit.Cell); mips != nil {
+				tex = mips.level(wallTexels(mips[0], height, hit, prev, x > 0))
 				tx = textureColumn(tex, hit, rayX, rayY)
 			}
 		}
+		prev = hit
 
 		for y := 0; y < f.H; y++ {
 			// cov is how much of this pixel row the wall covers: 1 inside the
@@ -174,10 +177,16 @@ func blendPixel(back, front Pixel, cov float64) Pixel {
 // player + ray*d. The ceiling is the mirror image above the middle.
 func castPixel(f *Frame, p game.Player, rayX, rayY float64, y int) Pixel {
 	d, ceiling := castDist(f, y)
-	tex, base := floorTexture, floorBase
+	mips, base := floorMips, floorBase
 	if ceiling {
-		tex, base = ceilingTexture, ceilingBase
+		mips, base = ceilingMips, ceilingBase
 	}
+	// Texture pixels one screen pixel covers (V3): across a row, neighbor
+	// columns' rays are 2*PlaneLen/W apart, so their points are that times
+	// d apart; down a column, the distance changes by d*d/K per row (K as
+	// in castDist: d = K/offset). Far away the second is much bigger.
+	k := float64(f.W) / (4 * game.PlaneLen * f.PixelAspect)
+	tex := mips.level(math.Max(2*game.PlaneLen*d/float64(f.W), d*d/k) * float64(mips[0].W))
 	wx, wy := p.X+rayX*d, p.Y+rayY*d
 	// The fraction of the world position inside its cell picks the texel.
 	tx := min(int((wx-math.Floor(wx))*float64(tex.W)), tex.W-1)
