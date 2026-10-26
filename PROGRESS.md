@@ -196,3 +196,4 @@ Template:
 - Issues found: a test helper `absDiff` already existed in shade_test.go (removed in favor of the new one); gofmt alignment in the new benchmark file.
 - Not done: on-screen check (user): mixed background at a few values, thresholds 4/8/16 in half-block and mixed; not pushed.
 - Next: user's on-screen check, then push (the user's plan). Then visual-quality recommendations for the user to choose from.
+- Update: after checking S3, the user asked to push S1-S3; S3 marked done, and with it P1-14 and P1-15 (they stayed [~] until the S0ra track was done). Pushed to GitHub.

@@ -241,13 +241,13 @@ Estimated: about 5 weekends.
 
 Ideas and reference from S0ra (YouTube + Discord, 2026-10-23): events-mode input on Linux and a "Mixed" ASCII render mode. Key release events (needs a tcell change) are left for when Linux/mac support starts.
 
-### [~] P1-14: Smoother events-mode keys
+### [x] P1-14: Smoother events-mode keys
 - Tracker learns the OS repeat delay from the first press -> first repeat gap and sets FirstWindow to it plus a margin, so holds don't stop just before repeats begin on Linux (600-660ms delays).
 - Turning eases in over the first ~0.4s of a hold, so a single tap turns ~30-50° instead of ~99°. Movement too, if it feels better.
 - README: in events mode only the last pressed key repeats, so moving + turning together is limited; async (Windows) doesn't have this.
 - Acceptance: unit tests for the learned window and the ease-in (fake times). On screen (user, `-keys events`): a tap turns a small amount, holding is smooth.
 
-### [~] P1-15: "Mixed" render mode
+### [x] P1-15: "Mixed" render mode
 - New RenderMode after ASCII in the V cycle: per cell, ASCII ramp character from the averaged gray, fg = pixel color, bg = pixel color x 0.2. Needs truecolor (same fallback as half-block).
 - Optional: round colors to steps so neighbouring cells share a style and tcell sends fewer color codes; measure bytes per frame with and without, keep only if it helps.
 - Credit S0ra / libasciic in README.
@@ -283,7 +283,7 @@ A separate track from maps and gameplay (D39): finishing what S0ra suggested (P1
 - Needs the user's OK: tcell v2 -> v3 is a dependency change.
 - Acceptance: unit tests for press/release tracking; on screen (user): events mode in Windows Terminal (and, through S0ra, Ghostty or kitty on Linux) moves and turns at the same time.
 
-### [~] S3: The rest of the Mixed style
+### [x] S3: The rest of the Mixed style
 - Color threshold (libasciic's compression): reuse the previous cell's style when no color channel differs by more than a threshold, so tcell sends fewer color codes. Works for mixed and half-block; a setting, off by default. Measure bytes per frame with and without.
 - Adjustable mixed background brightness (0-100%, default 20%) in Settings.
 - Acceptance: unit tests for the threshold and the background setting; bytes-per-frame numbers recorded; on screen (user): mixed looks right at a few thresholds.
