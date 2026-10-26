@@ -137,7 +137,7 @@ func (a *App) newRun() {
 	a.state.Mode = old.Mode
 	a.state.ShowMinimap = a.cfg.MinimapAtStart
 	a.state.Rand = newRand() // real games differ each time
-	a.keys = input.Tracker{}
+	a.keys.Reset()           // keeps what it learned about the terminal
 	a.runActive = true
 	a.switchTo(&playingScreen{})
 }
@@ -250,13 +250,14 @@ func (a *App) step(now time.Time, events []term.Event) (quit bool) {
 			a.frame.Resize(render.FrameSize(a.scr.Size()))
 		case term.Focus:
 			a.focused = ev.Focused
-		case term.Key:
-			// Key releases aren't used yet (tcell v2 never sends them);
-			// S2 feeds them to the key tracker.
-			if ev.Action == term.Release {
-				continue
+			if !ev.Focused {
+				// Keys let go in another window never send a release here.
+				a.keys.ReleaseAll()
 			}
-			if ev.Code == term.KeyCtrlC {
+		case term.Key:
+			// Releases go to the screen too (the playing screen ends held
+			// keys with them), but never quit.
+			if ev.Code == term.KeyCtrlC && ev.Action != term.Release {
 				a.endRun()  // a run quit with Ctrl+C still counts
 				return true // Ctrl+C quits from any screen (D24)
 			}
@@ -300,9 +301,13 @@ func (a *App) step(now time.Time, events []term.Event) (quit bool) {
 	return a.quit
 }
 
-// keysLabel names the input mode for the HUD; async also shows focus.
-func keysLabel(mode string, focused bool) string {
+// keysLabel names the input mode for the HUD; async also shows focus,
+// events whether the terminal sends key releases (exact held keys, D42).
+func keysLabel(mode string, focused, releases bool) string {
 	if mode != "async" {
+		if releases {
+			return "keys events (releases)"
+		}
 		return "keys events"
 	}
 	if focused {

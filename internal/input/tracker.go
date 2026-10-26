@@ -1,8 +1,11 @@
 // Package input turns terminal key events into game.Input.
 //
-// tcell v2 only reports key presses and OS key repeats, never key releases.
-// The Tracker guesses "still held" from how recently a key's last event came
-// in. See ARCHITECTURE.md "Input approach" and DECISIONS.md D12 and D31.
+// Many terminals only report key presses and OS key repeats, never key
+// releases. There the Tracker guesses "still held" from how recently a key's
+// last event came in. Once a real release arrives (tcell v3 with win32 input
+// mode or the kitty protocol, S2), a key is held from its press to its
+// release. See ARCHITECTURE.md "Input approach" and DECISIONS.md D12, D35
+// and D42.
 package input
 
 import (
@@ -62,10 +65,41 @@ type Tracker struct {
 	// delay is the OS repeat delay measured from a held key; 0 until then.
 	// It is one value for all keys: the OS uses the same delay for each.
 	delay time.Duration
+
+	// releases is true once a real key release came in: from then on a key
+	// is held exactly from press to release (down), with no timeout and no
+	// tap slowdown. Until then the Tracker guesses, since a terminal that
+	// never sends releases would otherwise leave keys held forever.
+	releases bool
+	down     [numKeys]bool
+}
+
+// Releases reports whether the terminal has sent a key release, so held
+// keys are exact (the HUD shows it).
+func (t *Tracker) Releases() bool { return t.releases }
+
+// Release records that k went up. The first release switches the Tracker
+// to exact press/release tracking.
+func (t *Tracker) Release(k Key) {
+	t.releases = true
+	t.down[k] = false
+}
+
+// ReleaseAll lets go of every key, for when the terminal loses focus: a
+// release that happens in another window never reaches us.
+func (t *Tracker) ReleaseAll() {
+	t.down = [numKeys]bool{}
+}
+
+// Reset forgets every key but keeps what was learned about the terminal
+// (the repeat delay and whether it sends releases), for a new run.
+func (t *Tracker) Reset() {
+	*t = Tracker{delay: t.delay, releases: t.releases}
 }
 
 // Press records a key event (a press or an OS repeat) at time now.
 func (t *Tracker) Press(k Key, now time.Time) {
+	t.down[k] = true
 	gap := now.Sub(t.lastEvent[k])
 	switch {
 	case t.lastEvent[k].IsZero() || gap > maxRepeatDelay:
@@ -97,6 +131,9 @@ func (t *Tracker) firstWindow() time.Duration {
 
 // Held reports whether k counts as held at time now.
 func (t *Tracker) Held(k Key, now time.Time) bool {
+	if t.releases {
+		return t.down[k]
+	}
 	if t.lastEvent[k].IsZero() {
 		return false
 	}
@@ -108,9 +145,10 @@ func (t *Tracker) Held(k Key, now time.Time) bool {
 }
 
 // tapness is 1 while a held key might still be a tap (no repeats yet),
-// fades to 0 over slowFade once repeats arrive, and is 0 if not held.
+// fades to 0 over slowFade once repeats arrive, and is 0 if not held. With
+// real releases a tap is short by itself, so there's no slowdown.
 func (t *Tracker) tapness(k Key, now time.Time) float64 {
-	if !t.Held(k, now) {
+	if t.releases || !t.Held(k, now) {
 		return 0
 	}
 	if !t.repeating[k] {

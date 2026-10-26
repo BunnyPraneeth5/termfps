@@ -14,7 +14,8 @@ import (
 // It's an interface: any type with these three methods counts as a screen,
 // so the app can switch between very different screens the same way.
 type screen interface {
-	// key handles one key press. It may set a.quit or switch screens.
+	// key handles one key event: a press, a repeat or a release. It may set
+	// a.quit or switch screens.
 	key(a *App, ev term.Key)
 	// mouse handles a mouse button going down (down = true) or up, with the
 	// pointer on screen cell (x, y).
@@ -48,6 +49,14 @@ type playingScreen struct {
 }
 
 func (p *playingScreen) key(a *App, ev term.Key) {
+	if ev.Action == term.Release {
+		// Only movement keys are held; Esc, M, V, Space and R act on
+		// presses.
+		if k, ok := input.KeyFor(ev); ok {
+			a.keys.Release(k)
+		}
+		return
+	}
 	switch {
 	case input.IsQuit(ev): // Esc pauses (Ctrl+C is handled for every screen in step)
 		a.switchTo(a.pauseMenu())
@@ -132,7 +141,7 @@ func (p *playingScreen) tick(a *App, now time.Time, dt float64) {
 		Draw:          a.times.avg.draw,
 		Present:       a.times.avg.present,
 		Show:          a.times.avg.show,
-		Keys:          keysLabel(a.cfg.KeyMode, a.focused),
+		Keys:          keysLabel(a.cfg.KeyMode, a.focused, a.keys.Releases()),
 		MinimapHidden: minimapHidden,
 		Mode:          st.Mode,
 		Notice:        notice,

@@ -156,22 +156,76 @@ func TestSwitchTo(t *testing.T) {
 	}
 }
 
-// Key releases don't reach screens yet (S2 uses them), and a released
-// Ctrl+C doesn't quit.
-func TestKeyReleaseIgnored(t *testing.T) {
+// release is a key release, as tcell v3 sends with advanced keys.
+func release(k term.KeyCode, r rune) term.Key {
+	ev := key(k, r)
+	ev.Action = term.Release
+	return ev
+}
+
+// A released Ctrl+C doesn't quit.
+func TestCtrlCReleaseDoesNotQuit(t *testing.T) {
 	a, _ := newTestApp(t)
-	rec := &recordScreen{}
-	a.switchTo(rec)
-	release := func(k term.KeyCode, r rune) term.Key {
-		ev := key(k, r)
-		ev.Action = term.Release
-		return ev
-	}
-	if a.step(t0.Add(time.Second/30), []term.Event{release(term.KeyRune, 'w'), release(term.KeyCtrlC, 0)}) {
+	if a.step(t0.Add(time.Second/30), []term.Event{release(term.KeyCtrlC, 0)}) {
 		t.Error("a Ctrl+C release quit the app")
 	}
-	if rec.keys != 0 {
-		t.Errorf("screen got %d keys from releases, want 0", rec.keys)
+}
+
+// With releases, W moves until it's released and stops right then.
+func TestReleaseStopsMovement(t *testing.T) {
+	a, _ := newTestApp(t)
+	now := t0.Add(time.Second / 30)
+	a.step(now, []term.Event{release(term.KeyRune, 'd'), key(term.KeyRune, 'w')})
+	if !a.keys.Releases() {
+		t.Fatal("the tracker didn't see the release")
+	}
+	for i := 0; i < 30; i++ { // a second with no repeats: still held
+		now = now.Add(time.Second / 30)
+		a.step(now, nil)
+	}
+	x := a.state.Player.X
+	now = now.Add(time.Second / 30)
+	a.step(now, []term.Event{release(term.KeyRune, 'w')})
+	if a.state.Player.X != x {
+		t.Errorf("moved after the release frame: x %v -> %v", x, a.state.Player.X)
+	}
+	if x <= 1.5+0.5 { // the test map starts the player at x 1.5
+		t.Errorf("x = %v after holding W for a second, want well past the start", x)
+	}
+}
+
+// The HUD's key label says when held keys are exact (the terminal sends
+// releases), and whether async keys have focus.
+func TestKeysLabel(t *testing.T) {
+	cases := []struct {
+		mode              string
+		focused, releases bool
+		want              string
+	}{
+		{"events", true, false, "keys events"},
+		{"events", true, true, "keys events (releases)"},
+		{"async", true, true, "keys async (focused)"},
+		{"async", false, false, "keys async (NOT focused)"},
+	}
+	for _, c := range cases {
+		if got := keysLabel(c.mode, c.focused, c.releases); got != c.want {
+			t.Errorf("keysLabel(%q, %v, %v) = %q, want %q", c.mode, c.focused, c.releases, got, c.want)
+		}
+	}
+}
+
+// Losing focus lets go of held keys (their releases happen elsewhere).
+func TestFocusLostReleasesKeys(t *testing.T) {
+	a, _ := newTestApp(t)
+	now := t0.Add(time.Second / 30)
+	a.step(now, []term.Event{release(term.KeyRune, 'd'), key(term.KeyRune, 'w')})
+	now = now.Add(time.Second / 30)
+	a.step(now, []term.Event{term.Focus{Focused: false}})
+	x := a.state.Player.X
+	now = now.Add(time.Second / 30)
+	a.step(now, nil)
+	if a.state.Player.X != x {
+		t.Errorf("still moving after focus was lost: x %v -> %v", x, a.state.Player.X)
 	}
 }
 

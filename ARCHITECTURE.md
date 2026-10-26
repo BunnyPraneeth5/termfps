@@ -169,13 +169,14 @@ For each column `x`:
 - Without truecolor, tcell downgrades gray to the nearest palette color. At 16 colors that is about 4 grays, so fog becomes hard bands. P0 accepts this outside Windows Terminal. Stretch T19 starts in ASCII when truecolor is not available.
 
 ## Input approach
-- tcell only gives key press and repeat events. It drops key-up events (the Win32 console API has them; tcell doesn't pass them through).
+- (P0, tcell v2) tcell only gives key press and repeat events. It drops key-up events (the Win32 console API has them; tcell doesn't pass them through).
 - Windows key repeat waits about 500ms after the first press, then repeats about 30 times per second. It only repeats the most recently pressed key.
 - P0 baseline: adaptive "held window". A key counts as held until a timeout after its last event:
   - after the first press, the timeout is about 550ms (covers the initial repeat delay)
   - once repeats are arriving, the timeout drops to about 100ms (stops soon after release)
   - Update moves `speed * dt` per frame for every held key. Movement is smooth and FPS independent.
 - Known limit: holding W and then pressing Left stops W's repeats, so W times out. You can't move and turn at the same time with the baseline.
+- S2 (D42): tcell v3 with advanced keys reports key releases through win32 input mode (Windows Terminal) and the kitty keyboard protocol. After the first real release, the Tracker holds a key exactly from press to release (no timeout, no tap slowdown); losing focus lets go of every key. Until a release arrives (terminals without them) it guesses as below. The HUD shows `keys events (releases)` in exact mode.
 - P1-14 (D35): the Tracker measures the OS repeat delay and uses it + 100ms as the first window; while a key has no repeats yet, turning runs at 25% and moving at 40% (`Input.TurnSlow`, `MoveSlow`), so a tap stays small.
 - Result (D19): the spike below worked and is the default on Windows (`-keys async`). The held window above is the fallback (`-keys events`) and the default elsewhere.
 - Spike T8 (2-hour timebox): read real key state with Win32 `GetAsyncKeyState` through Go's standard `syscall` package (no new dependency), in a Windows-only file (`keystate_windows.go`; Go builds `_windows.go` files only on Windows). Catch: it reads keys even when another window has focus. Keep the spike only if it works and the focus problem is solvable, and log the result as a decision.
@@ -218,7 +219,7 @@ internal/game        + weapon/ammo, enemies, pickups, spawner + tiers, score, pe
 internal/render      + Pixel.Tint, depth buffer, sprites, textures, weapon overlay, crosshair
 internal/input       + Space, R, mouse buttons, menu keys
 internal/save        save.json load/save (encoding/json, atomic write)
-internal/term        our screen interface, styles and events; tcell v2 adapter (the only tcell import) and a fake screen for tests (S1, D41)
+internal/term        our screen interface, styles and events; tcell v3 adapter (the only tcell import, S2) and a fake screen for tests (S1, D41)
 internal/audio       oto player + generated effects (P1-17)
 internal/assets      pixel-art images (gun, flash, sprites) and textures as text files, embedded; format in render.ParseImage
 ```

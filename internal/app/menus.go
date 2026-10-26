@@ -29,6 +29,9 @@ type menuScreen struct {
 }
 
 func (m *menuScreen) key(a *App, ev term.Key) {
+	if ev.Action == term.Release {
+		return // menus act on presses (and repeats, so a held arrow scrolls)
+	}
 	k, ok := input.MenuKeyFor(ev)
 	if !ok {
 		return

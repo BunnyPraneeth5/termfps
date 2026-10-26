@@ -284,3 +284,14 @@ func TestMapUnlockAndSelect(t *testing.T) {
 		t.Errorf("playing map %d %q, want 1 \"Second\"", a.mapIndex, a.state.Map.Name)
 	}
 }
+
+// Menus act on presses only: a release doesn't move the selection.
+func TestMenuIgnoresReleases(t *testing.T) {
+	a, _ := newMenuApp(t)
+	now := t0
+	sel := a.current.(*menuScreen).menu.Selected
+	press(a, &now, release(term.KeyDown, 0))
+	if got := a.current.(*menuScreen).menu.Selected; got != sel {
+		t.Errorf("selection %d -> %d after a Down release, want unchanged", sel, got)
+	}
+}

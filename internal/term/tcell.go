@@ -2,20 +2,43 @@ package term
 
 import (
 	"fmt"
+	"strings"
+	"unicode/utf8"
 
-	"github.com/gdamore/tcell/v2"
+	"github.com/gdamore/tcell/v3"
 )
 
-// Tcell is the real terminal, through tcell v2. This is the only file in
-// the game that imports tcell.
+// Tcell is the real terminal, through tcell v3 (S2). This is the only file
+// in the game that imports tcell.
 type Tcell struct {
-	s tcell.Screen
+	s tcellScreen
+}
+
+// tcellScreen is the part of tcell.Screen the adapter uses. tcell.Screen
+// has all of these methods, so it fits; the tests use a small stand-in,
+// since tcell v3 has no simulation screen.
+type tcellScreen interface {
+	Put(x, y int, str string, style tcell.Style) (string, int)
+	Size() (int, int)
+	Clear()
+	Show()
+	Sync()
+	Colors() int
+	EnableMouse(...tcell.MouseFlags)
+	EnableFocus()
+	EventQ() chan tcell.Event
+	Fini()
 }
 
 // Open creates and initializes the terminal screen. Call Fini to restore
 // the terminal.
+//
+// Advanced keys turn on key release reporting where the terminal has it:
+// win32 input mode (Windows Terminal) and the kitty keyboard protocol
+// (kitty, Ghostty, foot, WezTerm outside Windows). Other terminals only
+// send presses, and the game guesses as before (D35).
 func Open() (*Tcell, error) {
-	s, err := tcell.NewScreen()
+	s, err := tcell.NewScreen(tcell.OptAdvancedKeys(true))
 	if err != nil {
 		return nil, fmt.Errorf("create screen: %w", err)
 	}
@@ -38,8 +61,8 @@ func (t *Tcell) Clear() { t.s.Clear() }
 func (t *Tcell) Show()  { t.s.Show() }
 func (t *Tcell) Sync()  { t.s.Sync() }
 
-// Truecolor: tcell reports 1<<24 colors when it has truecolor, and fewer
-// with TCELL_TRUECOLOR=disable or NO_COLOR.
+// Truecolor: tcell reports 1<<24 colors when it has truecolor (always on
+// Windows), and fewer with TCELL_TRUECOLOR=disable or NO_COLOR.
 func (t *Tcell) Truecolor() bool { return t.s.Colors() >= 1<<24 }
 
 func (t *Tcell) EnableMouse() { t.s.EnableMouse(tcell.MouseButtonEvents) }
@@ -50,9 +73,11 @@ func (t *Tcell) EnableFocus() { t.s.EnableFocus() }
 // game, so they're skipped.
 func (t *Tcell) PollEvent() Event {
 	for {
-		ev := t.s.PollEvent()
-		if ev == nil {
-			return nil // the screen was finalized
+		// Receiving from a closed channel gives ok = false right away;
+		// tcell closes its event channel in Fini.
+		ev, ok := <-t.s.EventQ()
+		if !ok {
+			return nil
 		}
 		if e, ok := fromTcell(ev); ok {
 			return e
@@ -67,27 +92,7 @@ func fromTcell(ev tcell.Event) (e Event, ok bool) {
 	// tcell.Event interface; ev has that type inside each case.
 	switch ev := ev.(type) {
 	case *tcell.EventKey:
-		// tcell v2 has no key releases or repeat flag: every key is a Press.
-		k := Key{Code: KeyUnknown, Mod: fromTcellMod(ev.Modifiers()), Action: Press, When: ev.When()}
-		switch ev.Key() {
-		case tcell.KeyRune:
-			k.Code, k.Rune = KeyRune, ev.Rune()
-		case tcell.KeyUp:
-			k.Code = KeyUp
-		case tcell.KeyDown:
-			k.Code = KeyDown
-		case tcell.KeyLeft:
-			k.Code = KeyLeft
-		case tcell.KeyRight:
-			k.Code = KeyRight
-		case tcell.KeyEnter:
-			k.Code = KeyEnter
-		case tcell.KeyEscape:
-			k.Code = KeyEscape
-		case tcell.KeyCtrlC:
-			k.Code = KeyCtrlC
-		}
-		return k, true
+		return fromTcellKey(ev), true
 	case *tcell.EventMouse:
 		x, y := ev.Position()
 		b := ev.Buttons()
@@ -109,6 +114,48 @@ func fromTcell(ev tcell.Event) (e Event, ok bool) {
 		return Focus{Focused: ev.Focused}, true
 	}
 	return nil, false
+}
+
+// fromTcellKey converts a key event. With advanced keys, tcell reports
+// releases (Pressed false) and kitty repeats (Repeat above 1); win32 input
+// mode sends repeats as more presses.
+func fromTcellKey(ev *tcell.EventKey) Key {
+	k := Key{Code: KeyUnknown, Mod: fromTcellMod(ev.Modifiers()), Action: Press, When: ev.When()}
+	switch {
+	case !ev.Pressed():
+		k.Action = Release
+	case ev.Repeat() > 1:
+		k.Action = Repeat
+	}
+	switch ev.Key() {
+	case tcell.KeyRune:
+		str := ev.Str()
+		r, size := utf8.DecodeRuneInString(str)
+		switch {
+		case size != len(str) || r == utf8.RuneError:
+			// several runes in one cell (a composed character): no game key
+		case k.Mod&ModCtrl != 0 && strings.EqualFold(str, "c"):
+			// Advanced keys report Ctrl+C as "c" with Ctrl.
+			k.Code = KeyCtrlC
+		default:
+			k.Code, k.Rune = KeyRune, r
+		}
+	case tcell.KeyUp:
+		k.Code = KeyUp
+	case tcell.KeyDown:
+		k.Code = KeyDown
+	case tcell.KeyLeft:
+		k.Code = KeyLeft
+	case tcell.KeyRight:
+		k.Code = KeyRight
+	case tcell.KeyEnter:
+		k.Code = KeyEnter
+	case tcell.KeyEscape:
+		k.Code = KeyEscape
+	case tcell.KeyCtrlC: // without advanced keys
+		k.Code = KeyCtrlC
+	}
+	return k
 }
 
 // fromTcellMod converts modifier bits. tcell's Meta counts as Alt.
