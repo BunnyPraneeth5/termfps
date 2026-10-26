@@ -189,3 +189,4 @@ Template:
 - Update: the user ran `go test ./...` on their machine and every package passed (term, input, audio and main included). Committed.
 - Not done: on-screen check (user); not pushed.
 - Next: user runs the tests and the on-screen check (Windows Terminal events mode: move and turn together, taps, Esc delay; S0ra on Linux).
+- Update: the user checked S2 on screen in Windows Terminal (events mode: moving and turning together, taps, the HUD label, Esc) and everything works; S2 marked done. Async stays the Windows default (no change asked for).

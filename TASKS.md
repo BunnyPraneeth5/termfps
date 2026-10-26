@@ -278,7 +278,7 @@ A separate track from maps and gameplay (D39): finishing what S0ra suggested (P1
 - Why first: tcell v3 removes the simulation screen our tests use, and this layer means switching to tcell v3, or to our own input reader, only touches the adapter.
 - Acceptance: nothing changes on screen; all tests pass on the fake screen; build, vet, gofmt, tests on Windows and Linux CI.
 
-### [~] S2: Real key releases (tcell v3)
+### [x] S2: Real key releases (tcell v3)
 - Spike first (timeboxed): tcell v3.4+ key events (`Pressed()`, `Repeat()`, kitty protocol event types, Windows key-up). Then a v3 adapter for `term`. In events mode, held keys come from press/release, so moving and turning together works and taps are exact. Terminals without releases keep the P1-14 guessing; async stays the Windows default.
 - Needs the user's OK: tcell v2 -> v3 is a dependency change.
 - Acceptance: unit tests for press/release tracking; on screen (user): events mode in Windows Terminal (and, through S0ra, Ghostty or kitty on Linux) moves and turns at the same time.
