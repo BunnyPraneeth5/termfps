@@ -274,3 +274,9 @@ Format: what, why, trade-off, revisit when.
 - Why: S0ra's libasciic does the same (D31, D39); D36 left it out until it could be measured. The numbers show even 4 cuts the bytes by 40-50%, which matters over SSH or slow terminals.
 - Trade-off: off by default, so nothing changes unless chosen. At 16 and 32, smooth fog gradients turn into visible bands. The comparison is per row only, like libasciic.
 - Revisit when: the user's on-screen check at a few thresholds, or SSH play (P4) needs a different default.
+
+## D44: Visual quality track V1-V5 (2026-10-26)
+- What: a new TASKS section, "Visual quality": V1 textured floor and ceiling, V2 smooth wall edges, V3 mipmaps against shimmer, V4 32x32 wall textures, V5 a longer ASCII/mixed ramp. Two runs (V1-V3, then V4-V5), one commit per task, the user checks each run on screen. Darker corners (lighting) were left out: they belong with M4.
+- Why: the user asked for better visual quality after S3; these were the recommendations, and the user picked 1-5.
+- Trade-off: more work per frame (floor casting touches every floor and ceiling pixel); each task keeps the render benchmarks within the 33 ms budget (DrawFrame is ~0.07 ms now).
+- Revisit when: a run's on-screen check, or performance on slow machines.
