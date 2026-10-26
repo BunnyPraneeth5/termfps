@@ -292,15 +292,15 @@ A separate track from maps and gameplay (D39): finishing what S0ra suggested (P1
 
 A separate track (D44): the user asked for better visuals. Five tasks in two runs, each run checked on screen by the user: V1-V3, then V4-V5. Lighting touches (darker corners) were left out; they belong with M4.
 
-### [~] V1: Textured floor and ceiling
+### [x] V1: Textured floor and ceiling
 - Floor and ceiling casting (Lodev's method, matched to the wall math): a tile texture on the floor and a panel texture on the ceiling, with the same distance fog as walls. The floor stays darker than close walls and the ceiling stays dim. With wall textures off (Settings), floor and ceiling stay the flat gradient.
 - Acceptance: unit tests (floor pixels follow world position, fog with distance, textures-off unchanged); render benchmark within budget; on screen (user): the floor reads as a surface that moves correctly when walking and turning.
 
-### [~] V2: Smooth wall edges
+### [x] V2: Smooth wall edges
 - The top and bottom pixel of each wall column blend wall and floor/ceiling by how much of the pixel the wall covers, so wall edges don't step.
 - Acceptance: unit tests (coverage blending, full pixels unchanged); on screen (user): wall tops and bottoms look smoother in half-block.
 
-### [~] V3: Less shimmer on far walls and the floor
+### [x] V3: Less shimmer on far walls and the floor
 - Mipmaps: each texture also gets half, quarter, ... size versions (box-averaged); far walls and far floor sample the version that matches how many texture pixels one screen pixel covers, so patterns don't flicker when turning.
 - Acceptance: unit tests (mip levels, level choice by distance); on screen (user): far walls and the floor near the horizon flicker less when turning.
 

@@ -207,3 +207,4 @@ Template:
 - Tests: V1's ran and passed (all packages but main, blocked). For V2 and V3, Smart App Control blocked the render, app and term test binaries; the other packages pass. Not worked around (CLAUDE.md); V2 and V3 tests have not run yet.
 - Not done: `go test ./...` by the user; on-screen check of run 1 (user); not pushed.
 - Next: user runs the tests and checks run 1 on screen; then run 2 (V4, V5).
+- Update: the user ran the tests and checked run 1 on screen ("ok done"); V1-V3 marked done. Run 2 next, then the user tests and pushes.
