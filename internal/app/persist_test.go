@@ -84,6 +84,11 @@ func TestSettingChangeSaves(t *testing.T) {
 	if d.Settings.RenderMode != "mixed" || d.Settings.FPS != 30 || d.Settings.Volume != 80 {
 		t.Errorf("saved settings %+v, want mixed, 30 FPS, volume 80", *d.Settings)
 	}
+	press(a, &now, down, down, right) // color threshold off -> 4
+	d, _ = save.Load(store)
+	if bg, thr := d.Settings.MixedBackground, d.Settings.ColorThreshold; bg == nil || *bg != 20 || thr == nil || *thr != 4 {
+		t.Errorf("saved mixed background %v and threshold %v, want 20 and 4", bg, thr)
+	}
 }
 
 // Unlocking a map saves it, and loaded progress opens the maps again.
@@ -134,6 +139,22 @@ func TestApplySettings(t *testing.T) {
 		PixelAspect: 1.2, Volume: 40, Sound: true, MinimapAtStart: true})
 	if c.Mode != game.ModeShade || c.FPS != 60 || c.PixelAspect != 1.2 || c.Volume != 40 || c.Textures || !c.Sound || note != "" {
 		t.Errorf("ApplySettings = %+v, note %q", c, note)
+	}
+}
+
+// The S3 settings come from the save file when it has them; a file from
+// before S3 (nil) keeps the defaults.
+func TestApplySettingsS3(t *testing.T) {
+	base := Config{FPS: 30, KeyMode: "events", PixelAspect: 1, MixedBackground: 20}
+	old := save.Settings{RenderMode: "mixed", FPS: 30, KeyMode: "events", PixelAspect: 1}
+	if c, _ := ApplySettings(base, old); c.MixedBackground != 20 || c.ColorThreshold != 0 {
+		t.Errorf("pre-S3 save: background %d threshold %d, want 20 and 0", c.MixedBackground, c.ColorThreshold)
+	}
+	bg, thr := 0, 8
+	saved := old
+	saved.MixedBackground, saved.ColorThreshold = &bg, &thr // & takes the address: a pointer to the variable
+	if c, _ := ApplySettings(base, saved); c.MixedBackground != 0 || c.ColorThreshold != 8 {
+		t.Errorf("saved 0%% and 8: got %d and %d", c.MixedBackground, c.ColorThreshold)
 	}
 }
 

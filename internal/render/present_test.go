@@ -172,3 +172,99 @@ func BenchmarkPresentMixed120x40(b *testing.B) {
 		PresentMixed(scr, f)
 	}
 }
+
+// With a color threshold, a cell reuses the style of the cell to its left
+// when every channel is close enough, compared with the style actually
+// used there, so a gradient can't drift more than the threshold. Each row
+// starts fresh, and a tint never merges into gray.
+func TestColorThresholdHalfBlock(t *testing.T) {
+	grays := []uint8{100, 103, 106, 110, 140, 140}
+	f := newFrame(len(grays), 3) // 2 view rows
+	for row := 0; row < 4; row++ {
+		for x, g := range grays {
+			f.Pix[row*f.W+x] = Pixel{Gray: g}
+		}
+	}
+	f.Pix[0*f.W+5] = Pixel{Gray: 141, Tint: TintRed} // top pixel of cell (5, 0)
+	fgGray := func(s *term.Fake, x, y int) uint8 {
+		_, st := s.Get(x, y)
+		r, _, _, _ := st.Fg.RGB()
+		return r
+	}
+
+	s := term.NewFake(len(grays), 3)
+	PresentHalfBlock(s, f) // threshold 0: every cell its own color
+	for x, g := range grays {
+		if got := fgGray(s, x, 1); got != g {
+			t.Errorf("threshold off: cell %d = %d, want %d", x, got, g)
+		}
+	}
+
+	f.ColorThreshold = 4
+	PresentHalfBlock(s, f)
+	// 103 is within 4 of 100: reused. 106 is 6 from the 100 actually used:
+	// new. 110 is within 4 of 106: reused. 140: new.
+	for x, want := range []uint8{100, 100, 106, 106, 140, 140} {
+		if got := fgGray(s, x, 1); got != want {
+			t.Errorf("threshold 4: row 1 cell %d = %d, want %d", x, got, want)
+		}
+	}
+	if _, st := s.Get(5, 0); st.Fg != rgbColor(141, TintRed) {
+		t.Errorf("red cell next to gray 140 = %+v, want its own red", st.Fg)
+	}
+	if got := fgGray(s, 0, 1); got != 100 {
+		t.Errorf("row 1 starts with %d, want its own 100", got)
+	}
+}
+
+// Mixed uses the threshold too, and its background brightness comes from
+// the Frame (0 = black, 0.5 = half).
+func TestPresentMixedBackgroundAndThreshold(t *testing.T) {
+	f := newFrame(2, 2)
+	for i := range f.Pix {
+		f.Pix[i] = Pixel{Gray: 200}
+	}
+	f.Pix[1] = Pixel{Gray: 202}
+	f.Pix[f.W+1] = Pixel{Gray: 202}
+	s := term.NewFake(2, 2)
+
+	f.MixedBackground = 0.5
+	PresentMixed(s, f)
+	if _, st := s.Get(0, 0); st.Bg != rgbColor(100, TintNone) {
+		t.Errorf("background at 50%% = %+v, want gray 100", st.Bg)
+	}
+	f.MixedBackground = 0
+	PresentMixed(s, f)
+	if _, st := s.Get(0, 0); st.Bg != rgbColor(0, TintNone) {
+		t.Errorf("background at 0%% = %+v, want black", st.Bg)
+	}
+
+	f.ColorThreshold = 4
+	PresentMixed(s, f)
+	_, left := s.Get(0, 0)
+	if _, right := s.Get(1, 0); right != left {
+		t.Errorf("gray 202 next to 200 with threshold 4: style %+v, want the left cell's %+v", right, left)
+	}
+}
+
+func TestCloseStyle(t *testing.T) {
+	a := term.Style{Fg: term.RGB(10, 20, 30), Bg: term.RGB(0, 0, 0)}
+	cases := []struct {
+		name      string
+		b         term.Style
+		threshold uint8
+		want      bool
+	}{
+		{"same, threshold off", a, 0, false},
+		{"same", a, 1, true},
+		{"one channel at the threshold", term.Style{Fg: term.RGB(10, 25, 30), Bg: term.RGB(0, 0, 0)}, 5, true},
+		{"one channel past it", term.Style{Fg: term.RGB(10, 26, 30), Bg: term.RGB(0, 0, 0)}, 5, false},
+		{"background past it", term.Style{Fg: term.RGB(10, 20, 30), Bg: term.RGB(0, 0, 9)}, 8, false},
+		{"default colors never close", term.Style{}, 255, false},
+	}
+	for _, c := range cases {
+		if got := closeStyle(a, c.b, c.threshold); got != c.want {
+			t.Errorf("%s: closeStyle = %v, want %v", c.name, got, c.want)
+		}
+	}
+}

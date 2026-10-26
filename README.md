@@ -27,7 +27,9 @@ the first prototype; a new demo of the survival game is planned.
 > Half-block and mixed modes need a truecolor terminal and more bandwidth
 > than plain text. Press `V` for shade-block or ASCII mode, which use plain
 > characters and the terminal's own colors. Without truecolor, the game
-> starts in ASCII.
+> starts in ASCII. On a slow connection, Settings > Color threshold (4 or 8)
+> roughly halves what half-block and mixed send, at a small cost in color
+> detail.
 
 ## Build and run
 
@@ -74,8 +76,10 @@ mode). See `-keys` below for other systems.
 - **Start:** Play, Select map, Settings, Quit.
 - **Pause** (`Esc` in the game; the game freezes, dimmed behind the menu):
   Resume, Settings, Restart, Quit to menu.
-- **Settings** take effect right away: render mode, FPS (30 or 60), minimap
-  at start, wall textures, sound on/off, volume, key mode, pixel aspect.
+- **Settings** take effect right away: render mode, mixed background
+  brightness (0-100%, default 20%), color threshold (off by default), FPS
+  (30 or 60), minimap at start, wall textures, sound on/off, volume, key
+  mode, pixel aspect.
 - **Game over:** your kills, time and tier, your best on that map, then Try
   again or Main menu.
 
@@ -172,11 +176,9 @@ Planned next (details in [PRD.md](PRD.md) and [TASKS.md](TASKS.md)):
 
 1. **Maps and gameplay update:** better, more realistic maps and more to do
    in them (being discussed).
-2. **S0ra follow-ups:** real key press/release events in more terminals, and
-   the rest of the mixed render style.
-3. **Server / client split** inside the game, needed for the next two.
-4. **You vs an AI agent:** play against Claude Code, Codex, opencode or another CLI agent, in modes like hide and seek or a face-to-face duel.
-5. **Multiplayer:** team deathmatch over LAN, then over SSH.
+2. **Server / client split** inside the game, needed for the next two.
+3. **You vs an AI agent:** play against Claude Code, Codex, opencode or another CLI agent, in modes like hide and seek or a face-to-face duel.
+4. **Multiplayer:** team deathmatch over LAN, then over SSH.
 
 ## Development
 

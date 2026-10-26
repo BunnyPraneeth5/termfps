@@ -28,7 +28,19 @@ type Frame struct {
 	ZBuf []float64
 	// Textures turns wall textures on (P1-10). Off gives flat gray walls.
 	Textures bool
+	// MixedBackground is how bright a Mixed-mode cell's background is, as a
+	// fraction (0-1) of its character's color (S3). Usually
+	// DefaultMixedBackground; the Settings menu changes it.
+	MixedBackground float64
+	// ColorThreshold lets the truecolor presenters (half-block, mixed) reuse
+	// the color of the cell to the left when no red, green or blue channel
+	// differs by more than this (0 = off), so fewer color codes go to the
+	// terminal (S3, from S0ra's libasciic).
+	ColorThreshold uint8
 }
+
+// DefaultMixedBackground is the Mixed background brightness (20%, P1-15).
+const DefaultMixedBackground = 0.2
 
 // DefaultPixelAspect was measured in T11 from a Windows Terminal screenshot:
 // cells are about 14x28 screen pixels, so each half-block pixel is 14x14.

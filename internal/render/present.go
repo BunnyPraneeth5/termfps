@@ -18,14 +18,43 @@ func PresentHalfBlock(s term.Screen, f *Frame) {
 	for row := 0; row < rows; row++ {
 		top := f.Pix[(2*row)*f.W : (2*row+1)*f.W]
 		bottom := f.Pix[(2*row+1)*f.W : (2*row+2)*f.W]
+		var prev term.Style // the style used for the cell to the left
 		for x := 0; x < f.W; x++ {
 			style := term.Style{
 				Fg: rgbColor(top[x].Gray, top[x].Tint),
 				Bg: rgbColor(bottom[x].Gray, bottom[x].Tint),
 			}
+			if x > 0 && closeStyle(style, prev, f.ColorThreshold) {
+				style = prev
+			}
+			prev = style
 			s.Put(x, row, halfBlock, style)
 		}
 	}
+}
+
+// closeStyle reports whether a's colors are each within threshold of b's,
+// channel by channel (0 = off: never close). Only RGB colors can be close;
+// both styles have no attributes.
+//
+// The presenters compare a cell with the style actually used to its left,
+// not with that cell's own colors, so a long, slow gradient can't drift
+// more than threshold from the truth: once it does, a new color is sent.
+func closeStyle(a, b term.Style, threshold uint8) bool {
+	return threshold > 0 && closeColor(a.Fg, b.Fg, threshold) && closeColor(a.Bg, b.Bg, threshold)
+}
+
+func closeColor(a, b term.Color, threshold uint8) bool {
+	ar, ag, ab, aok := a.RGB()
+	br, bg, bb, bok := b.RGB()
+	return aok && bok && absDiff(ar, br) <= threshold && absDiff(ag, bg) <= threshold && absDiff(ab, bb) <= threshold
+}
+
+func absDiff(a, b uint8) uint8 {
+	if a > b {
+		return a - b
+	}
+	return b - a
 }
 
 // Character ramps for the text presenters, brightest first. Strings (not
@@ -77,14 +106,10 @@ func grayColor(g uint8) term.Color {
 	return term.RGB(g, g, g)
 }
 
-// mixedBackground is how bright the cell background is in the Mixed mode,
-// as a fraction of the character's color.
-const mixedBackground = 0.2
-
 // PresentMixed writes the Frame as one ASCII character per cell, like
 // PresentASCII, but in truecolor: the character in the cell's color on a
-// background of the same color at a fifth of the brightness, so dark gaps
-// between characters fill in (P1-15). The style is from S0ra's libasciic
+// background of the same color at f.MixedBackground of the brightness
+// (default a fifth), so dark gaps between characters fill in (P1-15, S3). The style is from S0ra's libasciic
 // "Mixed" mode (D31). It needs truecolor, like half-block, and costs about
 // the same: both send a foreground and a background color per cell.
 func PresentMixed(s term.Screen, f *Frame) {
@@ -92,13 +117,18 @@ func PresentMixed(s term.Screen, f *Frame) {
 	for row := 0; row < rows; row++ {
 		top := f.Pix[(2*row)*f.W : (2*row+1)*f.W]
 		bottom := f.Pix[(2*row+1)*f.W : (2*row+2)*f.W]
+		var prev term.Style // the style used for the cell to the left
 		for x := 0; x < f.W; x++ {
 			avg := uint8((int(top[x].Gray) + int(bottom[x].Gray)) / 2)
 			tint := cellTint(top[x], bottom[x])
 			style := term.Style{
 				Fg: rgbColor(avg, tint),
-				Bg: rgbColor(toGray(float64(avg)*mixedBackground), tint),
+				Bg: rgbColor(toGray(float64(avg)*f.MixedBackground), tint),
 			}
+			if x > 0 && closeStyle(style, prev, f.ColorThreshold) {
+				style = prev
+			}
+			prev = style
 			s.Put(x, row, asciiRamp[rampIndex(avg, len(asciiRamp))], style)
 		}
 	}

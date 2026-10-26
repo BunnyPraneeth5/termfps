@@ -190,3 +190,9 @@ Template:
 - Not done: on-screen check (user); not pushed.
 - Next: user runs the tests and the on-screen check (Windows Terminal events mode: move and turn together, taps, Esc delay; S0ra on Linux).
 - Update: the user checked S2 on screen in Windows Terminal (events mode: moving and turning together, taps, the HUD label, Esc) and everything works; S2 marked done. Async stays the Windows default (no change asked for).
+
+## 2026-10-26 (S3)
+- Done (build, vet on Windows and `GOOS=linux`, gofmt, all tests pass): S3 (D43). Settings "Mixed background" (0-100%, default 20%) and "Color threshold" (off, 4, 8, 16, 32) for half-block and mixed, saved in save.json (older files get the defaults). Key mode change in Settings keeps the tracker's learned values. New tests: threshold (reuse, drift limit, row start, tints), closeStyle, mixed background, save checks and pre-S3 files, ApplySettings, Settings menu and saving. New benchmark `BytesPerFrame` (real tcell v3 screen on a byte-counting fake terminal): half-block 41.3 KB/frame off, 21.3 KB at 8; mixed 33.9 KB off, 14.0 KB at 8.
+- Issues found: a test helper `absDiff` already existed in shade_test.go (removed in favor of the new one); gofmt alignment in the new benchmark file.
+- Not done: on-screen check (user): mixed background at a few values, thresholds 4/8/16 in half-block and mixed; not pushed.
+- Next: user's on-screen check, then push (the user's plan). Then visual-quality recommendations for the user to choose from.

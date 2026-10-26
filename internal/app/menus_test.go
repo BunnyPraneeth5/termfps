@@ -18,7 +18,7 @@ func newMenuApp(t *testing.T) (*App, *term.Fake) {
 	if err != nil {
 		t.Fatalf("Parse: %v", err)
 	}
-	cfg := Config{FPS: 30, KeyMode: "events", PixelAspect: 1, Textures: true, MinimapAtStart: true, Sound: true, Volume: 80}
+	cfg := Config{FPS: 30, KeyMode: "events", PixelAspect: 1, Textures: true, MinimapAtStart: true, Sound: true, Volume: 80, MixedBackground: 20}
 	return New(s, []*world.Map{m}, cfg, t0), s
 }
 
@@ -142,6 +142,14 @@ func TestSettingsApplyRightAway(t *testing.T) {
 	press(a, &now, right)
 	if a.state.Mode != game.ModeMixed {
 		t.Errorf("mode = %v after Right, want mixed", a.state.Mode)
+	}
+	press(a, &now, down, right) // mixed background 20% -> 30%
+	if a.cfg.MixedBackground != 30 || a.frame.MixedBackground != 0.3 {
+		t.Errorf("mixed background = %d%% (frame %v), want 30%%", a.cfg.MixedBackground, a.frame.MixedBackground)
+	}
+	press(a, &now, down, right) // color threshold off -> 4
+	if a.cfg.ColorThreshold != 4 || a.frame.ColorThreshold != 4 {
+		t.Errorf("color threshold = %d (frame %d), want 4", a.cfg.ColorThreshold, a.frame.ColorThreshold)
 	}
 	press(a, &now, down, right) // FPS 30 -> 60
 	if a.cfg.FPS != 60 {

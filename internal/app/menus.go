@@ -208,6 +208,8 @@ func (a *App) gameOverMenu() *menuScreen {
 // Settings items, in menu order.
 const (
 	setMode = iota
+	setMixedBackground
+	setThreshold
 	setFPS
 	setMinimap
 	setTextures
@@ -238,6 +240,16 @@ func (a *App) settingsMenu(back *menuScreen) *menuScreen {
 	if input.AsyncSupported() == nil {
 		keyChoices = []string{"async", "events"}
 	}
+	backgrounds := []int{0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100}
+	if !slices.Contains(backgrounds, a.cfg.MixedBackground) {
+		backgrounds = append(backgrounds, a.cfg.MixedBackground) // e.g. 25 typed into save.json
+		slices.Sort(backgrounds)
+	}
+	thresholds := []int{0, 4, 8, 16, 32}
+	if !slices.Contains(thresholds, a.cfg.ColorThreshold) {
+		thresholds = append(thresholds, a.cfg.ColorThreshold)
+		slices.Sort(thresholds)
+	}
 	var aspects []float64
 	for tenths := 5; tenths <= 20; tenths++ {
 		aspects = append(aspects, float64(tenths)/10)
@@ -250,6 +262,11 @@ func (a *App) settingsMenu(back *menuScreen) *menuScreen {
 	items := make([]ui.Item, setBack+1)
 	items[setMode] = ui.Item{Label: "Render mode", Values: mapStrings(modes, game.RenderMode.String),
 		Value: slices.Index(modes, a.state.Mode)}
+	items[setMixedBackground] = ui.Item{Label: "Mixed background",
+		Values: mapStrings(backgrounds, func(n int) string { return fmt.Sprintf("%d%%", n) }),
+		Value:  slices.Index(backgrounds, a.cfg.MixedBackground)}
+	items[setThreshold] = ui.Item{Label: "Color threshold", Values: mapStrings(thresholds, thresholdLabel),
+		Value: slices.Index(thresholds, a.cfg.ColorThreshold)}
 	items[setFPS] = ui.Item{Label: "FPS", Values: mapStrings(fpsChoices, func(n int) string { return fmt.Sprint(n) }),
 		Value: slices.Index(fpsChoices, a.cfg.FPS)}
 	items[setMinimap] = onOff("Minimap at start", a.cfg.MinimapAtStart)
@@ -273,6 +290,12 @@ func (a *App) settingsMenu(back *menuScreen) *menuScreen {
 			return
 		case s.menu.Selected == setMode:
 			a.state.Mode = modes[it.Value]
+		case s.menu.Selected == setMixedBackground:
+			a.cfg.MixedBackground = backgrounds[it.Value]
+			a.frame.MixedBackground = float64(a.cfg.MixedBackground) / 100
+		case s.menu.Selected == setThreshold:
+			a.cfg.ColorThreshold = thresholds[it.Value]
+			a.frame.ColorThreshold = uint8(a.cfg.ColorThreshold)
 		case s.menu.Selected == setFPS:
 			a.cfg.FPS = fpsChoices[it.Value] // Run resets its ticker
 		case s.menu.Selected == setMinimap:
@@ -289,7 +312,7 @@ func (a *App) settingsMenu(back *menuScreen) *menuScreen {
 			a.applySound()
 		case s.menu.Selected == setKeys:
 			a.cfg.KeyMode = keyChoices[it.Value]
-			a.keys = input.Tracker{}
+			a.keys.Reset() // keeps what it learned about the terminal (releases)
 			if a.cfg.KeyMode == "async" {
 				a.scr.EnableFocus() // async keys only count while focused
 			}
@@ -300,6 +323,14 @@ func (a *App) settingsMenu(back *menuScreen) *menuScreen {
 		a.persist() // saved on every change (D25)
 	}
 	return s
+}
+
+// thresholdLabel is the menu text for a color threshold.
+func thresholdLabel(n int) string {
+	if n == 0 {
+		return "off"
+	}
+	return fmt.Sprint(n)
 }
 
 // onOff is an off/on setting item.

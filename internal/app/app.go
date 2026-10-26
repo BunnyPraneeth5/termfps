@@ -31,6 +31,12 @@ type Config struct {
 	MinimapAtStart bool            // each run starts with the minimap shown
 	Sound          bool            // sound effects on
 	Volume         int             // sound volume in percent, 0-100
+	// MixedBackground is the Mixed-mode background brightness in percent
+	// of the character color, 0-100 (S3; 20 by default).
+	MixedBackground int
+	// ColorThreshold is the half-block / mixed color threshold per color
+	// channel (0-255), 0 = off (S3).
+	ColorThreshold int
 }
 
 // App is everything the loop needs between frames.
@@ -102,10 +108,11 @@ func New(scr term.Screen, maps []*world.Map, cfg Config, now time.Time) *App {
 		cfg:      cfg,
 		maps:     maps,
 		progress: save.Progress{UnlockedMaps: 1, Best: map[string]save.Best{}},
-		frame:    render.Frame{PixelAspect: cfg.PixelAspect, Textures: cfg.Textures},
-		focused:  true,
-		start:    now,
-		last:     now,
+		frame: render.Frame{PixelAspect: cfg.PixelAspect, Textures: cfg.Textures,
+			MixedBackground: float64(cfg.MixedBackground) / 100, ColorThreshold: uint8(cfg.ColorThreshold)},
+		focused: true,
+		start:   now,
+		last:    now,
 	}
 	// A state exists from the start, so the render mode has a home before
 	// the first run.

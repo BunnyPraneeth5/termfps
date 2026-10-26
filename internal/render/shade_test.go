@@ -70,10 +70,3 @@ func TestBackgroundShade(t *testing.T) {
 		t.Errorf("floor bottom %d is as bright as a close side wall %d", bottom, wallShade(1, 1))
 	}
 }
-
-func absDiff(a, b uint8) uint8 {
-	if a > b {
-		return a - b
-	}
-	return b - a
-}

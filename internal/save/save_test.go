@@ -77,6 +77,8 @@ func TestDamagedFile(t *testing.T) {
 		{"bad render mode", `{"version": 1, "settings": {"render_mode": "sixel", "fps": 30, "key_mode": "events", "pixel_aspect": 1}}`, "render mode"},
 		{"fps out of range", `{"version": 1, "settings": {"render_mode": "ascii", "fps": 0, "key_mode": "events", "pixel_aspect": 1}}`, "fps 0"},
 		{"negative kills", `{"version": 1, "progress": {"total_kills": -1}}`, "negative"},
+		{"mixed background out of range", `{"version": 1, "settings": {"render_mode": "ascii", "fps": 30, "key_mode": "events", "pixel_aspect": 1, "mixed_background": 101}}`, "mixed background 101"},
+		{"color threshold out of range", `{"version": 1, "settings": {"render_mode": "ascii", "fps": 30, "key_mode": "events", "pixel_aspect": 1, "color_threshold": -1}}`, "color threshold -1"},
 	}
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
@@ -99,5 +101,23 @@ func TestDamagedFile(t *testing.T) {
 				t.Error("damaged save.json still in place")
 			}
 		})
+	}
+}
+
+// A save file from before S3 has no mixed background or color threshold:
+// they load as nil (use the defaults), not 0, and the file is fine.
+func TestPreS3SettingsLoad(t *testing.T) {
+	s := testStore(t)
+	os.MkdirAll(filepath.Dir(s.Path), 0o755)
+	old := `{"version": 1, "settings": {"render_mode": "mixed", "fps": 30, "key_mode": "events", "pixel_aspect": 1}}`
+	if err := os.WriteFile(s.Path, []byte(old), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	d, problem := Load(s)
+	if problem != "" || d.Settings == nil {
+		t.Fatalf("Load = %+v, %q; want the settings, no problem", d, problem)
+	}
+	if d.Settings.MixedBackground != nil || d.Settings.ColorThreshold != nil {
+		t.Errorf("missing S3 settings = %v, %v; want nil", d.Settings.MixedBackground, d.Settings.ColorThreshold)
 	}
 }

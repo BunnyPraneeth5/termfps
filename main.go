@@ -176,9 +176,10 @@ func parseFlags() (cfg app.Config, explicit map[string]bool, ok bool) {
 		PanicMode: os.Getenv("TERMFPS_PANIC"),
 		Textures:  *textures,
 		// Defaults for settings that have no flag (the Settings menu changes them).
-		MinimapAtStart: true,
-		Sound:          true,
-		Volume:         80,
+		MinimapAtStart:  true,
+		Sound:           true,
+		Volume:          80,
+		MixedBackground: int(render.DefaultMixedBackground * 100),
 	}, explicit, true
 }
 

@@ -37,6 +37,10 @@ type Settings struct {
 	Volume         int     `json:"volume"` // percent
 	KeyMode        string  `json:"key_mode"`
 	PixelAspect    float64 `json:"pixel_aspect"`
+	// The S3 settings are pointers so a save file from before S3, which
+	// doesn't have them, gives nil (use the default), not 0.
+	MixedBackground *int `json:"mixed_background,omitempty"` // percent, 0-100
+	ColorThreshold  *int `json:"color_threshold,omitempty"`  // per channel, 0 = off
 }
 
 // Progress is what carries over between runs.
@@ -117,6 +121,10 @@ func (d *Data) check() error {
 			return fmt.Errorf("unknown key mode %q", s.KeyMode)
 		case s.PixelAspect < 0.5 || s.PixelAspect > 2.0:
 			return fmt.Errorf("pixel aspect %v out of range 0.5-2.0", s.PixelAspect)
+		case s.MixedBackground != nil && (*s.MixedBackground < 0 || *s.MixedBackground > 100):
+			return fmt.Errorf("mixed background %d out of range 0-100", *s.MixedBackground)
+		case s.ColorThreshold != nil && (*s.ColorThreshold < 0 || *s.ColorThreshold > 255):
+			return fmt.Errorf("color threshold %d out of range 0-255", *s.ColorThreshold)
 		}
 	}
 	return nil

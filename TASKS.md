@@ -283,7 +283,7 @@ A separate track from maps and gameplay (D39): finishing what S0ra suggested (P1
 - Needs the user's OK: tcell v2 -> v3 is a dependency change.
 - Acceptance: unit tests for press/release tracking; on screen (user): events mode in Windows Terminal (and, through S0ra, Ghostty or kitty on Linux) moves and turns at the same time.
 
-### [ ] S3: The rest of the Mixed style
+### [~] S3: The rest of the Mixed style
 - Color threshold (libasciic's compression): reuse the previous cell's style when no color channel differs by more than a threshold, so tcell sends fewer color codes. Works for mixed and half-block; a setting, off by default. Measure bytes per frame with and without.
 - Adjustable mixed background brightness (0-100%, default 20%) in Settings.
 - Acceptance: unit tests for the threshold and the background setting; bytes-per-frame numbers recorded; on screen (user): mixed looks right at a few thresholds.

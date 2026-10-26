@@ -28,7 +28,7 @@ func newState(t testing.TB, x, y float64) *game.State {
 }
 
 func newFrame(cols, rows int) *Frame {
-	f := Frame{PixelAspect: DefaultPixelAspect}
+	f := Frame{PixelAspect: DefaultPixelAspect, MixedBackground: DefaultMixedBackground}
 	f.Resize(FrameSize(cols, rows))
 	return &f
 }

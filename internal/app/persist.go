@@ -28,6 +28,13 @@ func ApplySettings(base Config, s save.Settings) (c Config, note string) {
 	c.Sound = s.Sound
 	c.Volume = s.Volume
 	c.PixelAspect = s.PixelAspect
+	// Missing in save files from before S3: keep base's defaults.
+	if s.MixedBackground != nil {
+		c.MixedBackground = *s.MixedBackground
+	}
+	if s.ColorThreshold != nil {
+		c.ColorThreshold = *s.ColorThreshold
+	}
 	if s.KeyMode == "async" && input.AsyncSupported() != nil {
 		note = fmt.Sprintf("The saved key mode async doesn't work here; using %s.", base.KeyMode)
 	} else {
@@ -59,8 +66,15 @@ func (a *App) settings() save.Settings {
 		Volume:         a.cfg.Volume,
 		KeyMode:        a.cfg.KeyMode,
 		PixelAspect:    a.cfg.PixelAspect,
+		// Pointers to copies, so the save data never points into the config.
+		MixedBackground: ptr(a.cfg.MixedBackground),
+		ColorThreshold:  ptr(a.cfg.ColorThreshold),
 	}
 }
+
+// ptr returns a pointer to a copy of v. [T any] makes it generic: it works
+// for any type.
+func ptr[T any](v T) *T { return &v }
 
 // persist writes settings and progress to the save file. A failure is
 // shown in the menus until a later save works.
