@@ -10,6 +10,9 @@ var (
 	brickTexture = mustParseImage("brick", assets.Brick)
 	stoneTexture = mustParseImage("stone", assets.Stone)
 	metalTexture = mustParseImage("metal", assets.Metal)
+
+	floorTexture   = mustParseImage("floor", assets.Floor)
+	ceilingTexture = mustParseImage("ceiling", assets.Ceiling)
 )
 
 // texMin is how much of a wall's shade its darkest texture pixel keeps:

@@ -137,3 +137,80 @@ func TestDim(t *testing.T) {
 		t.Errorf("Dim: %+v, want gray 80 (tint kept) and 0", f.Pix)
 	}
 }
+
+// The floor seen just below a wall's bottom edge is as far away as the
+// wall, so floor and walls meet without a seam (V1).
+func TestCastDistMatchesWalls(t *testing.T) {
+	f := newFrame(120, 40)
+	for _, dist := range []float64{1, 2.5, 6} {
+		top, height := wallLine(f, dist)
+		bottom := int(top + height) // the pixel row holding the wall's bottom edge
+		d, ceiling := castDist(f, bottom)
+		if ceiling || d < dist*0.9 || d > dist*1.1 {
+			t.Errorf("wall at %v: floor row %d is at %v (ceiling %v), want about %v", dist, bottom, d, ceiling, dist)
+		}
+		if d, ceiling := castDist(f, int(top)); !ceiling || d < dist*0.9 || d > dist*1.1 {
+			t.Errorf("wall at %v: ceiling row %d is at %v (ceiling %v), want about %v", dist, int(top), d, ceiling, dist)
+		}
+	}
+}
+
+// floorRows returns the pixels of rows from..to-1.
+func floorRows(f *Frame, from, to int) []Pixel {
+	return append([]Pixel(nil), f.Pix[from*f.W:to*f.W]...)
+}
+
+// The floor is fixed to the world: moving one whole cell shows the same
+// floor (the texture repeats per cell), half a cell doesn't.
+func TestFloorFollowsWorldPosition(t *testing.T) {
+	f := newFrame(120, 40)
+	f.Textures = true
+	draw := func(x float64) []Pixel {
+		DrawFrame(newState(t, x, 3.5), f)
+		return floorRows(f, 70, 78) // floor in every case below (walls end higher)
+	}
+	a, b, c := draw(1.5), draw(2.5), draw(2.0)
+	same, differs := true, false
+	for i := range a {
+		same = same && a[i] == b[i]
+		differs = differs || a[i] != c[i]
+	}
+	if !same {
+		t.Error("floor differs after moving exactly one cell, want the same")
+	}
+	if !differs {
+		t.Error("floor is the same after moving half a cell, want it to move")
+	}
+}
+
+// Floor and ceiling fade with distance, the ceiling stays darker than the
+// floor, and with textures off both are the old flat gradient.
+func TestFloorCeilingShading(t *testing.T) {
+	f := newFrame(120, 40)
+	f.Textures = true
+	DrawFrame(newState(t, 1.5, 3.5), f)
+	avg := func(y int) float64 {
+		sum := 0
+		for x := 0; x < f.W; x++ {
+			sum += int(f.Pix[y*f.W+x].Gray)
+		}
+		return float64(sum) / float64(f.W)
+	}
+	if near, far := avg(f.H-1), avg(60); near <= far {
+		t.Errorf("floor near %.0f, far %.0f: want near brighter", near, far)
+	}
+	if floor, ceiling := avg(f.H-1), avg(0); ceiling >= floor/2 {
+		t.Errorf("ceiling %.0f vs floor %.0f at the same distance: want the ceiling much darker", ceiling, floor)
+	}
+	if near := avg(f.H - 1); near < 60 || near > 110 {
+		t.Errorf("nearest floor row averages %.0f, want about the old 80", near)
+	}
+
+	f.Textures = false
+	DrawFrame(newState(t, 1.5, 3.5), f)
+	for _, y := range []int{0, f.H - 1} {
+		if got, want := f.Pix[y*f.W+5].Gray, backgroundShade(y, f.H); got != want {
+			t.Errorf("textures off, row %d = %d, want the flat %d", y, got, want)
+		}
+	}
+}

@@ -292,7 +292,7 @@ A separate track from maps and gameplay (D39): finishing what S0ra suggested (P1
 
 A separate track (D44): the user asked for better visuals. Five tasks in two runs, each run checked on screen by the user: V1-V3, then V4-V5. Lighting touches (darker corners) were left out; they belong with M4.
 
-### [ ] V1: Textured floor and ceiling
+### [~] V1: Textured floor and ceiling
 - Floor and ceiling casting (Lodev's method, matched to the wall math): a tile texture on the floor and a panel texture on the ceiling, with the same distance fog as walls. The floor stays darker than close walls and the ceiling stays dim. With wall textures off (Settings), floor and ceiling stay the flat gradient.
 - Acceptance: unit tests (floor pixels follow world position, fog with distance, textures-off unchanged); render benchmark within budget; on screen (user): the floor reads as a surface that moves correctly when walking and turning.
 

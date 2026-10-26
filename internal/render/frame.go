@@ -112,8 +112,10 @@ func DrawFrame(s *game.State, f *Frame) {
 		for y := 0; y < f.H; y++ {
 			px := wall
 			switch {
+			case (y < start || y >= end) && f.Textures:
+				px = castPixel(f, p, rayX, rayY, y) // textured ceiling above, floor below
 			case y < start || y >= end:
-				px = Pixel{Gray: backgroundShade(y, f.H)} // ceiling above, floor below
+				px = Pixel{Gray: backgroundShade(y, f.H)} // flat ceiling above, floor below
 			case tex != nil:
 				// Where this pixel falls on the wall, 0 (top) to 1 (bottom).
 				v := (float64(y) + 0.5 - top) / height
@@ -123,6 +125,39 @@ func DrawFrame(s *game.State, f *Frame) {
 			f.Pix[y*f.W+x] = px // sets the tint too, so no color is left from last frame
 		}
 	}
+}
+
+// castPixel returns the floor (below the middle) or ceiling (above) pixel
+// in row y of the column whose ray is (rayX, rayY), for player p (V1,
+// Lodev's floor casting).
+//
+// A floor point at perpendicular distance d is where the bottom of a wall
+// at distance d would be drawn. wallLine makes that wall W/(2*PlaneLen*
+// aspect*d) pixels tall around the middle row, so a pixel row offset rows
+// below the middle sees the floor at d = W/(4*PlaneLen*aspect*offset). The
+// ray's direction has length 1 along the view direction, so the point is
+// player + ray*d. The ceiling is the mirror image above the middle.
+func castPixel(f *Frame, p game.Player, rayX, rayY float64, y int) Pixel {
+	d, ceiling := castDist(f, y)
+	tex, base := floorTexture, floorBase
+	if ceiling {
+		tex, base = ceilingTexture, ceilingBase
+	}
+	wx, wy := p.X+rayX*d, p.Y+rayY*d
+	// The fraction of the world position inside its cell picks the texel.
+	tx := min(int((wx-math.Floor(wx))*float64(tex.W)), tex.W-1)
+	ty := min(int((wy-math.Floor(wy))*float64(tex.H)), tex.H-1)
+	return Pixel{Gray: texturedGray(castShade(base, d), tex.Pix[ty*tex.W+tx].Gray)}
+}
+
+// castDist returns the perpendicular distance of the floor (or, above the
+// middle row, the ceiling) seen in pixel row y. See castPixel.
+func castDist(f *Frame, y int) (d float64, ceiling bool) {
+	offset := float64(y) + 0.5 - float64(f.H)/2
+	if offset < 0 {
+		offset, ceiling = -offset, true
+	}
+	return float64(f.W) / (4 * game.PlaneLen * f.PixelAspect * offset), ceiling
 }
 
 // wallLine returns where a wall at perpendicular distance dist starts
