@@ -15,8 +15,8 @@ func TestTextureAssetsParse(t *testing.T) {
 			t.Errorf("%s: %v", name, err)
 			continue
 		}
-		if img.W != 16 || img.H != 16 {
-			t.Errorf("%s is %dx%d, want 16x16", name, img.W, img.H)
+		if img.W != 32 || img.H != 32 { // V4; floor and ceiling stay 16x16
+			t.Errorf("%s is %dx%d, want 32x32", name, img.W, img.H)
 		}
 		for i, ok := range img.Opaque {
 			if !ok {
@@ -51,8 +51,8 @@ func TestTextureColumnFlip(t *testing.T) {
 	hit := world.Hit{Side: 0, WallX: 0.25}
 	fromWest := textureColumn(brickTexture, hit, 1, 0)  // ray going east
 	fromEast := textureColumn(brickTexture, hit, -1, 0) // ray going west
-	if fromEast != 4 || fromWest != 11 {
-		t.Errorf("columns: from east %d, from west %d; want 4 and 11", fromEast, fromWest)
+	if fromEast != 8 || fromWest != 23 {
+		t.Errorf("columns: from east %d, from west %d; want 8 and 23", fromEast, fromWest)
 	}
 }
 
@@ -97,13 +97,13 @@ func BenchmarkDrawFrameTextured120x40(b *testing.B) {
 // averages 2x2 pixels of it (V3).
 func TestNewMipmap(t *testing.T) {
 	m := newMipmap(brickTexture)
-	for i, want := range []int{16, 8, 4, 2, 1} {
+	for i, want := range []int{32, 16, 8, 4, 2, 1} {
 		if i >= len(m) || m[i].W != want || m[i].H != want {
 			t.Fatalf("level %d: want %dx%d, have %d levels", i, want, want, len(m))
 		}
 	}
 	p := brickTexture.Pix
-	sum := int(p[0].Gray) + int(p[1].Gray) + int(p[16].Gray) + int(p[17].Gray)
+	sum := int(p[0].Gray) + int(p[1].Gray) + int(p[32].Gray) + int(p[33].Gray)
 	if got := int(m[1].Pix[0].Gray); got != (sum+2)/4 {
 		t.Errorf("level 1 pixel (0, 0) = %d, want the average %d", got, (sum+2)/4)
 	}
@@ -115,7 +115,7 @@ func TestMipmapLevel(t *testing.T) {
 		texels float64
 		size   int
 	}{
-		{0.3, 16}, {1.9, 16}, {2, 8}, {4, 4}, {7.9, 4}, {1000, 1},
+		{0.3, 32}, {1.9, 32}, {2, 16}, {4, 8}, {7.9, 8}, {1000, 1},
 	}
 	for _, c := range cases {
 		if got := m.level(c.texels).W; got != c.size {
@@ -129,16 +129,16 @@ func TestMipmapLevel(t *testing.T) {
 // wins. A different face doesn't count.
 func TestWallTexels(t *testing.T) {
 	hit := world.Hit{Side: 0, MapX: 5, MapY: 3, WallX: 0.9}
-	if got := wallTexels(brickTexture, 4, hit, world.Hit{}, false); got != 4 {
-		t.Errorf("16-pixel texture on a 4-pixel wall = %v texels, want 4", got)
+	if got := wallTexels(brickTexture, 4, hit, world.Hit{}, false); got != 8 {
+		t.Errorf("32-pixel texture on a 4-pixel wall = %v texels, want 8", got)
 	}
 	prev := world.Hit{Side: 0, MapX: 5, MapY: 2, WallX: 0.4} // 1.5 cells along the same face
-	if got := wallTexels(brickTexture, 40, hit, prev, true); got != 24 {
-		t.Errorf("grazing: %v texels, want 1.5 cells * 16 = 24", got)
+	if got := wallTexels(brickTexture, 40, hit, prev, true); got != 48 {
+		t.Errorf("grazing: %v texels, want 1.5 cells * 32 = 48", got)
 	}
 	other := world.Hit{Side: 0, MapX: 7, MapY: 2, WallX: 0.4} // another face
-	if got := wallTexels(brickTexture, 40, hit, other, true); got != 0.4 {
-		t.Errorf("different face: %v texels, want only the column's 0.4", got)
+	if got := wallTexels(brickTexture, 40, hit, other, true); got != 0.8 {
+		t.Errorf("different face: %v texels, want only the column's 0.8", got)
 	}
 }
 
