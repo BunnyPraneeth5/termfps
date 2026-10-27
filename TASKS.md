@@ -305,11 +305,11 @@ A separate track (D44): the user asked for better visuals. Five tasks in two run
 - Mipmaps: each texture also gets half, quarter, ... size versions (box-averaged); far walls and far floor sample the version that matches how many texture pixels one screen pixel covers, so patterns don't flicker when turning.
 - Acceptance: unit tests (mip levels, level choice by distance); on screen (user): far walls and the floor near the horizon flicker less when turning.
 
-### [~] V4: Sharper wall textures
+### [x] V4: Sharper wall textures
 - Brick, stone and metal redrawn at 32x32 (more detail up close; V3's mipmaps keep them calm far away).
 - Acceptance: textures parse, tests pass; on screen (user).
 
-### [~] V5: Finer ASCII and mixed shading
+### [x] V5: Finer ASCII and mixed shading
 - A longer brightness ramp for the ASCII and mixed modes, so shading has more steps.
 - Acceptance: unit tests (ramp order, full range used); on screen (user).
 
