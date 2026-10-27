@@ -1,6 +1,7 @@
 package render
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/BunnyPraneeth5/termfps/internal/assets"
@@ -142,23 +143,25 @@ func TestWallTexels(t *testing.T) {
 	}
 }
 
-// Far down a corridor, the floor samples a small mipmap level, so one row
-// of it is an even gray instead of a flickering pattern.
+// Far across a wide hall, the floor samples a small mipmap level, so one
+// row of it is an even gray instead of a flickering pattern. The hall is
+// wide so the middle columns see floor there, not side walls.
 func TestFarFloorIsAveraged(t *testing.T) {
-	corridor := "################################\n" +
-		"#P.............................#\n" +
-		"#..............................#\n" +
-		"################################\n"
-	m, err := world.Parse([]byte(corridor))
+	hall := "################################\n"
+	for range 30 { // range over a number repeats the loop that many times
+		hall += "#..............................#\n"
+	}
+	hall += "################################\n"
+	m, err := world.Parse([]byte(strings.Replace(hall, ".", "P", 1)))
 	if err != nil {
 		t.Fatal(err)
 	}
 	s := game.NewState(m)
-	s.Player.X, s.Player.Y = 1.5, 2.0 // middle of the corridor, facing east
+	s.Player.X, s.Player.Y = 1.5, 16.0 // west end, middle row, facing east
 	f := newFrame(120, 40)
 	f.Textures = true
 	DrawFrame(s, f)
-	y := 41 // just below the far end wall: floor about 18 cells away
+	y := 41 // just below the far east wall: floor about 18 cells away
 	if d, ceiling := castDist(f, y); ceiling || d < 15 {
 		t.Fatalf("row %d is at %v (ceiling %v), want far floor", y, d, ceiling)
 	}

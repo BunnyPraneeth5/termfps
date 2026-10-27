@@ -41,11 +41,8 @@ var Stone []byte
 //go:embed metal.txt
 var Metal []byte
 
-// Floor (tiles) and Ceiling (panels) are 16x16 textures for floor and
-// ceiling casting (V1).
+// Floor is the 16x16 tile texture for floor casting (V1). The ceiling is
+// flat near-black.
 //
 //go:embed floor.txt
 var Floor []byte
-
-//go:embed ceiling.txt
-var Ceiling []byte

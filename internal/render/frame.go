@@ -139,10 +139,11 @@ func DrawFrame(s *game.State, f *Frame) {
 }
 
 // backgroundPixel is the ceiling (above the middle) or floor (below) in
-// row y of the column whose ray is (rayX, rayY): cast and textured with
-// textures on, the flat gradient with them off.
+// row y of the column whose ray is (rayX, rayY). With textures on, the
+// floor is cast and textured; the ceiling is always flat near-black (the
+// user's choice after V1: more contrast for the walls, fewer color codes).
 func backgroundPixel(f *Frame, p game.Player, rayX, rayY float64, y int) Pixel {
-	if f.Textures {
+	if _, ceiling := castDist(f, y); f.Textures && !ceiling {
 		return castPixel(f, p, rayX, rayY, y)
 	}
 	return Pixel{Gray: backgroundShade(y, f.H)}
@@ -165,22 +166,19 @@ func blendPixel(back, front Pixel, cov float64) Pixel {
 	return out
 }
 
-// castPixel returns the floor (below the middle) or ceiling (above) pixel
-// in row y of the column whose ray is (rayX, rayY), for player p (V1,
-// Lodev's floor casting).
+// castPixel returns the floor pixel in row y (below the middle) of the
+// column whose ray is (rayX, rayY), for player p (V1, Lodev's floor
+// casting).
 //
 // A floor point at perpendicular distance d is where the bottom of a wall
 // at distance d would be drawn. wallLine makes that wall W/(2*PlaneLen*
 // aspect*d) pixels tall around the middle row, so a pixel row offset rows
 // below the middle sees the floor at d = W/(4*PlaneLen*aspect*offset). The
 // ray's direction has length 1 along the view direction, so the point is
-// player + ray*d. The ceiling is the mirror image above the middle.
+// player + ray*d.
 func castPixel(f *Frame, p game.Player, rayX, rayY float64, y int) Pixel {
-	d, ceiling := castDist(f, y)
-	mips, base := floorMips, floorBase
-	if ceiling {
-		mips, base = ceilingMips, ceilingBase
-	}
+	d, _ := castDist(f, y)
+	mips := floorMips
 	// Texture pixels one screen pixel covers (V3): across a row, neighbor
 	// columns' rays are 2*PlaneLen/W apart, so their points are that times
 	// d apart; down a column, the distance changes by d*d/K per row (K as
@@ -191,7 +189,7 @@ func castPixel(f *Frame, p game.Player, rayX, rayY float64, y int) Pixel {
 	// The fraction of the world position inside its cell picks the texel.
 	tx := min(int((wx-math.Floor(wx))*float64(tex.W)), tex.W-1)
 	ty := min(int((wy-math.Floor(wy))*float64(tex.H)), tex.H-1)
-	return Pixel{Gray: texturedGray(castShade(base, d), tex.Pix[ty*tex.W+tx].Gray)}
+	return Pixel{Gray: texturedGray(castShade(floorBase, d), tex.Pix[ty*tex.W+tx].Gray)}
 }
 
 // castDist returns the perpendicular distance of the floor (or, above the

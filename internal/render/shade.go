@@ -20,12 +20,10 @@ const (
 	floorHorizon = 12.0
 	floorNear    = 80.0
 
-	// With textures on, floor and ceiling are cast (V1): their brightness
-	// fades with distance like walls, from these values at distance 0.
-	// floorBase gives about the old floorNear (80) at the bottom of the
-	// screen; the ceiling stays dim so walls stand out against it.
-	floorBase   = 120.0
-	ceilingBase = 45.0
+	// With textures on, the floor is cast (V1): its brightness fades with
+	// distance like walls, from floorBase at distance 0, which gives about
+	// the old floorNear (80) at the bottom of the screen.
+	floorBase = 120.0
 )
 
 // backgroundShade returns the ceiling or floor gray for pixel row y of a
@@ -40,9 +38,8 @@ func backgroundShade(y, h int) uint8 {
 	return toGray(floorHorizon + (floorNear-floorHorizon)*t)
 }
 
-// castShade returns the gray of a floor or ceiling point at distance dist,
-// for a surface whose brightness at distance 0 is base: the same fog as
-// walls.
+// castShade returns the gray of a floor point at distance dist, for a
+// surface whose brightness at distance 0 is base: the same fog as walls.
 func castShade(base, dist float64) uint8 {
 	return toGray(base / (1 + fogK*math.Max(dist, 0)))
 }

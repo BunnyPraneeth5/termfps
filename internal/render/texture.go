@@ -13,15 +13,13 @@ var (
 	stoneTexture = mustParseImage("stone", assets.Stone)
 	metalTexture = mustParseImage("metal", assets.Metal)
 
-	floorTexture   = mustParseImage("floor", assets.Floor)
-	ceilingTexture = mustParseImage("ceiling", assets.Ceiling)
+	floorTexture = mustParseImage("floor", assets.Floor)
 
 	// Their mipmaps (V3), built once at startup.
-	brickMips   = newMipmap(brickTexture)
-	stoneMips   = newMipmap(stoneTexture)
-	metalMips   = newMipmap(metalTexture)
-	floorMips   = newMipmap(floorTexture)
-	ceilingMips = newMipmap(ceilingTexture)
+	brickMips = newMipmap(brickTexture)
+	stoneMips = newMipmap(stoneTexture)
+	metalMips = newMipmap(metalTexture)
+	floorMips = newMipmap(floorTexture)
 )
 
 // mipmap is a texture at full size (level 0) and at half, quarter, ...

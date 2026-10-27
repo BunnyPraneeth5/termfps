@@ -294,6 +294,7 @@ A separate track (D44): the user asked for better visuals. Five tasks in two run
 
 ### [x] V1: Textured floor and ceiling
 - Floor and ceiling casting (Lodev's method, matched to the wall math): a tile texture on the floor and a panel texture on the ceiling, with the same distance fog as walls. The floor stays darker than close walls and the ceiling stays dim. With wall textures off (Settings), floor and ceiling stay the flat gradient.
+- Update (D45): after trying it, the user chose a flat near-black ceiling again; only the floor is textured.
 - Acceptance: unit tests (floor pixels follow world position, fog with distance, textures-off unchanged); render benchmark within budget; on screen (user): the floor reads as a surface that moves correctly when walking and turning.
 
 ### [x] V2: Smooth wall edges

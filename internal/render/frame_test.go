@@ -147,14 +147,24 @@ func TestDrawFrameFacingWall(t *testing.T) {
 	DrawFrame(s, f)
 	wallGray := wallShade(2, 0) // all columns hit the east (X-side) wall at 2
 
+	// The wall covers rows 16.27 to 61.73: rows 17-60 fully, rows 16 and 61
+	// partly, so those mix wall with ceiling or floor (V2).
 	for _, x := range []int{0, f.W / 2, f.W - 1} {
 		for y := 0; y < f.H; y++ {
-			want := backgroundShade(y, f.H)
-			if y >= 16 && y < 62 {
-				want = wallGray
-			}
-			if got := f.Pix[y*f.W+x].Gray; got != want {
-				t.Errorf("pixel (%d, %d) = %d, want %d", x, y, got, want)
+			got, bg := f.Pix[y*f.W+x].Gray, backgroundShade(y, f.H)
+			switch {
+			case y == 16 || y == 61:
+				if got <= bg || got >= wallGray {
+					t.Errorf("edge pixel (%d, %d) = %d, want between %d and %d", x, y, got, bg, wallGray)
+				}
+			case y > 16 && y < 61:
+				if got != wallGray {
+					t.Errorf("pixel (%d, %d) = %d, want wall %d", x, y, got, wallGray)
+				}
+			default:
+				if got != bg {
+					t.Errorf("pixel (%d, %d) = %d, want background %d", x, y, got, bg)
+				}
 			}
 		}
 	}
@@ -239,8 +249,8 @@ func TestFloorFollowsWorldPosition(t *testing.T) {
 	}
 }
 
-// Floor and ceiling fade with distance, the ceiling stays darker than the
-// floor, and with textures off both are the old flat gradient.
+// The floor fades with distance, the ceiling stays flat near-black, and
+// with textures off the floor is the old flat gradient.
 func TestFloorCeilingShading(t *testing.T) {
 	f := newFrame(120, 40)
 	f.Textures = true
@@ -255,8 +265,10 @@ func TestFloorCeilingShading(t *testing.T) {
 	if near, far := avg(f.H-1), avg(60); near <= far {
 		t.Errorf("floor near %.0f, far %.0f: want near brighter", near, far)
 	}
-	if floor, ceiling := avg(f.H-1), avg(0); ceiling >= floor/2 {
-		t.Errorf("ceiling %.0f vs floor %.0f at the same distance: want the ceiling much darker", ceiling, floor)
+	for x := 0; x < f.W; x++ { // the ceiling stays flat near-black with textures on
+		if got := f.Pix[x].Gray; got != ceilingGray {
+			t.Fatalf("ceiling pixel (%d, 0) = %d, want flat %d", x, got, ceilingGray)
+		}
 	}
 	if near := avg(f.H - 1); near < 60 || near > 110 {
 		t.Errorf("nearest floor row averages %.0f, want about the old 80", near)

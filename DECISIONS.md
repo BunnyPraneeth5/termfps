@@ -280,3 +280,10 @@ Format: what, why, trade-off, revisit when.
 - Why: the user asked for better visual quality after S3; these were the recommendations, and the user picked 1-5.
 - Trade-off: more work per frame (floor casting touches every floor and ceiling pixel); each task keeps the render benchmarks within the 33 ms budget (DrawFrame is ~0.07 ms now).
 - Revisit when: a run's on-screen check, or performance on slow machines.
+
+## D45: Flat near-black ceiling; bytes per frame after V1-V5 (2026-10-27)
+- What: after trying V1, the user chose to drop the ceiling texture: the ceiling is flat near-black again (gray 8, as before V1), with textures on or off. The floor stays textured. Two render tests that the Smart App Control block had hidden were fixed: `TestDrawFrameFacingWall` still expected V2's blended edge rows to be full wall, and `TestFarFloorIsAveraged` (V3) looked at side walls in a too-narrow corridor instead of far floor (now a wide hall).
+- Why: the dim ceiling texture added little but noise; a flat ceiling gives the walls more contrast and sends fewer color codes.
+- Measured after the change (`BytesPerFrame`, 120x40, Warehouse, turning, textures on): half-block 68,718 bytes/frame with the threshold off, 50,476 at 4, 36,151 at 8, 25,470 at 16, 16,136 at 32; mixed 56,775 / 30,766 / 21,493 / 13,787 / 8,235; ASCII 4,522. That is more than D43's numbers (41,313 half-block, off) because the textured floor (V1) and the sharper 32x32 textures (V4) put more detail on screen, and every changed color costs bytes. At 30 FPS half-block sends about 2 MB/s with the threshold off; threshold 8 brings it below the pre-V1 amount. DrawFrame with textures: about 0.5 ms at 120x40.
+- Trade-off: on a slow terminal or over SSH, half-block needs the color threshold (or ASCII) more than before.
+- Revisit when: someone reports stutter in half-block (consider a default threshold), or SSH play (P4).
