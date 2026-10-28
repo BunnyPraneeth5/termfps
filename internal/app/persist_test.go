@@ -99,7 +99,7 @@ func TestUnlockSavesAndLoads(t *testing.T) {
 	now := t0
 	press(a, &now, enter)
 	a.state.Spawning = false
-	a.state.Time = unlockAfter
+	a.state.Time = unlockAfter("5:00")
 	press(a, &now)
 	d, _ := save.Load(store)
 	if d.Progress.UnlockedMaps != 2 {

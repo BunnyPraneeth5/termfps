@@ -114,9 +114,9 @@ func (a *App) mapMenu() *menuScreen {
 		if b, ok := a.progress.Best[m.Name]; ok { // ok is false if the map has no best yet
 			it.Label += fmt.Sprintf("   best %s, %d kills", render.Clock(b.Time), b.Kills)
 		}
-		if i >= a.progress.UnlockedMaps {
+		if a.mapLocked(i) {
 			it.Disabled = true
-			it.Label += fmt.Sprintf("   locked: survive %s on %s", render.Clock(unlockAfter), a.maps[i-1].Name)
+			it.Label += fmt.Sprintf("   locked: survive %s on %s", render.Clock(unlockAfter(a.cfg.UnlockRule)), a.maps[i-1].Name)
 		}
 		items = append(items, it)
 	}
@@ -218,6 +218,7 @@ const (
 	setVolume
 	setKeys
 	setAspect
+	setUnlocks
 	setBack
 )
 
@@ -280,6 +281,8 @@ func (a *App) settingsMenu(back *menuScreen) *menuScreen {
 	items[setKeys] = ui.Item{Label: "Key mode", Values: keyChoices, Value: slices.Index(keyChoices, a.cfg.KeyMode)}
 	items[setAspect] = ui.Item{Label: "Pixel aspect", Values: mapStrings(aspects, func(v float64) string { return fmt.Sprint(v) }),
 		Value: slices.Index(aspects, a.cfg.PixelAspect)}
+	items[setUnlocks] = ui.Item{Label: "Map unlocks", Values: unlockRuleLabels,
+		Value: max(slices.Index(unlockRules, a.cfg.UnlockRule), 0)} // "" (unset) shows 5:00
 	items[setBack] = ui.Item{Label: "Back"}
 
 	s := &menuScreen{overGame: back.overGame, menu: ui.New("SETTINGS", nil, items)}
@@ -322,6 +325,8 @@ func (a *App) settingsMenu(back *menuScreen) *menuScreen {
 			if a.cfg.KeyMode == "async" {
 				a.scr.EnableFocus() // async keys only count while focused
 			}
+		case s.menu.Selected == setUnlocks:
+			a.cfg.UnlockRule = unlockRules[it.Value]
 		case s.menu.Selected == setAspect:
 			a.cfg.PixelAspect = aspects[it.Value]
 			a.frame.PixelAspect = a.cfg.PixelAspect

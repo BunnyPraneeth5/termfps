@@ -44,6 +44,8 @@ type Settings struct {
 	// RenderScale is "auto", "full" or "half" (V6); "" in files from before
 	// V6 means auto.
 	RenderScale string `json:"render_scale,omitempty"`
+	// UnlockRule is "5:00", "2:00" or "open" (M7); "" in older files means 5:00.
+	UnlockRule string `json:"unlock_rule,omitempty"`
 }
 
 // Progress is what carries over between runs.
@@ -130,6 +132,8 @@ func (d *Data) check() error {
 			return fmt.Errorf("color threshold %d out of range 0-255", *s.ColorThreshold)
 		case s.RenderScale != "" && s.RenderScale != "auto" && s.RenderScale != "full" && s.RenderScale != "half":
 			return fmt.Errorf("unknown render scale %q", s.RenderScale)
+		case s.UnlockRule != "" && s.UnlockRule != "5:00" && s.UnlockRule != "2:00" && s.UnlockRule != "open":
+			return fmt.Errorf("unknown unlock rule %q", s.UnlockRule)
 		}
 	}
 	return nil

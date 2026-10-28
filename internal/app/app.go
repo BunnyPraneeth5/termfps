@@ -41,6 +41,30 @@ type Config struct {
 	// render.AutoScaleCols wide), "full" or "half" (V6). "" counts as auto,
 	// for configs built without it (tests).
 	RenderScale string
+	// UnlockRule is how maps open (M7): "5:00" (the default: survive five
+	// minutes on the newest open map to open the next), "2:00", or "open"
+	// (every map open). "" counts as 5:00.
+	UnlockRule string
+}
+
+// unlockRules are the UnlockRule choices, in menu order, with their labels.
+var (
+	unlockRules      = []string{"5:00", "2:00", "open"}
+	unlockRuleLabels = []string{"survive 5:00", "survive 2:00", "all open"}
+)
+
+// unlockAfter is how many seconds to survive on the newest open map to
+// open the next one under rule (D26, M7).
+func unlockAfter(rule string) float64 {
+	if rule == "2:00" {
+		return 2 * 60
+	}
+	return 5 * 60
+}
+
+// mapLocked reports whether map i can't be played yet.
+func (a *App) mapLocked(i int) bool {
+	return a.cfg.UnlockRule != "open" && i >= a.progress.UnlockedMaps
 }
 
 // renderScale is the Frame scale for a terminal cols wide.
@@ -118,9 +142,6 @@ const cautionFor = 5 * time.Second
 
 // tierNoticeFor is how long the "TIER n" notice shows after a tier-up.
 const tierNoticeFor = 3 * time.Second
-
-// unlockAfter is how many seconds to survive on a map to open the next (D26).
-const unlockAfter = 5 * 60.0
 
 const caution = "Half-block needs a truecolor terminal and more bandwidth. Use ASCII over slow SSH."
 
@@ -348,9 +369,9 @@ func keysLabel(mode string, focused, releases bool) string {
 
 // unlocks returns how many maps are open after surviving survived seconds
 // on map played (0-based), when open of total maps were open. Surviving
-// long enough on the newest open map opens the next one.
-func unlocks(open, played int, survived float64, total int) int {
-	if played == open-1 && survived >= unlockAfter && open < total {
+// after seconds on the newest open map opens the next one.
+func unlocks(open, played int, survived float64, total int, after float64) int {
+	if played == open-1 && survived >= after && open < total {
 		return open + 1
 	}
 	return open

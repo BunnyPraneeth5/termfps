@@ -38,6 +38,9 @@ func ApplySettings(base Config, s save.Settings) (c Config, note string) {
 	if s.RenderScale != "" { // missing before V6: keep base's
 		c.RenderScale = s.RenderScale
 	}
+	if s.UnlockRule != "" { // missing before M7
+		c.UnlockRule = s.UnlockRule
+	}
 	if s.KeyMode == "async" && input.AsyncSupported() != nil {
 		note = fmt.Sprintf("The saved key mode async doesn't work here; using %s.", base.KeyMode)
 	} else {
@@ -73,6 +76,7 @@ func (a *App) settings() save.Settings {
 		MixedBackground: ptr(a.cfg.MixedBackground),
 		ColorThreshold:  ptr(a.cfg.ColorThreshold),
 		RenderScale:     a.cfg.RenderScale,
+		UnlockRule:      a.cfg.UnlockRule,
 	}
 }
 

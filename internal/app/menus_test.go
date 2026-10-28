@@ -257,7 +257,7 @@ func TestUnlockRule(t *testing.T) {
 		{"last map: nothing left", 4, 3, 4, 900, 4},
 	}
 	for _, c := range cases {
-		if got := unlocks(c.open, c.played, c.survived, c.total); got != c.want {
+		if got := unlocks(c.open, c.played, c.survived, c.total, unlockAfter("5:00")); got != c.want {
 			t.Errorf("%s: unlocks = %d, want %d", c.name, got, c.want)
 		}
 	}
@@ -288,7 +288,7 @@ func TestMapUnlockAndSelect(t *testing.T) {
 	}
 	press(a, &now, up, enter) // First
 	a.state.Spawning = false
-	a.state.Time = unlockAfter - 0.01
+	a.state.Time = unlockAfter("5:00") - 0.01
 	press(a, &now)
 	if a.progress.UnlockedMaps != 2 || !screenHas(s, "New map unlocked: Second") {
 		t.Fatalf("unlocked = %d after 5:00, want 2 with a notice", a.progress.UnlockedMaps)
@@ -309,5 +309,25 @@ func TestMenuIgnoresReleases(t *testing.T) {
 	press(a, &now, release(term.KeyDown, 0))
 	if got := a.current.(*menuScreen).menu.Selected; got != sel {
 		t.Errorf("selection %d -> %d after a Down release, want unchanged", sel, got)
+	}
+}
+
+// Under "2:00" two minutes open the next map; under "open" every map can
+// be picked without unlocking anything (M7).
+func TestUnlockRuleSetting(t *testing.T) {
+	if unlockAfter("2:00") != 120 || unlockAfter("5:00") != 300 || unlockAfter("") != 300 {
+		t.Errorf("unlockAfter: 2:00 = %v, 5:00 = %v, unset = %v", unlockAfter("2:00"), unlockAfter("5:00"), unlockAfter(""))
+	}
+	a, _ := newMenuApp(t)
+	a.maps = append(a.maps, a.maps[0].Clone(), a.maps[0].Clone())
+	if !a.mapLocked(1) || !a.mapLocked(2) || a.mapLocked(0) {
+		t.Fatal("with the default rule, maps after the first should be locked")
+	}
+	a.cfg.UnlockRule = "open"
+	if a.mapLocked(1) || a.mapLocked(2) {
+		t.Error("with all maps open, a map is still locked")
+	}
+	if a.progress.UnlockedMaps != 1 {
+		t.Errorf("the open rule changed the saved progress to %d", a.progress.UnlockedMaps)
 	}
 }

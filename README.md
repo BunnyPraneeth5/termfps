@@ -81,7 +81,8 @@ mode). See `-keys` below for other systems.
   scale (auto draws the 3D view at most 160 columns wide in big windows;
   full; half), FPS
   (30 or 60), minimap at start, wall textures, sound on/off, volume, key
-  mode, pixel aspect.
+  mode, pixel aspect, map unlocks (survive 5:00, survive 2:00, or all
+  maps open).
 - **Game over:** your kills, time and tier, your best on that map, then Try
   again or Main menu.
 
