@@ -329,7 +329,7 @@ All the ideas from the 2026-10-25/26 discussion, added to the plan first (D40). 
 
 ## Maps and world
 
-### [ ] M1: Minimap size and border
+### [~] M1: Minimap size and border
 - The scrolling window shows at most 16x16 map cells (now 24x16); a 16x16 map like the Arena keeps its full size. A border goes around the minimap so it stands apart from the 3D view.
 
 ### [ ] M2: Props
