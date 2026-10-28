@@ -130,3 +130,17 @@ func TestTwoShotsKillShooter(t *testing.T) {
 		t.Errorf("enemies left %d, kills %d; want 0 and 1", len(s.Enemies), s.Kills)
 	}
 }
+
+// A pillar between them blocks the shooter's line of sight (M2 cover).
+func TestShooterBlockedByPillar(t *testing.T) {
+	s := shooterState(t, "##########\n#P..i..S.#\n##########\n")
+	shots := 0
+	for range 3 * 30 {
+		Update(s, Input{}, frameDT)
+		shots += count(s, EventEnemyShot)
+		s.Enemies[0].X, s.Enemies[0].Y = 7.5, 1.5 // this test is about sight, not walking
+	}
+	if shots != 0 {
+		t.Errorf("shooter fired %d times through a pillar", shots)
+	}
+}

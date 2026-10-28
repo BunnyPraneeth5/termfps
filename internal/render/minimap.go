@@ -12,6 +12,7 @@ var (
 	minimapWall   = term.Style{Bg: grayColor(140)}
 	minimapTarget = term.Style{Bg: rgbColor(170, TintRed)}
 	minimapFloor  = term.Style{Bg: grayColor(25)}
+	minimapProp   = term.Style{Bg: grayColor(75)} // crates, barrels, pillars, lamps
 	minimapPlayer = term.Style{Bg: grayColor(25), Fg: grayColor(255), Bold: true}
 	minimapAmmo   = term.Style{Bg: grayColor(25), Fg: rgbColor(230, TintYellow)}
 	// The border (M1) is a light line on black, so the minimap stands apart
@@ -66,6 +67,9 @@ func DrawMinimap(s term.Screen, st *game.State) bool {
 			case m.At(x, y) == world.Target:
 				s.Put(sx, y0+vy, " ", minimapTarget)
 				s.Put(sx+1, y0+vy, " ", minimapTarget)
+			case m.At(x, y).BlocksMove(): // a prop you can't walk through (M2)
+				s.Put(sx, y0+vy, " ", minimapProp)
+				s.Put(sx+1, y0+vy, " ", minimapProp)
 			case m.At(x, y).Solid():
 				s.Put(sx, y0+vy, " ", minimapWall)
 				s.Put(sx+1, y0+vy, " ", minimapWall)

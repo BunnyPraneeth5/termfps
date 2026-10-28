@@ -179,3 +179,28 @@ func TestTimeCounts(t *testing.T) {
 		t.Errorf("time after 30 frames = %v, want 1 s", s.Time)
 	}
 }
+
+// A crate is cover: shots stop at it (M2). Debris isn't.
+func TestCrateProtectsZombie(t *testing.T) {
+	s := stateFrom(t, "#########\n#P..c..Z#\n#########\n")
+	Update(s, Input{Fire: true}, frameDT)
+	if count(s, EventEnemyHit) != 0 {
+		t.Error("shot went through a crate and hit the zombie")
+	}
+	s = stateFrom(t, "#########\n#P..,..Z#\n#########\n")
+	Update(s, Input{Fire: true}, frameDT)
+	if count(s, EventEnemyHit) != 1 {
+		t.Error("shot didn't pass over debris to the zombie")
+	}
+}
+
+// The player can't walk through a crate (M2).
+func TestPlayerBlockedByCrate(t *testing.T) {
+	s := stateFrom(t, "#######\n#P.c..#\n#######\n")
+	for range 60 {
+		Update(s, Input{Forward: true}, frameDT)
+	}
+	if s.Player.X > 3-Radius+1e-9 {
+		t.Errorf("player at x %v, want stopped before the crate at x 3", s.Player.X)
+	}
+}

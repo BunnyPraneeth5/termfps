@@ -164,3 +164,24 @@ func TestCastRayWallX(t *testing.T) {
 		t.Errorf("WallX = %v, want within [0, 1)", h.WallX)
 	}
 }
+
+// Rays (walls) see past props; ShotDistance finds the first one that blocks
+// shots (M2).
+func TestShotDistance(t *testing.T) {
+	m, err := Parse([]byte("##########\n#P.,.c...#\n##########\n"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if hit := CastRay(m, 1.5, 1.5, 1, 0); hit.MapX != 9 {
+		t.Errorf("ray stopped at x %d, want the wall at 9", hit.MapX)
+	}
+	if d := ShotDistance(m, 1.5, 1.5, 1, 0, 100); math.Abs(d-3.5) > 1e-9 {
+		t.Errorf("shot distance = %v, want 3.5 (the crate's cell starts at x 5)", d)
+	}
+	if d := ShotDistance(m, 1.5, 1.5, 1, 0, 2); !math.IsInf(d, 1) {
+		t.Errorf("shot distance with max 2 = %v, want +Inf", d)
+	}
+	if !LineOfSight(m, 1.5, 1.5, 4.5, 1.5) || LineOfSight(m, 1.5, 1.5, 7.5, 1.5) {
+		t.Error("line of sight: want clear over debris, blocked by the crate")
+	}
+}

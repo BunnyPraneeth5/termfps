@@ -63,7 +63,7 @@ func TestParseErrors(t *testing.T) {
 		{"only newlines", "\n\r\n\n", "empty"},
 		{"too small", "###\n#P#\n", "at least 3x3"},
 		{"ragged row", "#####\n#P..#\n#..#\n#####\n", "row 3 has 4 columns"},
-		{"unknown char", "#####\n#P.x#\n#...#\n#####\n", "row 2, column 4: unknown character 'x'"},
+		{"unknown char", "#####\n#P.?#\n#...#\n#####\n", "row 2, column 4: unknown character '?'"},
 		{"unicode char", "#####\n#P.é#\n#...#\n#####\n", "unknown character 'é'"},
 		{"tab inside row", "#####\n#P\t.#\n#...#\n#####\n", "unknown character '\\t'"},
 		{"target T on the border", "##T##\n#P..#\n#...#\n#####\n", "row 1, column 3: border"},
@@ -130,7 +130,7 @@ func TestParseHeaderErrors(t *testing.T) {
 		{"empty name", "; name:\n###\n#P#\n###\n", "name is empty"},
 		{"two names", "; name: A\n; name: B\n###\n#P#\n###\n", "row 2: second name"},
 		{"only a header", "; name: A\n", "empty"},
-		{"row numbers count the header", "; name: A\n#####\n#P.x#\n#####\n", "row 3, column 4"},
+		{"row numbers count the header", "; name: A\n#####\n#P.?#\n#####\n", "row 3, column 4"},
 	}
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
@@ -139,5 +139,55 @@ func TestParseHeaderErrors(t *testing.T) {
 				t.Errorf("error = %v, want it to contain %q", err, c.wantErr)
 			}
 		})
+	}
+}
+
+// Props (M2) stay in the map as their character and are listed in order.
+func TestParseProps(t *testing.T) {
+	m, err := Parse([]byte("#########\n#Pbcil,x#\n#..L....#\n#########\n"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	want := []Cell{Barrel, Crate, Pillar, Lamp, Debris, Body, FlickerLamp}
+	if len(m.Props) != len(want) {
+		t.Fatalf("props = %+v, want %d", m.Props, len(want))
+	}
+	for i, k := range want {
+		if m.Props[i].Kind != k {
+			t.Errorf("prop %d = %q, want %q", i, m.Props[i].Kind, k)
+		}
+	}
+	if p := m.Props[0]; p.X != 2.5 || p.Y != 1.5 || m.At(2, 1) != Barrel {
+		t.Errorf("barrel at (%v, %v), cell %q; want (2.5, 1.5), 'b'", p.X, p.Y, m.At(2, 1))
+	}
+	// Movement: blocking props stop it, debris and bodies don't; rays see past all.
+	for _, c := range []struct {
+		x       int
+		blocked bool
+	}{{2, true}, {3, true}, {4, true}, {5, true}, {6, false}, {7, false}} {
+		if got := m.Blocked(c.x, 1); got != c.blocked {
+			t.Errorf("Blocked(%d, 1) = %v, want %v", c.x, got, c.blocked)
+		}
+		if m.IsSolid(c.x, 1) {
+			t.Errorf("IsSolid(%d, 1): props must not stop rays", c.x)
+		}
+	}
+	if !m.Blocked(0, 0) {
+		t.Error("a wall isn't Blocked")
+	}
+}
+
+// Blocking props are left out of the distance field (enemies walk around them).
+func TestDistanceFieldAvoidsProps(t *testing.T) {
+	m, err := Parse([]byte("#######\n#P.c..#\n#.....#\n#######\n"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	d := DistanceField(m, 1, 1, nil)
+	if d[1*m.W+3] != -1 {
+		t.Errorf("crate cell distance = %d, want -1", d[1*m.W+3])
+	}
+	if d[1*m.W+4] != 5 { // around the crate through row 2
+		t.Errorf("cell past the crate = %d, want 5 (the way around)", d[1*m.W+4])
 	}
 }

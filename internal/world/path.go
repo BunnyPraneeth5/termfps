@@ -17,7 +17,7 @@ func DistanceField(m *Map, fromX, fromY int, buf []int) []int {
 	for i := range buf {
 		buf[i] = -1
 	}
-	if m.IsSolid(fromX, fromY) {
+	if m.Blocked(fromX, fromY) {
 		return buf
 	}
 	start := fromY*m.W + fromX
@@ -29,8 +29,8 @@ func DistanceField(m *Map, fromX, fromY int, buf []int) []int {
 		x, y := i%m.W, i/m.W
 		for _, d := range [4][2]int{{1, 0}, {-1, 0}, {0, 1}, {0, -1}} {
 			nx, ny := x+d[0], y+d[1]
-			if m.IsSolid(nx, ny) {
-				continue // also covers outside the map
+			if m.Blocked(nx, ny) {
+				continue // walls, blocking props (M2); also covers outside the map
 			}
 			j := ny*m.W + nx
 			if buf[j] == -1 {
@@ -42,14 +42,14 @@ func DistanceField(m *Map, fromX, fromY int, buf []int) []int {
 	return buf
 }
 
-// LineOfSight reports whether nothing solid stands between (ax, ay) and
-// (bx, by). It casts a ray toward b; with the direction b-a (not unit
-// length), the hit distance is measured in "trips from a to b", so a hit
-// at 1 or more means the first solid cell is at or past b.
+// LineOfSight reports whether nothing solid, and no prop that blocks shots
+// (M2: cover), stands between (ax, ay) and (bx, by). It casts a ray toward
+// b; with the direction b-a (not unit length), distances are measured in
+// "trips from a to b", so a hit at 1 or more is at or past b.
 func LineOfSight(m *Map, ax, ay, bx, by float64) bool {
 	dx, dy := bx-ax, by-ay
 	if dx == 0 && dy == 0 {
 		return true
 	}
-	return CastRay(m, ax, ay, dx, dy).PerpDist >= 1
+	return CastRay(m, ax, ay, dx, dy).PerpDist >= 1 && ShotDistance(m, ax, ay, dx, dy, 1) >= 1
 }

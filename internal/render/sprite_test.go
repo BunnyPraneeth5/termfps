@@ -204,3 +204,13 @@ func TestDrawSpriteFlash(t *testing.T) {
 		t.Error("flashing zombie has no white pixels")
 	}
 }
+
+// Every prop has a sprite standing at its position (M2).
+func TestPropSprite(t *testing.T) {
+	for _, k := range []world.Cell{world.Barrel, world.Crate, world.Pillar, world.Lamp, world.FlickerLamp, world.Debris, world.Body} {
+		s := PropSprite(k, 2.5, 3.5)
+		if s.Image == nil || s.Height <= 0 || s.Height > 1 || s.X != 2.5 || s.Y != 3.5 {
+			t.Errorf("PropSprite(%q) = %+v", k, s)
+		}
+	}
+}

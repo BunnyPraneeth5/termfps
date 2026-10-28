@@ -24,9 +24,36 @@ type Hit struct {
 // A zero direction (0, 0) can't hit anything and returns PerpDist = +Inf.
 func CastRay(m *Map, posX, posY, rayDirX, rayDirY float64) Hit {
 	mapX, mapY := int(math.Floor(posX)), int(math.Floor(posY))
+	hit := Hit{PerpDist: math.Inf(1), MapX: mapX, MapY: mapY, Cell: m.At(mapX, mapY)}
+	walkCells(m, posX, posY, rayDirX, rayDirY, func(x, y, side int, enter float64) bool {
+		hit.MapX, hit.MapY, hit.Cell = x, y, m.At(x, y)
+		if !m.IsSolid(x, y) {
+			return true // keep walking
+		}
+		// The hit point's other coordinate: y on an X-side face, x on a
+		// Y-side face. Its fraction is the position along the face.
+		along := posY + enter*rayDirY
+		if side == 1 {
+			along = posX + enter*rayDirX
+		}
+		hit.PerpDist, hit.Side, hit.WallX = enter, side, along-math.Floor(along)
+		return false
+	})
+	return hit
+}
+
+// walkCells visits the cells a ray from (posX, posY) along (rayDirX,
+// rayDirY) enters, in order, with the DDA algorithm: visit gets the cell,
+// the side of the face the ray came through (0 = an X-side face, crossing a
+// vertical grid line; 1 = a Y-side face) and the ray length where it
+// entered (in units of the direction's length). It stops when visit
+// returns false, or after W+H+2 cells (outside the map is solid, so a ray
+// that keeps going is a bug the cap guards against).
+func walkCells(m *Map, posX, posY, rayDirX, rayDirY float64, visit func(x, y, side int, enter float64) bool) {
 	if rayDirX == 0 && rayDirY == 0 {
-		return Hit{PerpDist: math.Inf(1), MapX: mapX, MapY: mapY, Cell: m.At(mapX, mapY)}
+		return
 	}
+	mapX, mapY := int(math.Floor(posX)), int(math.Floor(posY))
 
 	// Ray length needed to cross one full cell in x (or y). Dividing a float
 	// by zero gives +Inf in Go (no panic), which means "never crosses".
@@ -53,32 +80,40 @@ func CastRay(m *Map, posX, posY, rayDirX, rayDirY float64) Hit {
 		sideDistY = (float64(mapY) + 1 - posY) * deltaY
 	}
 
-	// Outside the map counts as wall, so any ray stops within W+H steps.
-	// The cap is a safety net against an endless loop.
-	maxSteps := m.W + m.H + 2
-	for range maxSteps {
-		side := 0
+	for range m.W + m.H + 2 {
+		var side int
+		var enter float64
 		if sideDistX < sideDistY {
+			enter = sideDistX
 			sideDistX += deltaX
 			mapX += stepX
 		} else {
+			enter = sideDistY
 			sideDistY += deltaY
 			mapY += stepY
 			side = 1
 		}
-		if m.IsSolid(mapX, mapY) {
-			// sideDist went one step past the face we hit, so step back.
-			perp := sideDistX - deltaX
-			// The hit point's other coordinate: y on an X-side face, x on a
-			// Y-side face. Its fraction is the position along the face.
-			along := posY + perp*rayDirY
-			if side == 1 {
-				perp = sideDistY - deltaY
-				along = posX + perp*rayDirX
-			}
-			return Hit{PerpDist: perp, Side: side, MapX: mapX, MapY: mapY, Cell: m.At(mapX, mapY),
-				WallX: along - math.Floor(along)}
+		if !visit(mapX, mapY, side, enter) {
+			return
 		}
 	}
-	return Hit{PerpDist: math.Inf(1), MapX: mapX, MapY: mapY, Cell: m.At(mapX, mapY)}
+}
+
+// ShotDistance returns how far along (dirX, dirY) from (posX, posY) the
+// first prop that blocks shots is (M2), as a ray length like CastRay's, or
+// +Inf if there is none before a wall or maxDist. A prop counts as its
+// whole cell.
+func ShotDistance(m *Map, posX, posY, dirX, dirY, maxDist float64) float64 {
+	dist := math.Inf(1)
+	walkCells(m, posX, posY, dirX, dirY, func(x, y, _ int, enter float64) bool {
+		if enter > maxDist || m.IsSolid(x, y) {
+			return false
+		}
+		if m.At(x, y).BlocksShot() {
+			dist = enter
+			return false
+		}
+		return true
+	})
+	return dist
 }

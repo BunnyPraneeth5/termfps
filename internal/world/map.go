@@ -25,7 +25,38 @@ const (
 	ZombieStart Cell = 'Z'
 	// ShooterStart marks where a shooter starts (P1-07), like ZombieStart.
 	ShooterStart Cell = 'S'
+
+	// Props (M2) stay in the map as their character and are drawn as
+	// sprites; rays (walls) see past them. Some block movement and shots.
+	Barrel      Cell = 'b' // blocks movement and shots
+	Crate       Cell = 'c' // blocks movement and shots
+	Pillar      Cell = 'i' // blocks movement and shots
+	Lamp        Cell = 'l' // a standing lamp: blocks movement, not shots
+	FlickerLamp Cell = 'L' // a lamp that flickers (M4)
+	Debris      Cell = ',' // rubble: blocks nothing
+	Body        Cell = 'x' // a body on the floor: blocks nothing
 )
+
+// IsProp reports whether the cell is a prop (M2).
+func (c Cell) IsProp() bool {
+	switch c {
+	case Barrel, Crate, Pillar, Lamp, FlickerLamp, Debris, Body:
+		return true
+	}
+	return false
+}
+
+// BlocksMove reports whether a prop in this cell stops the player and
+// enemies. Walls aren't props: see Map.Blocked for everything that blocks.
+func (c Cell) BlocksMove() bool {
+	return c == Barrel || c == Crate || c == Pillar || c == Lamp || c == FlickerLamp
+}
+
+// BlocksShot reports whether a prop in this cell stops bullets and line of
+// sight (cover).
+func (c Cell) BlocksShot() bool {
+	return c == Barrel || c == Crate || c == Pillar
+}
 
 // IsWall reports whether the cell is a permanent wall (any texture).
 func (c Cell) IsWall() bool {
@@ -44,6 +75,13 @@ type Map struct {
 	Cells          []Cell  // row-major, index = y*W + x
 	SpawnX, SpawnY float64 // center of the P cell (x+0.5, y+0.5)
 	EnemyStarts    []EnemyStart
+	Props          []Prop // every prop cell, in map order (M2)
+}
+
+// Prop is a prop placed in the map file; its cell keeps the character.
+type Prop struct {
+	Kind Cell    // the map character, e.g. Crate
+	X, Y float64 // center of its cell
 }
 
 // EnemyStart is an enemy placed in the map file.
@@ -58,6 +96,7 @@ func (m *Map) Clone() *Map {
 	c := *m                                   // copies W, H, spawn; the slices below still share memory...
 	c.Cells = append([]Cell(nil), m.Cells...) // ...so copy them
 	c.EnemyStarts = append([]EnemyStart(nil), m.EnemyStarts...)
+	c.Props = append([]Prop(nil), m.Props...)
 	return &c
 }
 
@@ -117,6 +156,9 @@ func Parse(data []byte) (*Map, error) {
 				spawns++
 				m.SpawnX, m.SpawnY = float64(x)+0.5, float64(y)+0.5
 			}
+			if c.IsProp() {
+				m.Props = append(m.Props, Prop{Kind: c, X: float64(x) + 0.5, Y: float64(y) + 0.5})
+			}
 			if c == ZombieStart || c == ShooterStart {
 				m.EnemyStarts = append(m.EnemyStarts, EnemyStart{Kind: c, X: float64(x) + 0.5, Y: float64(y) + 0.5})
 				c = Empty
@@ -148,10 +190,17 @@ func (m *Map) Set(x, y int, c Cell) {
 	m.Cells[y*m.W+x] = c
 }
 
-// IsSolid reports whether (x, y) blocks movement and rays. Outside the map
-// counts as solid.
+// IsSolid reports whether (x, y) blocks rays: a wall or a target block.
+// Outside the map counts as solid.
 func (m *Map) IsSolid(x, y int) bool {
 	return m.At(x, y).Solid()
+}
+
+// Blocked reports whether (x, y) stops the player and enemies: anything
+// solid, or a prop that blocks movement (M2).
+func (m *Map) Blocked(x, y int) bool {
+	c := m.At(x, y)
+	return c.Solid() || c.BlocksMove()
 }
 
 // checkChar returns an error if the byte at line[x] is not a known map char.
@@ -160,10 +209,13 @@ func checkChar(line string, x, y int) error {
 	case Wall, Stone, Metal, Empty, Spawn, Target, ZombieStart, ShooterStart:
 		return nil
 	}
+	if Cell(line[x]).IsProp() {
+		return nil
+	}
 	// Decode the full character so the message shows it properly,
 	// even if it is a multi-byte UTF-8 character like 'é'.
 	r, _ := utf8.DecodeRuneInString(line[x:])
-	return fmt.Errorf("row %d, column %d: unknown character %q (use '#', '%%', '&', '.', 'P', 'T', 'Z' or 'S')", y+1, x+1, r)
+	return fmt.Errorf("row %d, column %d: unknown character %q (use '#', '%%', '&', '.', 'P', 'T', 'Z', 'S', or a prop: 'b', 'c', 'i', 'l', 'L', ',', 'x')", y+1, x+1, r)
 }
 
 // parseHeaders reads the header lines at the top of a map file. The only

@@ -1,11 +1,13 @@
 package render
 
 import (
+	"fmt"
 	"math"
 	"slices"
 
 	"github.com/BunnyPraneeth5/termfps/internal/assets"
 	"github.com/BunnyPraneeth5/termfps/internal/game"
+	"github.com/BunnyPraneeth5/termfps/internal/world"
 )
 
 // Enemy and pickup images, parsed from the built-in assets at startup.
@@ -13,7 +15,38 @@ var (
 	ZombieImage  = mustParseImage("zombie", assets.Zombie)
 	ShooterImage = mustParseImage("shooter", assets.Shooter)
 	AmmoImage    = mustParseImage("ammo", assets.Ammo)
+
+	barrelImage = mustParseImage("barrel", assets.Barrel)
+	crateImage  = mustParseImage("crate", assets.Crate)
+	pillarImage = mustParseImage("pillar", assets.Pillar)
+	lampImage   = mustParseImage("lamp", assets.Lamp)
+	debrisImage = mustParseImage("debris", assets.Debris)
+	bodyImage   = mustParseImage("body", assets.Body)
 )
+
+// PropSprite returns the sprite for a prop (M2) standing at (x, y): its
+// picture and height in cells. It panics for a cell that isn't a prop: the
+// caller only passes Map.Props, so that would be a bug.
+func PropSprite(kind world.Cell, x, y float64) Sprite {
+	s := Sprite{X: x, Y: y}
+	switch kind {
+	case world.Barrel:
+		s.Image, s.Height = barrelImage, 0.55
+	case world.Crate:
+		s.Image, s.Height = crateImage, 0.6
+	case world.Pillar:
+		s.Image, s.Height = pillarImage, 1.0
+	case world.Lamp, world.FlickerLamp:
+		s.Image, s.Height = lampImage, 0.95
+	case world.Debris:
+		s.Image, s.Height = debrisImage, 0.12
+	case world.Body:
+		s.Image, s.Height = bodyImage, 0.18
+	default:
+		panic(fmt.Sprintf("render: no sprite for prop %q", kind))
+	}
+	return s
+}
 
 // Sprite is a flat picture standing in the world (an enemy, a pickup). It
 // always faces the camera, like the enemies in Doom and Wolfenstein.

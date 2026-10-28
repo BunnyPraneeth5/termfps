@@ -46,3 +46,23 @@ var Metal []byte
 //
 //go:embed floor.txt
 var Floor []byte
+
+// Prop sprites (M2): barrel, crate, pillar, standing lamp, debris, body.
+//
+//go:embed barrel.txt
+var Barrel []byte
+
+//go:embed crate.txt
+var Crate []byte
+
+//go:embed pillar.txt
+var Pillar []byte
+
+//go:embed lamp.txt
+var Lamp []byte
+
+//go:embed debris.txt
+var Debris []byte
+
+//go:embed body.txt
+var Body []byte

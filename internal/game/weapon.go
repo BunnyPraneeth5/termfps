@@ -1,6 +1,8 @@
 package game
 
 import (
+	"math"
+
 	"github.com/BunnyPraneeth5/termfps/internal/world"
 )
 
@@ -93,17 +95,18 @@ func startReload(s *State) {
 }
 
 // shoot casts the center ray. The nearest enemy in front of the first
-// solid cell takes the hit; otherwise a red target block there is
-// destroyed.
+// solid cell (or prop that blocks shots, M2) takes the hit; otherwise a red
+// target block there is destroyed.
 func shoot(s *State) {
 	p := s.Player
 	dirX, dirY := p.Dir()
 	hit := world.CastRay(s.Map, p.X, p.Y, dirX, dirY) // unit dir: PerpDist = distance
-	if i := shotHitsEnemy(s, dirX, dirY, hit.PerpDist); i >= 0 {
+	cover := world.ShotDistance(s.Map, p.X, p.Y, dirX, dirY, hit.PerpDist)
+	if i := shotHitsEnemy(s, dirX, dirY, math.Min(hit.PerpDist, cover)); i >= 0 {
 		damageEnemy(s, i, BulletDamage)
 		return
 	}
-	if hit.Cell == world.Target {
+	if hit.Cell == world.Target && cover > hit.PerpDist {
 		s.Map.Set(hit.MapX, hit.MapY, world.Empty)
 		s.distCell = -1 // the map opened up: enemies need a fresh distance field
 		s.Events = append(s.Events, EventTargetDestroyed)
