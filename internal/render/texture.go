@@ -65,8 +65,9 @@ func (m mipmap) level(texels float64) *Image {
 }
 
 // texMin is how much of a wall's shade its darkest texture pixel keeps:
-// textures add detail without turning walls black.
-const texMin = 0.45
+// textures add detail without turning walls black. 0.3 since V7 (was
+// 0.45), so brick lines, stone gaps and floor tiles read clearly.
+const texMin = 0.3
 
 // wallTexture returns the texture (with its mipmap levels) for a wall
 // cell, or nil (flat color) for anything else, like red target blocks.

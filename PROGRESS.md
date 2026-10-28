@@ -217,3 +217,9 @@ Template:
 - Not done: `go test ./...` by the user; on-screen check of run 2 (user); push (after the user's test, per their plan).
 - Update: the user's test run found two render test failures, both test problems hidden by the Smart App Control block: `TestDrawFrameFacingWall` (written before V2, expected hard wall edges) and `TestFarFloorIsAveraged` (my V3 test looked at side walls in a too-narrow corridor). Fixed. The user also chose a flat near-black ceiling (no ceiling texture, D45). Build, vet, gofmt and all tests pass here, render included. Bytes per frame re-measured (D45): half-block 68.7 KB/frame off, 36.2 KB at 8, more than before V1 because of the floor and sharper textures.
 - Update: the user checked run 2 and the black ceiling ("good", though the difference felt small); V4 and V5 marked done and everything pushed.
+
+## 2026-10-29 (V6 measured, V7)
+- The user reported big (zoomed-out) windows lag in Windows Terminal and asked to build render scale (V6) and the contrast tuning (V7), then wait for review.
+- V6 render scale (Settings: auto/full/half; Frame.Scale, ScaledFrameSize, AutoScale, scaled presenters; saved as render_scale; tests): built, all tests pass, but measured only 4-12% fewer bytes at 320x90 (D46), because the cost is the cell count, not color codes. Left uncommitted in the working tree for the user's decision (recommendation: drop it).
+- V7 committed: texture contrast up (texMin 0.3), floor base 140. Build, vet, gofmt, all tests pass.
+- Next: user's review of V7 on screen and the V6 decision.

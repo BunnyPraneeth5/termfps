@@ -21,9 +21,10 @@ const (
 	floorNear    = 80.0
 
 	// With textures on, the floor is cast (V1): its brightness fades with
-	// distance like walls, from floorBase at distance 0, which gives about
-	// the old floorNear (80) at the bottom of the screen.
-	floorBase = 120.0
+	// distance like walls, from floorBase at distance 0. 140 since V7 (was
+	// 120): a little brighter, so the tiles show; still well below a close
+	// wall.
+	floorBase = 140.0
 )
 
 // backgroundShade returns the ceiling or floor gray for pixel row y of a

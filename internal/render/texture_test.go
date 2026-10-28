@@ -41,8 +41,8 @@ func TestTexturedGray(t *testing.T) {
 	if got := texturedGray(200, 252); got != 200 {
 		t.Errorf("bright texture pixel: %d, want the full shade 200", got)
 	}
-	if got := texturedGray(200, 0); got != 90 {
-		t.Errorf("black texture pixel: %d, want %v of 200 = 90", got, texMin)
+	if got := texturedGray(200, 0); got != 60 {
+		t.Errorf("black texture pixel: %d, want %v of 200 = 60", got, texMin)
 	}
 }
 
