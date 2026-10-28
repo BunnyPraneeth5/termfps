@@ -65,7 +65,7 @@ func pickupSpot(s *State) (x, y float64, ok bool) {
 	m := s.Map
 	for range spawnTries {
 		cx, cy := s.Rand.IntN(m.W), s.Rand.IntN(m.H)
-		if m.IsSolid(cx, cy) || s.dist[cy*m.W+cx] < 0 {
+		if !freeCell(m, cx, cy) || s.dist[cy*m.W+cx] < 0 {
 			continue
 		}
 		x, y = float64(cx)+0.5, float64(cy)+0.5

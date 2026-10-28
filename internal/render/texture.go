@@ -14,12 +14,14 @@ var (
 	metalTexture = mustParseImage("metal", assets.Metal)
 
 	floorTexture = mustParseImage("floor", assets.Floor)
+	doorTexture  = mustParseImage("door", assets.Door)
 
 	// Their mipmaps (V3), built once at startup.
 	brickMips = newMipmap(brickTexture)
 	stoneMips = newMipmap(stoneTexture)
 	metalMips = newMipmap(metalTexture)
 	floorMips = newMipmap(floorTexture)
+	doorMips  = newMipmap(doorTexture)
 )
 
 // mipmap is a texture at full size (level 0) and at half, quarter, ...
@@ -79,6 +81,8 @@ func wallTexture(c world.Cell) mipmap {
 		return stoneMips
 	case world.Metal:
 		return metalMips
+	case world.Door:
+		return doorMips // the panel of a sliding door (M3)
 	}
 	return nil
 }

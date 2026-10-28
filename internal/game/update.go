@@ -53,6 +53,7 @@ func Update(s *State, in Input, dt float64) {
 		s.Events = append(s.Events, EventRenderModeChanged)
 	}
 
+	updateDoors(s, dt) // before moving, so a door that just opened lets you through
 	updateWeapon(s, in, dt)
 	movePlayer(s, in, dt)
 	updateEnemies(s, dt)

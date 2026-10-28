@@ -66,3 +66,8 @@ var Debris []byte
 
 //go:embed body.txt
 var Body []byte
+
+// Door is the 32x32 sliding door texture (M3).
+//
+//go:embed door.txt
+var Door []byte

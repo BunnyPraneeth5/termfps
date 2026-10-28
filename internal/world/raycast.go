@@ -27,6 +27,13 @@ func CastRay(m *Map, posX, posY, rayDirX, rayDirY float64) Hit {
 	hit := Hit{PerpDist: math.Inf(1), MapX: mapX, MapY: mapY, Cell: m.At(mapX, mapY)}
 	walkCells(m, posX, posY, rayDirX, rayDirY, func(x, y, side int, enter float64) bool {
 		hit.MapX, hit.MapY, hit.Cell = x, y, m.At(x, y)
+		if hit.Cell == Door {
+			if d := m.DoorAt(x, y); d != nil {
+				var ok bool
+				hit, ok = hitDoor(hit, d, posX, posY, rayDirX, rayDirY)
+				return !ok // a hit stops the ray; through the gap it goes on
+			}
+		}
 		if !m.IsSolid(x, y) {
 			return true // keep walking
 		}
@@ -40,6 +47,34 @@ func CastRay(m *Map, posX, posY, rayDirX, rayDirY float64) Hit {
 		return false
 	})
 	return hit
+}
+
+// hitDoor checks a ray in door d's cell against the door's panel, which
+// runs through the middle of the cell. The panel slides toward its high
+// end as it opens, so the part from Open to 1 along it is still there.
+// WallX is measured from the panel's edge, so its texture moves with it.
+func hitDoor(hit Hit, d *SlidingDoor, posX, posY, rayDirX, rayDirY float64) (Hit, bool) {
+	var t, along float64
+	side := 1
+	if d.Across { // panel on the line y = Y + 0.5
+		if rayDirY == 0 {
+			return hit, false
+		}
+		t = (float64(d.Y) + 0.5 - posY) / rayDirY
+		along = posX + t*rayDirX - float64(d.X)
+	} else { // panel on the line x = X + 0.5
+		if rayDirX == 0 {
+			return hit, false
+		}
+		t = (float64(d.X) + 0.5 - posX) / rayDirX
+		along = posY + t*rayDirY - float64(d.Y)
+		side = 0
+	}
+	if t <= 0 || along < 0 || along >= 1 || along < d.Open {
+		return hit, false // behind us, outside the cell, or through the gap
+	}
+	hit.PerpDist, hit.Side, hit.WallX = t, side, along-d.Open
+	return hit, true
 }
 
 // walkCells visits the cells a ray from (posX, posY) along (rayDirX,

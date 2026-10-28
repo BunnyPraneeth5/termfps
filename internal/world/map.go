@@ -35,6 +35,10 @@ const (
 	FlickerLamp Cell = 'L' // a lamp that flickers (M4)
 	Debris      Cell = ',' // rubble: blocks nothing
 	Body        Cell = 'x' // a body on the floor: blocks nothing
+
+	// Door is a sliding door (M3) between two walls. Its state is in
+	// Map.Doors; rays, shots and movement go through it as far as it's open.
+	Door Cell = 'D'
 )
 
 // IsProp reports whether the cell is a prop (M2).
@@ -75,7 +79,38 @@ type Map struct {
 	Cells          []Cell  // row-major, index = y*W + x
 	SpawnX, SpawnY float64 // center of the P cell (x+0.5, y+0.5)
 	EnemyStarts    []EnemyStart
-	Props          []Prop // every prop cell, in map order (M2)
+	Props          []Prop        // every prop cell, in map order (M2)
+	Doors          []SlidingDoor // every door, in map order (M3)
+}
+
+// SlidingDoor is a door in cell (X, Y). It's a thin panel through the
+// middle of the cell, between walls on two opposite sides, that slides
+// sideways into the wall as it opens.
+type SlidingDoor struct {
+	X, Y int
+	// Across is true when the walls are left and right of the door, so the
+	// panel runs east-west and you walk through it north-south; false when
+	// the walls are above and below.
+	Across bool
+	// Open is how far it has slid open, 0 (closed) to 1 (open).
+	Open float64
+	// Hold is how many more seconds it stays open; the game sets it while
+	// someone is near (game.updateDoors).
+	Hold float64
+}
+
+// DoorPassable is how far open a door must be to walk through it.
+const DoorPassable = 0.8
+
+// DoorAt returns the door in cell (x, y), or nil if there is none. Maps
+// have few doors, so a scan is quick.
+func (m *Map) DoorAt(x, y int) *SlidingDoor {
+	for i := range m.Doors {
+		if m.Doors[i].X == x && m.Doors[i].Y == y {
+			return &m.Doors[i] // a pointer into the slice, so callers can change it
+		}
+	}
+	return nil
 }
 
 // Prop is a prop placed in the map file; its cell keeps the character.
@@ -97,6 +132,7 @@ func (m *Map) Clone() *Map {
 	c.Cells = append([]Cell(nil), m.Cells...) // ...so copy them
 	c.EnemyStarts = append([]EnemyStart(nil), m.EnemyStarts...)
 	c.Props = append([]Prop(nil), m.Props...)
+	c.Doors = append([]SlidingDoor(nil), m.Doors...) // doors open and close per run
 	return &c
 }
 
@@ -169,6 +205,19 @@ func Parse(data []byte) (*Map, error) {
 	if spawns != 1 {
 		return nil, fmt.Errorf("map has %d spawn points 'P', expected exactly 1", spawns)
 	}
+	// Doors need walls on two opposite sides to slide into.
+	for y := 0; y < h; y++ {
+		for x := 0; x < w; x++ {
+			if m.At(x, y) != Door {
+				continue
+			}
+			across := m.At(x-1, y).IsWall() && m.At(x+1, y).IsWall()
+			if !across && !(m.At(x, y-1).IsWall() && m.At(x, y+1).IsWall()) {
+				return nil, fmt.Errorf("row %d, column %d: a door 'D' needs walls on both sides (left and right, or above and below)", y+off+1, x+1)
+			}
+			m.Doors = append(m.Doors, SlidingDoor{X: x, Y: y, Across: across})
+		}
+	}
 	return m, nil
 }
 
@@ -197,8 +246,19 @@ func (m *Map) IsSolid(x, y int) bool {
 }
 
 // Blocked reports whether (x, y) stops the player and enemies: anything
-// solid, or a prop that blocks movement (M2).
+// solid, a prop that blocks movement (M2), or a door that isn't open far
+// enough (M3).
 func (m *Map) Blocked(x, y int) bool {
+	if m.At(x, y) == Door {
+		d := m.DoorAt(x, y)
+		return d == nil || d.Open < DoorPassable
+	}
+	return m.pathBlocked(x, y)
+}
+
+// pathBlocked is Blocked without doors: enemies plan their way through
+// doors, which open when they come near.
+func (m *Map) pathBlocked(x, y int) bool {
 	c := m.At(x, y)
 	return c.Solid() || c.BlocksMove()
 }
@@ -206,7 +266,7 @@ func (m *Map) Blocked(x, y int) bool {
 // checkChar returns an error if the byte at line[x] is not a known map char.
 func checkChar(line string, x, y int) error {
 	switch Cell(line[x]) {
-	case Wall, Stone, Metal, Empty, Spawn, Target, ZombieStart, ShooterStart:
+	case Wall, Stone, Metal, Empty, Spawn, Target, ZombieStart, ShooterStart, Door:
 		return nil
 	}
 	if Cell(line[x]).IsProp() {
@@ -215,7 +275,7 @@ func checkChar(line string, x, y int) error {
 	// Decode the full character so the message shows it properly,
 	// even if it is a multi-byte UTF-8 character like 'é'.
 	r, _ := utf8.DecodeRuneInString(line[x:])
-	return fmt.Errorf("row %d, column %d: unknown character %q (use '#', '%%', '&', '.', 'P', 'T', 'Z', 'S', or a prop: 'b', 'c', 'i', 'l', 'L', ',', 'x')", y+1, x+1, r)
+	return fmt.Errorf("row %d, column %d: unknown character %q (use '#', '%%', '&', '.', 'P', 'T', 'Z', 'S', 'D', or a prop: 'b', 'c', 'i', 'l', 'L', ',', 'x')", y+1, x+1, r)
 }
 
 // parseHeaders reads the header lines at the top of a map file. The only

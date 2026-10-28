@@ -17,7 +17,7 @@ func DistanceField(m *Map, fromX, fromY int, buf []int) []int {
 	for i := range buf {
 		buf[i] = -1
 	}
-	if m.Blocked(fromX, fromY) {
+	if m.pathBlocked(fromX, fromY) {
 		return buf
 	}
 	start := fromY*m.W + fromX
@@ -29,8 +29,8 @@ func DistanceField(m *Map, fromX, fromY int, buf []int) []int {
 		x, y := i%m.W, i/m.W
 		for _, d := range [4][2]int{{1, 0}, {-1, 0}, {0, 1}, {0, -1}} {
 			nx, ny := x+d[0], y+d[1]
-			if m.Blocked(nx, ny) {
-				continue // walls, blocking props (M2); also covers outside the map
+			if m.pathBlocked(nx, ny) {
+				continue // walls, blocking props (M2), not doors (M3); also covers outside the map
 			}
 			j := ny*m.W + nx
 			if buf[j] == -1 {

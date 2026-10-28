@@ -335,7 +335,7 @@ All the ideas from the 2026-10-25/26 discussion, added to the plan first (D40). 
 ### [~] M2: Props
 - Barrels, crates, pillars, lamps, debris, bodies: map characters drawn as sprites. Some block movement and bullets (crates, pillars), some don't (debris).
 
-### [ ] M3: Doors
+### [~] M3: Doors
 - Wolfenstein-style sliding doors: open when you walk up (or press a key), close after a while; enemies open them too.
 
 ### [ ] M4: Lighting per map

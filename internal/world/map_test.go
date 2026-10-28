@@ -191,3 +191,32 @@ func TestDistanceFieldAvoidsProps(t *testing.T) {
 		t.Errorf("cell past the crate = %d, want 5 (the way around)", d[1*m.W+4])
 	}
 }
+
+// A door needs walls on two opposite sides; which pair sets its direction (M3).
+func TestParseDoors(t *testing.T) {
+	m, err := Parse([]byte("#####\n#P..#\n##D##\n#...#\n#.#.#\n#.D.#\n#.#.#\n#####\n"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(m.Doors) != 2 || !m.Doors[0].Across || m.Doors[1].Across {
+		t.Fatalf("doors = %+v, want one across (walls left and right), one not", m.Doors)
+	}
+	if d := m.DoorAt(2, 5); d == nil || d != &m.Doors[1] {
+		t.Error("DoorAt(2, 5) didn't find the second door")
+	}
+	if _, err := Parse([]byte("#####\n#P..#\n#.D.#\n#####\n")); err == nil || !strings.Contains(err.Error(), "row 3, column 3: a door") {
+		t.Errorf("door without walls: error %v, want one naming row 3, column 3", err)
+	}
+	// Closed doors block movement, open ones don't; paths go through either.
+	if !m.Blocked(2, 2) {
+		t.Error("closed door isn't Blocked")
+	}
+	m.Doors[0].Open = 0.9
+	if m.Blocked(2, 2) {
+		t.Error("door 90% open is still Blocked")
+	}
+	m.Doors[0].Open = 0
+	if d := DistanceField(m, 1, 1, nil); d[3*m.W+2] < 0 {
+		t.Error("distance field doesn't go through the closed door")
+	}
+}

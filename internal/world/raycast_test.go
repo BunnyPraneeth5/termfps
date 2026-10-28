@@ -185,3 +185,27 @@ func TestShotDistance(t *testing.T) {
 		t.Error("line of sight: want clear over debris, blocked by the crate")
 	}
 }
+
+// A ray stops at a door's panel in the middle of its cell; as the door
+// slides open, rays through the gap go on (M3).
+func TestCastRayDoor(t *testing.T) {
+	m, err := Parse([]byte("#####\n#P..#\n##D##\n#...#\n#####\n"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	hit := CastRay(m, 2.5, 1.5, 0, 1) // straight south into the closed door
+	if hit.Cell != Door || math.Abs(hit.PerpDist-1) > 1e-9 || hit.Side != 1 || math.Abs(hit.WallX-0.5) > 1e-9 {
+		t.Errorf("closed door: %+v, want the door at 1.0, side 1, WallX 0.5", hit)
+	}
+	m.Doors[0].Open = 0.5 // the panel now covers 0.5-1 of the cell's width
+	if hit := CastRay(m, 2.7, 1.5, 0, 1); hit.Cell != Door || math.Abs(hit.WallX-0.2) > 1e-9 {
+		t.Errorf("half open, x 2.7: %+v, want the panel with WallX 0.2", hit)
+	}
+	if hit := CastRay(m, 2.2, 1.5, 0, 1); hit.Cell == Door || hit.MapY != 4 {
+		t.Errorf("half open, x 2.2: %+v, want through the gap to the wall at y 4", hit)
+	}
+	m.Doors[0].Open = 1
+	if LineOfSight(m, 2.5, 1.5, 2.5, 3.5) != true {
+		t.Error("open door blocks line of sight")
+	}
+}
