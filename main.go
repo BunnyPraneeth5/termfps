@@ -182,6 +182,7 @@ func parseFlags() (cfg app.Config, explicit map[string]bool, ok bool) {
 		MixedBackground: int(render.DefaultMixedBackground * 100),
 		RenderScale:     "auto",
 		UnlockRule:      "5:00",
+		MinimapFog:      true,
 	}, explicit, true
 }
 

@@ -46,6 +46,8 @@ type Settings struct {
 	RenderScale string `json:"render_scale,omitempty"`
 	// UnlockRule is "5:00", "2:00" or "open" (M7); "" in older files means 5:00.
 	UnlockRule string `json:"unlock_rule,omitempty"`
+	// MinimapFog is the minimap's fog of war (M8); nil in older files: on.
+	MinimapFog *bool `json:"minimap_fog,omitempty"`
 }
 
 // Progress is what carries over between runs.

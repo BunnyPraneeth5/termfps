@@ -37,7 +37,7 @@ func TestDrawMinimapLayout(t *testing.T) {
 	st := game.NewState(m)
 	st.Player.Angle = math.Pi / 2 // facing south
 
-	if !DrawMinimap(scr, st) {
+	if !DrawMinimap(scr, st, false) {
 		t.Fatal("DrawMinimap returned false on 80x24")
 	}
 	const x0 = 69
@@ -76,7 +76,7 @@ func TestDrawMinimapTooSmall(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Parse: %v", err)
 	}
-	if DrawMinimap(scr, game.NewState(m)) {
+	if DrawMinimap(scr, game.NewState(m), false) {
 		t.Error("DrawMinimap returned true on a screen too small for it")
 	}
 }
@@ -90,7 +90,7 @@ func TestDrawMinimapPickup(t *testing.T) {
 	}
 	st := game.NewState(m)
 	st.Pickups = []game.Pickup{{X: 2.5, Y: 4.5, Amount: 25}}
-	DrawMinimap(scr, st)
+	DrawMinimap(scr, st, false)
 	const x0 = 69 // 80 - 5*2 - 1
 	if str, style := scr.Get(x0+2*2, 1+4); str != "●" || style != minimapAmmo {
 		t.Errorf("box cell = %q, want a yellow dot", str)
@@ -140,7 +140,7 @@ func TestDrawMinimapScrolls(t *testing.T) {
 		t.Fatalf("Parse: %v", err)
 	}
 	st := game.NewState(m) // facing east
-	if !DrawMinimap(scr, st) {
+	if !DrawMinimap(scr, st, false) {
 		t.Fatal("DrawMinimap returned false for a big map on 80x24")
 	}
 	// Window origin: x 40-8 = 32, y 20-8 = 12. Player at view cell (8, 8).
@@ -157,5 +157,32 @@ func TestDrawMinimapScrolls(t *testing.T) {
 	}
 	if _, style := scr.Get(x0-2, 1); style == minimapFloor || style == minimapWall {
 		t.Error("minimap drew more than 16 cells across")
+	}
+}
+
+// With fog of war (M8) unseen cells are blank, and so is an ammo box on
+// one; seen cells look as usual.
+func TestDrawMinimapFog(t *testing.T) {
+	scr := term.NewFake(80, 24)
+	m, err := world.Parse([]byte(room))
+	if err != nil {
+		t.Fatalf("Parse: %v", err)
+	}
+	st := game.NewState(m)
+	st.Seen[1*m.W+1] = true // only cell (1, 1)
+	st.Pickups = []game.Pickup{{X: 2.5, Y: 4.5, Amount: 25}}
+	DrawMinimap(scr, st, true)
+	const x0 = 69
+	if _, style := scr.Get(x0+2, 1+1); style != minimapFloor {
+		t.Error("seen floor cell (1, 1) isn't floor-styled")
+	}
+	if _, style := scr.Get(x0+4, 1+1); style != minimapUnseen {
+		t.Error("unseen cell (2, 1) isn't blank")
+	}
+	if str, _ := scr.Get(x0+2*2, 1+4); str == "●" {
+		t.Error("the ammo box on an unseen cell is shown")
+	}
+	if str, _ := scr.Get(x0+2, 1+3); str != "→" {
+		t.Errorf("player cell = %q, want the arrow even unseen", str)
 	}
 }

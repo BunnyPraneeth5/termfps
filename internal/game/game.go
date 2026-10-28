@@ -78,6 +78,10 @@ type State struct {
 	// app replaces it with a time-seeded one for real games.
 	Rand *rand.Rand
 
+	// Seen marks the map cells the player has seen this run, row-major like
+	// Map.Cells, for the minimap's fog of war (M8).
+	Seen []bool
+
 	// dist is the distance field from the player's cell (distCell), used by
 	// enemies to walk around walls. -1 = not computed yet.
 	dist     []int
@@ -96,6 +100,7 @@ func NewState(m *world.Map) *State {
 		Tier:        1,
 		Spawning:    true,
 		spawnTimer:  FirstSpawnDelay,
+		Seen:        make([]bool, m.W*m.H),
 	}
 	s.pickupTimer = nextPickupDelay(s)
 	for _, e := range m.EnemyStarts {

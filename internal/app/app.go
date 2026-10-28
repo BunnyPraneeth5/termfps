@@ -45,6 +45,8 @@ type Config struct {
 	// minutes on the newest open map to open the next), "2:00", or "open"
 	// (every map open). "" counts as 5:00.
 	UnlockRule string
+	// MinimapFog shows only the cells already seen on the minimap (M8).
+	MinimapFog bool
 }
 
 // unlockRules are the UnlockRule choices, in menu order, with their labels.

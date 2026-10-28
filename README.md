@@ -82,7 +82,8 @@ mode). See `-keys` below for other systems.
   full; half), FPS
   (30 or 60), minimap at start, wall textures, sound on/off, volume, key
   mode, pixel aspect, map unlocks (survive 5:00, survive 2:00, or all
-  maps open).
+  maps open), minimap fog of war (on: the minimap shows only what you've
+  seen).
 - **Game over:** your kills, time and tier, your best on that map, then Try
   again or Main menu.
 

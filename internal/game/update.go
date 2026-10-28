@@ -56,6 +56,7 @@ func Update(s *State, in Input, dt float64) {
 	updateDoors(s, dt) // before moving, so a door that just opened lets you through
 	updateWeapon(s, in, dt)
 	movePlayer(s, in, dt)
+	markSeen(s) // after moving: what the player sees from where they are now
 	updateEnemies(s, dt)
 	updateSurvival(s, dt)
 	updatePickups(s, dt)

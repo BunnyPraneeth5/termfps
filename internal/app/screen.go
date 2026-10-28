@@ -135,7 +135,7 @@ func (p *playingScreen) tick(a *App, now time.Time, dt float64) {
 	a.drawScene()
 	t1 := time.Now()
 	a.present()
-	minimapHidden := st.ShowMinimap && !render.DrawMinimap(a.scr, st)
+	minimapHidden := st.ShowMinimap && !render.DrawMinimap(a.scr, st, a.cfg.MinimapFog)
 	render.DrawHUD(a.scr, render.HUD{
 		FPS:           a.fps.value(),
 		Player:        st.Player,

@@ -14,6 +14,7 @@ var (
 	minimapFloor  = term.Style{Bg: grayColor(25)}
 	minimapProp   = term.Style{Bg: grayColor(75)} // crates, barrels, pillars, lamps
 	minimapDoor   = term.Style{Bg: rgbColor(130, TintYellow)}
+	minimapUnseen = term.Style{Bg: grayColor(0)} // not seen yet (M8)
 	minimapPlayer = term.Style{Bg: grayColor(25), Fg: grayColor(255), Bold: true}
 	minimapAmmo   = term.Style{Bg: grayColor(25), Fg: rgbColor(230, TintYellow)}
 	// The border (M1) is a light line on black, so the minimap stands apart
@@ -40,10 +41,11 @@ const (
 
 // DrawMinimap draws the map in the top-right corner, on top of the 3D view,
 // inside a one-cell border (M1). When the map is bigger than the space it
-// gets, it shows a window around the player. It returns false (and draws
-// nothing) when the screen is too small for even a small window above the
-// HUD row.
-func DrawMinimap(s term.Screen, st *game.State) bool {
+// gets, it shows a window around the player. With fog on (M8), cells the
+// player hasn't seen yet (game.State.Seen) are blank, and so are ammo boxes
+// on them. It returns false (and draws nothing) when the screen is too
+// small for even a small window above the HUD row.
+func DrawMinimap(s term.Screen, st *game.State, fog bool) bool {
 	m := st.Map
 	w, h := s.Size()
 	viewW := min(m.W, minimapMaxW, (w-2)/minimapCellWidth) // the border's two columns
@@ -65,6 +67,9 @@ func DrawMinimap(s term.Screen, st *game.State) bool {
 			case x == px && y == py:
 				s.Put(sx, y0+vy, arrowFor(st.Player.Angle), minimapPlayer)
 				s.Put(sx+1, y0+vy, " ", minimapFloor)
+			case fog && !seen(st, x, y):
+				s.Put(sx, y0+vy, " ", minimapUnseen)
+				s.Put(sx+1, y0+vy, " ", minimapUnseen)
 			case m.At(x, y) == world.Target:
 				s.Put(sx, y0+vy, " ", minimapTarget)
 				s.Put(sx+1, y0+vy, " ", minimapTarget)
@@ -91,9 +96,18 @@ func DrawMinimap(s term.Screen, st *game.State) bool {
 		if int(pk.X) == px && int(pk.Y) == py {
 			continue // the player's arrow wins
 		}
+		if fog && !seen(st, int(pk.X), int(pk.Y)) {
+			continue // not found yet
+		}
 		s.Put(x0+vx*minimapCellWidth, y0+vy, "●", minimapAmmo)
 	}
 	return true
+}
+
+// seen reports whether the player has seen cell (x, y) this run (M8).
+func seen(st *game.State, x, y int) bool {
+	i := y*st.Map.W + x
+	return i >= 0 && i < len(st.Seen) && st.Seen[i]
 }
 
 // drawMinimapBorder draws a box w cells wide and h tall with its top-left

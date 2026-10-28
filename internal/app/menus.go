@@ -219,6 +219,7 @@ const (
 	setKeys
 	setAspect
 	setUnlocks
+	setMinimapFog
 	setBack
 )
 
@@ -283,6 +284,7 @@ func (a *App) settingsMenu(back *menuScreen) *menuScreen {
 		Value: slices.Index(aspects, a.cfg.PixelAspect)}
 	items[setUnlocks] = ui.Item{Label: "Map unlocks", Values: unlockRuleLabels,
 		Value: max(slices.Index(unlockRules, a.cfg.UnlockRule), 0)} // "" (unset) shows 5:00
+	items[setMinimapFog] = onOff("Minimap fog of war", a.cfg.MinimapFog)
 	items[setBack] = ui.Item{Label: "Back"}
 
 	s := &menuScreen{overGame: back.overGame, menu: ui.New("SETTINGS", nil, items)}
@@ -325,6 +327,8 @@ func (a *App) settingsMenu(back *menuScreen) *menuScreen {
 			if a.cfg.KeyMode == "async" {
 				a.scr.EnableFocus() // async keys only count while focused
 			}
+		case s.menu.Selected == setMinimapFog:
+			a.cfg.MinimapFog = it.Value == 1
 		case s.menu.Selected == setUnlocks:
 			a.cfg.UnlockRule = unlockRules[it.Value]
 		case s.menu.Selected == setAspect:

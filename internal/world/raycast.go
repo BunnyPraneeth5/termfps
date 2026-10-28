@@ -134,6 +134,13 @@ func walkCells(m *Map, posX, posY, rayDirX, rayDirY float64, visit func(x, y, si
 	}
 }
 
+// VisitCells calls visit for each cell a ray from (posX, posY) along
+// (dirX, dirY) enters, in order, until visit returns false (M8: what the
+// player can see). Outside the map is solid, so callers stop there.
+func VisitCells(m *Map, posX, posY, dirX, dirY float64, visit func(x, y int) bool) {
+	walkCells(m, posX, posY, dirX, dirY, func(x, y, _ int, _ float64) bool { return visit(x, y) })
+}
+
 // ShotDistance returns how far along (dirX, dirY) from (posX, posY) the
 // first prop that blocks shots is (M2), as a ray length like CastRay's, or
 // +Inf if there is none before a wall or maxDist. A prop counts as its

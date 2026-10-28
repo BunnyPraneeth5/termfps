@@ -351,7 +351,7 @@ All the ideas from the 2026-10-25/26 discussion, added to the plan first (D40). 
 - Decide: keep "survive 5:00 to unlock the next map", shorten it, open all maps, or a setting for it.
 - Built as a setting (my default, for the user's review): Settings "Map unlocks": survive 5:00 (default, as before), survive 2:00, or all open. "All open" doesn't change saved progress.
 
-### [ ] M8: Minimap fog of war
+### [~] M8: Minimap fog of war
 - The minimap shows only places you've seen.
 
 ### [ ] M9: Custom maps
