@@ -37,6 +37,30 @@ type Frame struct {
 	// differs by more than this (0 = off), so fewer color codes go to the
 	// terminal (S3, from S0ra's libasciic).
 	ColorThreshold uint8
+	// Scale is how many screen cells across and down each Frame cell fills
+	// (V6): 1 (or 0) draws the view at full resolution; 2 at half, each cell
+	// shown as a 2x2 block, so neighboring cells share colors and the
+	// terminal gets fewer color codes. Size the Frame with ScaledFrameSize.
+	Scale int
+}
+
+// AutoScaleCols is the widest the 3D view is drawn with the "auto" render
+// scale: wider terminals get a bigger Scale (V6).
+const AutoScaleCols = 160
+
+// AutoScale is the render scale "auto" picks for a terminal cols wide:
+// 1 up to AutoScaleCols, then 2, 3, ... so the view stays at most that
+// many columns of detail.
+func AutoScale(cols int) int {
+	return max(1, (cols+AutoScaleCols-1)/AutoScaleCols) // rounds up
+}
+
+// ScaledFrameSize is FrameSize for a Frame drawn at scale: each Frame cell
+// covers scale x scale screen cells, rounded up so the view is covered.
+func ScaledFrameSize(cols, rows, scale int) (w, h int) {
+	scale = max(scale, 1)
+	viewRows := (rows - 1 + scale - 1) / scale
+	return (cols + scale - 1) / scale, 2 * viewRows
 }
 
 // DefaultMixedBackground is the Mixed background brightness (20%, P1-15).

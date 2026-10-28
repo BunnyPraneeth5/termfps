@@ -223,3 +223,4 @@ Template:
 - V6 render scale (Settings: auto/full/half; Frame.Scale, ScaledFrameSize, AutoScale, scaled presenters; saved as render_scale; tests): built, all tests pass, but measured only 4-12% fewer bytes at 320x90 (D46), because the cost is the cell count, not color codes. Left uncommitted in the working tree for the user's decision (recommendation: drop it).
 - V7 committed: texture contrast up (texMin 0.3), floor base 140. Build, vet, gofmt, all tests pass.
 - Next: user's review of V7 on screen and the V6 decision.
+- Update: the user chose to keep V6; committed as it was built and tested (Settings "Render scale", default auto).

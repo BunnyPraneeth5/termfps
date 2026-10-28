@@ -41,6 +41,9 @@ type Settings struct {
 	// doesn't have them, gives nil (use the default), not 0.
 	MixedBackground *int `json:"mixed_background,omitempty"` // percent, 0-100
 	ColorThreshold  *int `json:"color_threshold,omitempty"`  // per channel, 0 = off
+	// RenderScale is "auto", "full" or "half" (V6); "" in files from before
+	// V6 means auto.
+	RenderScale string `json:"render_scale,omitempty"`
 }
 
 // Progress is what carries over between runs.
@@ -125,6 +128,8 @@ func (d *Data) check() error {
 			return fmt.Errorf("mixed background %d out of range 0-100", *s.MixedBackground)
 		case s.ColorThreshold != nil && (*s.ColorThreshold < 0 || *s.ColorThreshold > 255):
 			return fmt.Errorf("color threshold %d out of range 0-255", *s.ColorThreshold)
+		case s.RenderScale != "" && s.RenderScale != "auto" && s.RenderScale != "full" && s.RenderScale != "half":
+			return fmt.Errorf("unknown render scale %q", s.RenderScale)
 		}
 	}
 	return nil

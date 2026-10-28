@@ -377,3 +377,31 @@ func TestMenuClickDoesNotFire(t *testing.T) {
 		t.Errorf("magazine = %d, want 25: a held button from the menu fired", got)
 	}
 }
+
+// Auto draws the view at most render.AutoScaleCols wide; a resize past that
+// switches to 2x2 blocks (V6).
+func TestRenderScaleAutoFollowsResize(t *testing.T) {
+	a, s := newTestApp(t)
+	if a.frame.Scale != 1 || a.frame.W != 80 {
+		t.Fatalf("80 columns: scale %d, width %d; want 1, 80", a.frame.Scale, a.frame.W)
+	}
+	s.SetSize(200, 50)
+	a.step(t0.Add(time.Second/30), []term.Event{term.Resize{W: 200, H: 50}})
+	if a.frame.Scale != 2 || a.frame.W != 100 || a.frame.H != 2*25 {
+		t.Errorf("200x50: scale %d, frame %dx%d; want 2, 100x50", a.frame.Scale, a.frame.W, a.frame.H)
+	}
+	if hud := s.Row(49); !strings.Contains(hud, "HP") {
+		t.Errorf("HUD row = %q, want the HUD at full resolution", hud)
+	}
+}
+
+func TestRenderScaleModes(t *testing.T) {
+	for _, c := range []struct {
+		mode       string
+		cols, want int
+	}{{"full", 400, 1}, {"half", 80, 2}, {"auto", 161, 2}, {"", 100, 1}} {
+		if got := renderScale(c.mode, c.cols); got != c.want {
+			t.Errorf("renderScale(%q, %d) = %d, want %d", c.mode, c.cols, got, c.want)
+		}
+	}
+}

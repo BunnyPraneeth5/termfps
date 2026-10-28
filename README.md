@@ -77,7 +77,9 @@ mode). See `-keys` below for other systems.
 - **Pause** (`Esc` in the game; the game freezes, dimmed behind the menu):
   Resume, Settings, Restart, Quit to menu.
 - **Settings** take effect right away: render mode, mixed background
-  brightness (0-100%, default 20%), color threshold (off by default), FPS
+  brightness (0-100%, default 20%), color threshold (off by default), render
+  scale (auto draws the 3D view at most 160 columns wide in big windows;
+  full; half), FPS
   (30 or 60), minimap at start, wall textures, sound on/off, volume, key
   mode, pixel aspect.
 - **Game over:** your kills, time and tier, your best on that map, then Try

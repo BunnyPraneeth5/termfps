@@ -291,3 +291,44 @@ func TestASCIIRamp(t *testing.T) {
 		t.Errorf("grays 0-%d use %d of %d ramp steps", int(wallBase), len(used), len(asciiRamp))
 	}
 }
+
+// At scale 2 each Frame cell fills a 2x2 block of screen cells, clipped
+// to the view; the HUD row stays untouched (V6).
+func TestPresentScaled(t *testing.T) {
+	f := Frame{PixelAspect: DefaultPixelAspect, MixedBackground: DefaultMixedBackground, Scale: 2}
+	f.Resize(ScaledFrameSize(5, 4, 2)) // 3 x 2 cells for a 5-column, 3-view-row screen
+	if f.W != 3 || f.H != 4 {
+		t.Fatalf("frame %dx%d, want 3x4", f.W, f.H)
+	}
+	for i := range f.Pix {
+		f.Pix[i] = Pixel{Gray: uint8(40 * (i%f.W + 1))} // each Frame column its own gray
+	}
+	s := term.NewFake(5, 4)
+	PresentHalfBlock(s, &f)
+	for y := 0; y < 3; y++ {
+		for x := 0; x < 5; x++ {
+			_, st := s.Get(x, y)
+			r, _, _, _ := st.Fg.RGB()
+			if want := uint8(40 * (x/2 + 1)); r != want {
+				t.Errorf("screen cell (%d, %d) = gray %d, want Frame column %d's %d", x, y, r, x/2, want)
+			}
+		}
+	}
+	if str, _ := s.Get(0, 3); str != " " {
+		t.Errorf("HUD row = %q, want untouched", str)
+	}
+}
+
+func TestAutoScaleAndFrameSize(t *testing.T) {
+	for _, c := range []struct{ cols, want int }{{80, 1}, {160, 1}, {161, 2}, {320, 2}, {321, 3}} {
+		if got := AutoScale(c.cols); got != c.want {
+			t.Errorf("AutoScale(%d) = %d, want %d", c.cols, got, c.want)
+		}
+	}
+	if w, h := ScaledFrameSize(120, 40, 1); w != 120 || h != 78 {
+		t.Errorf("scale 1: %dx%d, want FrameSize's 120x78", w, h)
+	}
+	if w, h := ScaledFrameSize(321, 81, 2); w != 161 || h != 80 {
+		t.Errorf("scale 2: %dx%d, want 161x80 (rounded up)", w, h)
+	}
+}

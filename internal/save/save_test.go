@@ -78,6 +78,7 @@ func TestDamagedFile(t *testing.T) {
 		{"fps out of range", `{"version": 1, "settings": {"render_mode": "ascii", "fps": 0, "key_mode": "events", "pixel_aspect": 1}}`, "fps 0"},
 		{"negative kills", `{"version": 1, "progress": {"total_kills": -1}}`, "negative"},
 		{"mixed background out of range", `{"version": 1, "settings": {"render_mode": "ascii", "fps": 30, "key_mode": "events", "pixel_aspect": 1, "mixed_background": 101}}`, "mixed background 101"},
+		{"unknown render scale", `{"version": 1, "settings": {"render_mode": "ascii", "fps": 30, "key_mode": "events", "pixel_aspect": 1, "render_scale": "quarter"}}`, "render scale"},
 		{"color threshold out of range", `{"version": 1, "settings": {"render_mode": "ascii", "fps": 30, "key_mode": "events", "pixel_aspect": 1, "color_threshold": -1}}`, "color threshold -1"},
 	}
 	for _, c := range cases {

@@ -35,6 +35,9 @@ func ApplySettings(base Config, s save.Settings) (c Config, note string) {
 	if s.ColorThreshold != nil {
 		c.ColorThreshold = *s.ColorThreshold
 	}
+	if s.RenderScale != "" { // missing before V6: keep base's
+		c.RenderScale = s.RenderScale
+	}
 	if s.KeyMode == "async" && input.AsyncSupported() != nil {
 		note = fmt.Sprintf("The saved key mode async doesn't work here; using %s.", base.KeyMode)
 	} else {
@@ -69,6 +72,7 @@ func (a *App) settings() save.Settings {
 		// Pointers to copies, so the save data never points into the config.
 		MixedBackground: ptr(a.cfg.MixedBackground),
 		ColorThreshold:  ptr(a.cfg.ColorThreshold),
+		RenderScale:     a.cfg.RenderScale,
 	}
 }
 

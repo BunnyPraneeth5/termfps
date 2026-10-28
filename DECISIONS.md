@@ -293,4 +293,5 @@ Format: what, why, trade-off, revisit when.
 - Measured (`BytesPerFrameBig`: 320x90, half-block, textures on, turning): full resolution 260,061 bytes/frame (threshold off) and 144,157 (threshold 8); render scale 2: 229,797 and 138,441. Only 4-12% less: at that size neighbor cells already share colors most of the time, so color codes aren't the main cost; every cell changes while turning and each costs at least its 3-byte `▀`, about 28,000 cells. tcell's work per frame is about 10-11 ms there.
 - Why V6 isn't the fix: the cost is the number of cells the terminal must redraw, which render scale doesn't change. What does help at big sizes: the color threshold (about -45%), ASCII mode (1-byte characters, no RGB codes), a lower FPS, or a faster terminal.
 - Trade-off: V7 makes textures busier, so a few more color changes per frame.
-- Revisit when: the user decides on V6 (drop or keep), or a big-window mode is wanted (then: an FPS cap by size, or ASCII by size).
+- Revisit when: a big-window mode is wanted (then: an FPS cap by size, or ASCII by size).
+- Update: the user chose to keep V6 and commit it (auto is the default, so windows up to 160 columns are unchanged).

@@ -153,8 +153,13 @@ func TestApplySettingsS3(t *testing.T) {
 	bg, thr := 0, 8
 	saved := old
 	saved.MixedBackground, saved.ColorThreshold = &bg, &thr // & takes the address: a pointer to the variable
-	if c, _ := ApplySettings(base, saved); c.MixedBackground != 0 || c.ColorThreshold != 8 {
-		t.Errorf("saved 0%% and 8: got %d and %d", c.MixedBackground, c.ColorThreshold)
+	saved.RenderScale = "half"
+	if c, _ := ApplySettings(base, saved); c.MixedBackground != 0 || c.ColorThreshold != 8 || c.RenderScale != "half" {
+		t.Errorf("saved 0%%, 8, half: got %d, %d, %q", c.MixedBackground, c.ColorThreshold, c.RenderScale)
+	}
+	base.RenderScale = "auto"
+	if c, _ := ApplySettings(base, old); c.RenderScale != "auto" {
+		t.Errorf("pre-V6 save: render scale %q, want auto", c.RenderScale)
 	}
 }
 

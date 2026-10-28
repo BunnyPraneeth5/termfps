@@ -151,6 +151,14 @@ func TestSettingsApplyRightAway(t *testing.T) {
 	if a.cfg.ColorThreshold != 4 || a.frame.ColorThreshold != 4 {
 		t.Errorf("color threshold = %d (frame %d), want 4", a.cfg.ColorThreshold, a.frame.ColorThreshold)
 	}
+	press(a, &now, down, right) // render scale auto -> full
+	if a.cfg.RenderScale != "full" || a.frame.Scale != 1 {
+		t.Errorf("render scale = %q (frame scale %d), want full, 1", a.cfg.RenderScale, a.frame.Scale)
+	}
+	press(a, &now, right) // full -> half: the view is drawn at half size
+	if a.cfg.RenderScale != "half" || a.frame.Scale != 2 || a.frame.W != 40 {
+		t.Errorf("render scale = %q (frame scale %d, width %d), want half, 2, 40", a.cfg.RenderScale, a.frame.Scale, a.frame.W)
+	}
 	press(a, &now, down, right) // FPS 30 -> 60
 	if a.cfg.FPS != 60 {
 		t.Errorf("FPS = %d, want 60", a.cfg.FPS)

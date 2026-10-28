@@ -37,6 +37,30 @@ type Config struct {
 	// ColorThreshold is the half-block / mixed color threshold per color
 	// channel (0-255), 0 = off (S3).
 	ColorThreshold int
+	// RenderScale is "auto" (the default: the view is drawn at most
+	// render.AutoScaleCols wide), "full" or "half" (V6). "" counts as auto,
+	// for configs built without it (tests).
+	RenderScale string
+}
+
+// renderScale is the Frame scale for a terminal cols wide.
+func renderScale(mode string, cols int) int {
+	switch mode {
+	case "full":
+		return 1
+	case "half":
+		return 2
+	case "auto", "":
+		return render.AutoScale(cols)
+	}
+	panic(fmt.Sprintf("unknown render scale %q", mode)) // Load and the menu only allow the three
+}
+
+// resizeFrame sizes the Frame for the screen and the render scale.
+func (a *App) resizeFrame() {
+	cols, rows := a.scr.Size()
+	a.frame.Scale = renderScale(a.cfg.RenderScale, cols)
+	a.frame.Resize(render.ScaledFrameSize(cols, rows, a.frame.Scale))
 }
 
 // App is everything the loop needs between frames.
@@ -129,8 +153,7 @@ func New(scr term.Screen, maps []*world.Map, cfg Config, now time.Time) *App {
 		scr.EnableFocus()
 	}
 	scr.EnableMouse() // clicks only, no motion (D28)
-	// FrameSize(scr.Size()) passes Size's two results as the two arguments.
-	a.frame.Resize(render.FrameSize(scr.Size()))
+	a.resizeFrame()
 	a.switchTo(a.titleMenu())
 	return a
 }
@@ -254,7 +277,7 @@ func (a *App) step(now time.Time, events []term.Event) (quit bool) {
 		switch ev := ev.(type) {
 		case term.Resize:
 			a.scr.Sync()
-			a.frame.Resize(render.FrameSize(a.scr.Size()))
+			a.resizeFrame()
 		case term.Focus:
 			a.focused = ev.Focused
 			if !ev.Focused {

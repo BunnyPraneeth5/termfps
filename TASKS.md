@@ -313,10 +313,11 @@ A separate track (D44): the user asked for better visuals. Five tasks in two run
 - A longer brightness ramp for the ASCII and mixed modes, so shading has more steps.
 - Acceptance: unit tests (ramp order, full range used); on screen (user).
 
-### [ ] V6: Render scale for big windows
+### [~] V6: Render scale for big windows
 - Settings "Render scale": auto (default), full, half. Auto draws the 3D view at most 160 columns wide (2x2 screen cells per view cell from 161 columns, 3x3 from 321, ...) so neighboring cells share colors and the terminal gets far fewer color codes; full is today's behavior; half always uses 2x2. HUD, minimap and menus stay at full resolution. Saved in save.json (older files: auto).
 - Why: the user found big windows (zoomed out) lag in Windows Terminal: bytes per frame grow with the cell count (D45).
 - Acceptance: unit tests (scaled presenting, frame size, auto choice, setting saved); bytes per frame at a big size with and without; on screen (user): a zoomed-out window stays smooth.
+- Result (D46): only 4-12% fewer bytes at 320x90; the user chose to keep it.
 
 ### [~] V7: Stronger texture and floor contrast
 - Texture detail stands out more (the darkest texture pixel keeps 30% of the shade, was 45%) and the floor is a little brighter (base 140, was 120), so brick lines, stone gaps and floor tiles read clearly.

@@ -6,6 +6,31 @@ import (
 	"github.com/BunnyPraneeth5/termfps/internal/term"
 )
 
+// cellWriter puts one Frame cell on the screen: on one screen cell at
+// full scale, or on the Scale x Scale block it covers (V6), clipped to the
+// view (every row but the HUD's).
+type cellWriter struct {
+	s           term.Screen
+	scale, w, h int // h = view rows
+}
+
+func newCellWriter(s term.Screen, f *Frame) cellWriter {
+	w, h := s.Size()
+	return cellWriter{s: s, scale: max(f.Scale, 1), w: w, h: h - 1}
+}
+
+func (c cellWriter) put(x, row int, str string, st term.Style) {
+	if c.scale == 1 {
+		c.s.Put(x, row, str, st)
+		return
+	}
+	for y := row * c.scale; y < (row+1)*c.scale && y < c.h; y++ {
+		for sx := x * c.scale; sx < (x+1)*c.scale && sx < c.w; sx++ {
+			c.s.Put(sx, y, str, st)
+		}
+	}
+}
+
 // halfBlock is the upper half block. Its foreground color fills the top
 // half of the cell and its background color fills the bottom half.
 const halfBlock = "▀"
@@ -14,6 +39,7 @@ const halfBlock = "▀"
 // top pixel = foreground, bottom pixel = background. It only fills the screen's
 // buffer; the caller sends it to the terminal with Show.
 func PresentHalfBlock(s term.Screen, f *Frame) {
+	cw := newCellWriter(s, f)
 	rows := f.H / 2
 	for row := 0; row < rows; row++ {
 		top := f.Pix[(2*row)*f.W : (2*row+1)*f.W]
@@ -28,7 +54,7 @@ func PresentHalfBlock(s term.Screen, f *Frame) {
 				style = prev
 			}
 			prev = style
-			s.Put(x, row, halfBlock, style)
+			cw.put(x, row, halfBlock, style)
 		}
 	}
 }
@@ -82,6 +108,7 @@ func PresentASCII(s term.Screen, f *Frame) {
 
 // presentRamp averages the two pixels of each cell and picks a character.
 func presentRamp(s term.Screen, f *Frame, ramp []string) {
+	cw := newCellWriter(s, f)
 	rows := f.H / 2
 	for row := 0; row < rows; row++ {
 		top := f.Pix[(2*row)*f.W : (2*row+1)*f.W]
@@ -89,7 +116,7 @@ func presentRamp(s term.Screen, f *Frame, ramp []string) {
 		for x := 0; x < f.W; x++ {
 			avg := uint8((int(top[x].Gray) + int(bottom[x].Gray)) / 2)
 			style := term.Style{Fg: basicColor(cellTint(top[x], bottom[x]))}
-			s.Put(x, row, ramp[rampIndex(avg, len(ramp))], style)
+			cw.put(x, row, ramp[rampIndex(avg, len(ramp))], style)
 		}
 	}
 }
@@ -115,6 +142,7 @@ func grayColor(g uint8) term.Color {
 // "Mixed" mode (D31). It needs truecolor, like half-block, and costs about
 // the same: both send a foreground and a background color per cell.
 func PresentMixed(s term.Screen, f *Frame) {
+	cw := newCellWriter(s, f)
 	rows := f.H / 2
 	for row := 0; row < rows; row++ {
 		top := f.Pix[(2*row)*f.W : (2*row+1)*f.W]
@@ -131,7 +159,7 @@ func PresentMixed(s term.Screen, f *Frame) {
 				style = prev
 			}
 			prev = style
-			s.Put(x, row, asciiRamp[rampIndex(avg, len(asciiRamp))], style)
+			cw.put(x, row, asciiRamp[rampIndex(avg, len(asciiRamp))], style)
 		}
 	}
 }

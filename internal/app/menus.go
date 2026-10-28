@@ -210,6 +210,7 @@ const (
 	setMode = iota
 	setMixedBackground
 	setThreshold
+	setScale
 	setFPS
 	setMinimap
 	setTextures
@@ -267,6 +268,8 @@ func (a *App) settingsMenu(back *menuScreen) *menuScreen {
 		Value:  slices.Index(backgrounds, a.cfg.MixedBackground)}
 	items[setThreshold] = ui.Item{Label: "Color threshold", Values: mapStrings(thresholds, thresholdLabel),
 		Value: slices.Index(thresholds, a.cfg.ColorThreshold)}
+	items[setScale] = ui.Item{Label: "Render scale", Values: scaleChoices,
+		Value: max(slices.Index(scaleChoices, a.cfg.RenderScale), 0)} // "" (unset) shows auto
 	items[setFPS] = ui.Item{Label: "FPS", Values: mapStrings(fpsChoices, func(n int) string { return fmt.Sprint(n) }),
 		Value: slices.Index(fpsChoices, a.cfg.FPS)}
 	items[setMinimap] = onOff("Minimap at start", a.cfg.MinimapAtStart)
@@ -296,6 +299,9 @@ func (a *App) settingsMenu(back *menuScreen) *menuScreen {
 		case s.menu.Selected == setThreshold:
 			a.cfg.ColorThreshold = thresholds[it.Value]
 			a.frame.ColorThreshold = uint8(a.cfg.ColorThreshold)
+		case s.menu.Selected == setScale:
+			a.cfg.RenderScale = scaleChoices[it.Value]
+			a.resizeFrame()
 		case s.menu.Selected == setFPS:
 			a.cfg.FPS = fpsChoices[it.Value] // Run resets its ticker
 		case s.menu.Selected == setMinimap:
@@ -324,6 +330,9 @@ func (a *App) settingsMenu(back *menuScreen) *menuScreen {
 	}
 	return s
 }
+
+// scaleChoices are the render scale settings (V6), in menu order.
+var scaleChoices = []string{"auto", "full", "half"}
 
 // thresholdLabel is the menu text for a color threshold.
 func thresholdLabel(n int) string {

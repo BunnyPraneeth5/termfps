@@ -180,6 +180,7 @@ func parseFlags() (cfg app.Config, explicit map[string]bool, ok bool) {
 		Sound:           true,
 		Volume:          80,
 		MixedBackground: int(render.DefaultMixedBackground * 100),
+		RenderScale:     "auto",
 	}, explicit, true
 }
 
