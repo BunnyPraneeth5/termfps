@@ -6,6 +6,8 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
+	"math"
+	"strconv"
 	"strings"
 	"unicode/utf8"
 )
@@ -81,6 +83,54 @@ type Map struct {
 	EnemyStarts    []EnemyStart
 	Props          []Prop        // every prop cell, in map order (M2)
 	Doors          []SlidingDoor // every door, in map order (M3)
+
+	// Lighting (M4). Fog is the "; fog:" header, 0 if the map has none (the
+	// renderer then uses its default). Darkness is "; darkness:", 0 = the
+	// usual light. Lamps are the lamp props with the cells they light.
+	Fog, Darkness float64
+	Lamps         []LightSource
+}
+
+// LightSource is a lamp prop (M4) and the floor cells its light reaches.
+type LightSource struct {
+	X, Y    float64 // center of its cell
+	Flicker bool    // an 'L': its light flickers
+	Reach   []Lit   // cells it lights, worked out once when the map loads
+}
+
+// Lit is how much light a lamp adds to one cell: Weight at full power.
+type Lit struct {
+	Index  int // y*W + x
+	Weight float64
+}
+
+// Lamp light (M4): a lamp adds up to LampPower to cells within LampRadius,
+// fading to nothing at the edge, if nothing stands between (walls, closed
+// doors, and props that block shots cast shadows).
+const (
+	LampRadius = 4.5
+	LampPower  = 0.9
+)
+
+// lampReach lists the open cells a lamp at (lx, ly) lights.
+func lampReach(m *Map, lx, ly float64) []Lit {
+	var out []Lit
+	r := int(math.Ceil(LampRadius))
+	for y := int(ly) - r; y <= int(ly)+r; y++ {
+		for x := int(lx) - r; x <= int(lx)+r; x++ {
+			if m.IsSolid(x, y) || m.At(x, y).BlocksShot() {
+				continue
+			}
+			cx, cy := float64(x)+0.5, float64(y)+0.5
+			d := math.Hypot(cx-lx, cy-ly)
+			if d >= LampRadius || !LineOfSight(m, lx, ly, cx, cy) {
+				continue
+			}
+			f := 1 - d/LampRadius
+			out = append(out, Lit{Index: y*m.W + x, Weight: LampPower * f * f})
+		}
+	}
+	return out
 }
 
 // SlidingDoor is a door in cell (X, Y). It's a thin panel through the
@@ -153,7 +203,7 @@ func Parse(data []byte) (*Map, error) {
 	}
 	// Header lines start with ";" and come before the grid. off counts them,
 	// so error messages still give the row as the file's line number.
-	name, off, err := parseHeaders(lines)
+	hdr, off, err := parseHeaders(lines)
 	if err != nil {
 		return nil, err
 	}
@@ -179,7 +229,7 @@ func Parse(data []byte) (*Map, error) {
 	}
 
 	// Pass 2: build cells, check the border, find the spawn.
-	m := &Map{Name: name, W: w, H: h, Cells: make([]Cell, 0, w*h)}
+	m := &Map{Name: hdr.name, W: w, H: h, Cells: make([]Cell, 0, w*h), Fog: hdr.fog, Darkness: hdr.darkness}
 	spawns := 0
 	for y, line := range lines {
 		for x := 0; x < w; x++ {
@@ -216,6 +266,12 @@ func Parse(data []byte) (*Map, error) {
 				return nil, fmt.Errorf("row %d, column %d: a door 'D' needs walls on both sides (left and right, or above and below)", y+off+1, x+1)
 			}
 			m.Doors = append(m.Doors, SlidingDoor{X: x, Y: y, Across: across})
+		}
+	}
+	// Lamps last: their light needs the doors (closed ones cast shadows).
+	for _, p := range m.Props {
+		if p.Kind == Lamp || p.Kind == FlickerLamp {
+			m.Lamps = append(m.Lamps, LightSource{X: p.X, Y: p.Y, Flicker: p.Kind == FlickerLamp, Reach: lampReach(m, p.X, p.Y)})
 		}
 	}
 	return m, nil
@@ -278,24 +334,57 @@ func checkChar(line string, x, y int) error {
 	return fmt.Errorf("row %d, column %d: unknown character %q (use '#', '%%', '&', '.', 'P', 'T', 'Z', 'S', 'D', or a prop: 'b', 'c', 'i', 'l', 'L', ',', 'x')", y+1, x+1, r)
 }
 
-// parseHeaders reads the header lines at the top of a map file. The only
-// header is "; name: The Arena". It returns the name and how many lines
-// were headers. An unknown header is an error, so a typo doesn't go unseen.
-func parseHeaders(lines []string) (name string, n int, err error) {
+// headers are the values of a map file's header lines.
+type headers struct {
+	name           string
+	fog, darkness  float64
+	hasFog, hasDrk bool
+}
+
+// parseHeaders reads the header lines at the top of a map file:
+// "; name: The Arena", and for lighting (M4) "; fog: 0.4" (how fast things
+// fade with distance, 0-2; without it the game's default) and
+// "; darkness: 0.6" (0 = normal light, up to 0.95 = only lamps light the
+// map). It returns them and how many lines were headers. An unknown or
+// repeated header is an error, so a typo doesn't go unseen.
+func parseHeaders(lines []string) (h headers, n int, err error) {
 	for n < len(lines) && strings.HasPrefix(lines[n], ";") {
 		// Cut splits at the first ":"; found is false if there is none.
 		key, value, found := strings.Cut(strings.TrimPrefix(lines[n], ";"), ":")
 		key, value = strings.TrimSpace(key), strings.TrimSpace(value)
-		switch {
-		case !found || key != "name":
-			return "", 0, fmt.Errorf("row %d: unknown header %q (the only header is \"; name: ...\")", n+1, lines[n])
-		case value == "":
-			return "", 0, fmt.Errorf("row %d: map name is empty", n+1)
-		case name != "":
-			return "", 0, fmt.Errorf("row %d: second name header (the map already has the name %q)", n+1, name)
+		if !found {
+			return h, 0, fmt.Errorf("row %d: unknown header %q (headers are \"; name: ...\", \"; fog: ...\", \"; darkness: ...\")", n+1, lines[n])
 		}
-		name = value
+		switch key {
+		case "name":
+			switch {
+			case value == "":
+				return h, 0, fmt.Errorf("row %d: map name is empty", n+1)
+			case h.name != "":
+				return h, 0, fmt.Errorf("row %d: second name header (the map already has the name %q)", n+1, h.name)
+			}
+			h.name = value
+		case "fog", "darkness":
+			v, perr := strconv.ParseFloat(value, 64)
+			lo, hi := 0.0, 2.0
+			if key == "darkness" {
+				hi = 0.95
+			}
+			if perr != nil || v < lo || v > hi {
+				return h, 0, fmt.Errorf("row %d: %s must be a number from %v to %v, got %q", n+1, key, lo, hi, value)
+			}
+			if (key == "fog" && h.hasFog) || (key == "darkness" && h.hasDrk) {
+				return h, 0, fmt.Errorf("row %d: second %s header", n+1, key)
+			}
+			if key == "fog" {
+				h.fog, h.hasFog = v, true
+			} else {
+				h.darkness, h.hasDrk = v, true
+			}
+		default:
+			return h, 0, fmt.Errorf("row %d: unknown header %q (headers are \"; name: ...\", \"; fog: ...\", \"; darkness: ...\")", n+1, lines[n])
+		}
 		n++
 	}
-	return name, n, nil
+	return h, n, nil
 }

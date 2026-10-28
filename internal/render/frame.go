@@ -42,6 +42,20 @@ type Frame struct {
 	// shown as a 2x2 block, so neighboring cells share colors and the
 	// terminal gets fewer color codes. Size the Frame with ScaledFrameSize.
 	Scale int
+
+	// Set by DrawFrame for the map being drawn (M4), and used by the
+	// sprites after it: the fog factor and the light grid.
+	fog   float64
+	light lightGrid
+}
+
+// fogK returns the Frame's fog factor: the map's "; fog:" header, or the
+// default fogK for maps without one (and Frames DrawFrame hasn't drawn).
+func (f *Frame) fogK() float64 {
+	if f.fog > 0 {
+		return f.fog
+	}
+	return fogK
 }
 
 // AutoScaleCols is the widest the 3D view is drawn with the "auto" render
@@ -108,6 +122,8 @@ func DrawFrame(s *game.State, f *Frame) {
 	if f.PixelAspect <= 0 {
 		panic("render: Frame.PixelAspect must be > 0") // a bug in the caller, not bad input
 	}
+	f.fog = s.Map.Fog
+	f.light.prepare(s.Map, s.Time)
 	p := s.Player
 	dirX, dirY := p.Dir()
 	planeX, planeY := p.Plane()
@@ -122,7 +138,13 @@ func DrawFrame(s *game.State, f *Frame) {
 		f.ZBuf[x] = hit.PerpDist
 		top, height := wallLine(f, hit.PerpDist)
 		bottom := top + height
-		wall := Pixel{Gray: wallShade(hit.PerpDist, hit.Side)}
+		wall := Pixel{Gray: wallShadeFog(hit.PerpDist, hit.Side, f.fogK())}
+		if f.light.on && !math.IsInf(hit.PerpDist, 1) {
+			// A wall gets the light of the cell in front of it (M4).
+			back := hit.PerpDist - 0.01
+			l := f.light.at(int(math.Floor(p.X+rayX*back)), int(math.Floor(p.Y+rayY*back)))
+			wall.Gray = toGray(float64(wall.Gray) * l)
+		}
 		if hit.Cell == world.Target {
 			wall.Tint = TintRed
 		}
@@ -167,8 +189,13 @@ func DrawFrame(s *game.State, f *Frame) {
 // floor is cast and textured; the ceiling is always flat near-black (the
 // user's choice after V1: more contrast for the walls, fewer color codes).
 func backgroundPixel(f *Frame, p game.Player, rayX, rayY float64, y int) Pixel {
-	if _, ceiling := castDist(f, y); f.Textures && !ceiling {
+	_, ceiling := castDist(f, y)
+	if f.Textures && !ceiling {
 		return castPixel(f, p, rayX, rayY, y)
+	}
+	if !ceiling && f.light.on {
+		// The flat floor has no world position: dark maps just dim it.
+		return Pixel{Gray: toGray(float64(backgroundShade(y, f.H)) * f.light.ambient)}
 	}
 	return Pixel{Gray: backgroundShade(y, f.H)}
 }
@@ -213,7 +240,8 @@ func castPixel(f *Frame, p game.Player, rayX, rayY float64, y int) Pixel {
 	// The fraction of the world position inside its cell picks the texel.
 	tx := min(int((wx-math.Floor(wx))*float64(tex.W)), tex.W-1)
 	ty := min(int((wy-math.Floor(wy))*float64(tex.H)), tex.H-1)
-	return Pixel{Gray: texturedGray(castShade(floorBase, d), tex.Pix[ty*tex.W+tx].Gray)}
+	shade := toGray(floorBase / (1 + f.fogK()*d) * f.light.smooth(wx, wy)) // fog and lamp light (M4)
+	return Pixel{Gray: texturedGray(shade, tex.Pix[ty*tex.W+tx].Gray)}
 }
 
 // castDist returns the perpendicular distance of the floor (or, above the

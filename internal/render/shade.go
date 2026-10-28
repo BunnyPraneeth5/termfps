@@ -39,16 +39,15 @@ func backgroundShade(y, h int) uint8 {
 	return toGray(floorHorizon + (floorNear-floorHorizon)*t)
 }
 
-// castShade returns the gray of a floor point at distance dist, for a
-// surface whose brightness at distance 0 is base: the same fog as walls.
-func castShade(base, dist float64) uint8 {
-	return toGray(base / (1 + fogK*math.Max(dist, 0)))
-}
-
 // wallShade returns the gray for a wall at perpendicular distance dist.
 // side is world.Hit.Side: 0 = X-side face, 1 = Y-side face.
 func wallShade(dist float64, side int) uint8 {
-	g := wallBase / (1 + fogK*math.Max(dist, 0))
+	return wallShadeFog(dist, side, fogK)
+}
+
+// wallShadeFog is wallShade with a map's own fog factor (M4).
+func wallShadeFog(dist float64, side int, fog float64) uint8 {
+	g := wallBase / (1 + fog*math.Max(dist, 0))
 	if side == 1 {
 		g *= sideFactor
 	}

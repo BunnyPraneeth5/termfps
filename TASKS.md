@@ -338,7 +338,7 @@ All the ideas from the 2026-10-25/26 discussion, added to the plan first (D40). 
 ### [~] M3: Doors
 - Wolfenstein-style sliding doors: open when you walk up (or press a key), close after a while; enemies open them too.
 
-### [ ] M4: Lighting per map
+### [~] M4: Lighting per map
 - Header lines for fog and darkness; lamps that light nearby walls and floor; some flickering lights.
 
 ### [ ] M5: Redesign all four maps

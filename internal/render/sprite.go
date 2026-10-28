@@ -124,9 +124,9 @@ func drawSprite(f *Frame, p game.Player, s Sprite) {
 	top := floorY - pixH
 	left := centerX - pixW/2
 
-	// The same distance fog as walls. No side darkening: sprites always face
-	// the camera.
-	fog := 1 / (1 + fogK*depth)
+	// The same distance fog as walls, and the light of the sprite's cell
+	// (M4). No side darkening: sprites always face the camera.
+	fog := 1 / (1 + f.fogK()*depth) * f.light.at(int(math.Floor(s.X)), int(math.Floor(s.Y)))
 
 	x0 := max(int(math.Floor(left)), 0)
 	x1 := min(int(math.Ceil(left+pixW)), f.W)

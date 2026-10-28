@@ -1,6 +1,7 @@
 package world
 
 import (
+	"math"
 	"strings"
 	"testing"
 )
@@ -131,6 +132,9 @@ func TestParseHeaderErrors(t *testing.T) {
 		{"two names", "; name: A\n; name: B\n###\n#P#\n###\n", "row 2: second name"},
 		{"only a header", "; name: A\n", "empty"},
 		{"row numbers count the header", "; name: A\n#####\n#P.?#\n#####\n", "row 3, column 4"},
+		{"fog too high", "; fog: 3\n###\n#P#\n###\n", "row 1: fog must be a number from 0 to 2"},
+		{"darkness not a number", "; darkness: dim\n###\n#P#\n###\n", "darkness must be a number"},
+		{"two fogs", "; fog: 0.3\n; fog: 0.4\n###\n#P#\n###\n", "row 2: second fog"},
 	}
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
@@ -218,5 +222,54 @@ func TestParseDoors(t *testing.T) {
 	m.Doors[0].Open = 0
 	if d := DistanceField(m, 1, 1, nil); d[3*m.W+2] < 0 {
 		t.Error("distance field doesn't go through the closed door")
+	}
+}
+
+// Lighting headers (M4) set the map's fog and darkness.
+func TestParseLightHeaders(t *testing.T) {
+	m, err := Parse([]byte("; name: Dark\n; fog: 0.4\n; darkness: 0.6\n###\n#P#\n###\n"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if m.Name != "Dark" || m.Fog != 0.4 || m.Darkness != 0.6 {
+		t.Errorf("name %q fog %v darkness %v, want Dark, 0.4, 0.6", m.Name, m.Fog, m.Darkness)
+	}
+}
+
+// A lamp lights open cells within LampRadius it can see, brighter close
+// up; walls and cover props cast shadows (M4).
+func TestLampReach(t *testing.T) {
+	m, err := Parse([]byte("##########\n" +
+		"#P.......#\n" +
+		"#...l.c..#\n" +
+		"#........#\n" +
+		"######...#\n" +
+		"#........#\n" +
+		"##########\n"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(m.Lamps) != 1 || m.Lamps[0].Flicker {
+		t.Fatalf("lamps = %+v, want one steady lamp", m.Lamps)
+	}
+	lit := map[int]float64{}
+	for _, c := range m.Lamps[0].Reach {
+		lit[c.Index] = c.Weight
+	}
+	at := func(x, y int) float64 { return lit[y*m.W+x] }
+	if near, far := at(5, 2), at(3, 3); near <= far || near <= 0 {
+		t.Errorf("light next to the lamp %v, two cells away %v: want brighter close up", near, far)
+	}
+	if want := LampPower * (1 - 1/LampRadius) * (1 - 1/LampRadius); math.Abs(at(5, 2)-want) > 1e-9 {
+		t.Errorf("light one cell away = %v, want %v", at(5, 2), want)
+	}
+	if at(7, 2) != 0 {
+		t.Error("cell behind the crate is lit: cover should cast a shadow")
+	}
+	if at(2, 5) != 0 {
+		t.Error("cell behind the wall is lit")
+	}
+	if at(6, 2) != 0 {
+		t.Error("the crate's own cell is in the light list")
 	}
 }
