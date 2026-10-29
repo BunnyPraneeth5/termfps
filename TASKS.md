@@ -323,6 +323,10 @@ A separate track (D44): the user asked for better visuals. Five tasks in two run
 - Texture detail stands out more (the darkest texture pixel keeps 30% of the shade, was 45%) and the floor is a little brighter (base 140, was 120), so brick lines, stone gaps and floor tiles read clearly.
 - Acceptance: tests updated; on screen (user).
 
+### [~] V8: Faster drawing
+- From the user's Take 4 recording: zoomed out at 60 FPS the HUD showed draw 5-9 ms. DrawFrame now works out per-row floor values once per frame, walks each column in row ranges (only the two wall edge rows compute coverage), looks wall texture shades up in a per-column table, and toGray uses plain comparisons. Same picture.
+- Acceptance: all render tests pass unchanged; benchmarks faster; on screen (user): smoother when zoomed out.
+
 # Maps and gameplay update
 
 All the ideas from the 2026-10-25/26 discussion, added to the plan first (D40). The numbers are IDs, not the order: the order, the batches of five and the details get decided before any of them starts.

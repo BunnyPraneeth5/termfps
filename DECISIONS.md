@@ -301,3 +301,9 @@ Format: what, why, trade-off, revisit when.
 - Other choices made without asking (for the user's review): M7 is a setting with the old 5:00 as default; M3 doors open by walking up (no key); lamps block movement but not shots; the minimap fog of war is on by default.
 - Trade-off: darker maps make enemies harder to see; tune with the darkness header.
 - Revisit when: the user's on-screen review of M1-M9.
+
+## D48: Faster DrawFrame; minimap at most a third of the view (2026-10-30)
+- What: after the user's Take 4 recording (zoomed out: FPS 30-53 at a 60 FPS target; HUD draw 5-9 ms, present 5-8 ms, show 3-21 ms; at normal zoom the minimap covered about half the view's height). V8: per-row floor values (distance, fog shade, texture level, flat shade) once per frame; each column drawn in row ranges, coverage only on the two edge rows; wall texture shades from a per-column table; toGray without math.Round/Min/Max. Benchmarks: DrawFrame 120x40 0.25 -> 0.07 ms, textured 0.49 -> 0.15 ms, a 250x65 open hall with lamps 2.1 -> 0.87 ms; pictures unchanged (all render tests pass). M1 follow-up: the minimap window is at most a third of the view rows across and down (at least 5, at most 16), so at 24 rows it's 7x7 cells and from about 50 rows the full 16x16.
+- Why: at 60 FPS a frame has 16.7 ms; our draw + present were most of it in a big window. The minimap hid the horizon, where enemies appear.
+- Not changed: present (filling tcell's buffer, mostly tcell's own Put) and show (the terminal). In big windows those still limit the frame rate; 30 FPS or Render scale auto help.
+- Revisit when: the user's re-test; if present is still the limit, an adapter-side cache that skips unchanged cells (helps when standing still, not while turning).

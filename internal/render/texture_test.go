@@ -172,3 +172,33 @@ func TestFarFloorIsAveraged(t *testing.T) {
 		}
 	}
 }
+
+// BenchmarkDrawFrameOpenHall250x65 draws a big (zoomed-out) 250x65 window
+// looking across a wide hall with lamps and darkness: half the screen is
+// cast floor, the slow case in the user's recording (V8).
+func BenchmarkDrawFrameOpenHall250x65(b *testing.B) {
+	hall := "; darkness: 0.3\n################################\n"
+	for y := range 30 {
+		row := []byte("#..............................#")
+		if y%6 == 3 {
+			row[10], row[20] = 'l', 'L'
+		}
+		if y == 0 {
+			row[1] = 'P'
+		}
+		hall += string(row) + "\n"
+	}
+	hall += "################################\n"
+	m, err := world.Parse([]byte(hall))
+	if err != nil {
+		b.Fatal(err)
+	}
+	s := game.NewState(m)
+	s.Player.X, s.Player.Y = 1.5, 16.0
+	f := newFrame(250, 65)
+	f.Textures = true
+	b.ReportAllocs()
+	for b.Loop() {
+		DrawFrame(s, f)
+	}
+}

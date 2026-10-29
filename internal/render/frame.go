@@ -47,6 +47,45 @@ type Frame struct {
 	// sprites after it: the fog factor and the light grid.
 	fog   float64
 	light lightGrid
+	rows  rowCache
+}
+
+// rowCache holds, for every pixel row, what only depends on the row (V8),
+// worked out once per frame instead of once per pixel: whether it's above
+// the middle (ceiling), the flat background shade, and for the cast floor
+// its distance, fog shade and texture level. Reused between frames.
+type rowCache struct {
+	ceiling []bool
+	flat    []uint8
+	dist    []float64
+	shade   []float64
+	tex     []*Image
+}
+
+// prepareRows fills f.rows for the current size, fog and light.
+func (f *Frame) prepareRows() {
+	r := &f.rows
+	if cap(r.flat) < f.H {
+		*r = rowCache{ceiling: make([]bool, f.H), flat: make([]uint8, f.H), dist: make([]float64, f.H),
+			shade: make([]float64, f.H), tex: make([]*Image, f.H)}
+	}
+	r.ceiling, r.flat, r.dist, r.shade, r.tex = r.ceiling[:f.H], r.flat[:f.H], r.dist[:f.H], r.shade[:f.H], r.tex[:f.H]
+	// Texture pixels one screen pixel covers (V3): across a row, neighbor
+	// columns' rays are 2*PlaneLen/W apart, so their points are that times
+	// d apart; down a column, the distance changes by d*d/K per row (K as
+	// in castDist: d = K/offset). Far away the second is much bigger.
+	k := float64(f.W) / (4 * game.PlaneLen * f.PixelAspect)
+	for y := range f.H {
+		d, ceiling := castDist(f, y)
+		r.ceiling[y], r.dist[y] = ceiling, d
+		r.flat[y] = backgroundShade(y, f.H)
+		if !ceiling && f.light.on {
+			// The flat floor has no world position: dark maps just dim it.
+			r.flat[y] = toGray(float64(r.flat[y]) * f.light.ambient)
+		}
+		r.shade[y] = floorBase / (1 + f.fogK()*d)
+		r.tex[y] = floorMips.level(math.Max(2*game.PlaneLen*d/float64(f.W), d*d/k) * float64(floorMips[0].W))
+	}
 }
 
 // fogK returns the Frame's fog factor: the map's "; fog:" header, or the
@@ -124,10 +163,15 @@ func DrawFrame(s *game.State, f *Frame) {
 	}
 	f.fog = s.Map.Fog
 	f.light.prepare(s.Map, s.Time)
+	f.prepareRows()
 	p := s.Player
 	dirX, dirY := p.Dir()
 	planeX, planeY := p.Plane()
 	var prev world.Hit // the previous column's hit, for texture filtering
+	// colShade holds, for the current column, the shaded gray of each texture
+	// row (V8), so wall pixels look it up instead of redoing the math.
+	// Textures are at most 32 tall; 64 leaves room.
+	var colShade [64]uint8
 
 	for x := 0; x < f.W; x++ {
 		// cameraX goes from -1 (left edge) to almost +1 (right edge).
@@ -158,28 +202,42 @@ func DrawFrame(s *game.State, f *Frame) {
 		}
 		prev = hit
 
-		for y := 0; y < f.H; y++ {
-			// cov is how much of this pixel row the wall covers: 1 inside the
-			// wall, 0 above or below it, in between on its top and bottom
-			// edge (V2).
-			cov := coverage(y, top, bottom)
-			if cov <= 0 {
-				f.Pix[y*f.W+x] = backgroundPixel(f, p, rayX, rayY, y)
-				continue
+		// The wall touches pixel rows yTop to yEnd-1: the first and last
+		// only partly (V2 blends those). Clamp in float before converting:
+		// up close the wall is huge, and an out-of-range float -> int
+		// conversion gives a garbage value.
+		yTop := int(clamp(math.Floor(top), 0, float64(f.H)))
+		yEnd := int(clamp(math.Ceil(bottom), 0, float64(f.H)))
+		var texPerRow, texStart float64
+		if tex != nil {
+			for t := range tex.H {
+				colShade[t] = texturedGray(wall.Gray, tex.Pix[t*tex.W+tx].Gray)
 			}
+			// The texture row of pixel row y is int((y + 0.5 - top) / height * tex.H).
+			texPerRow = float64(tex.H) / height
+			texStart = (0.5 - top) * texPerRow
+		}
+		for y := 0; y < yTop; y++ {
+			f.Pix[y*f.W+x] = backgroundPixel(f, p, rayX, rayY, y) // ceiling, or floor
+		}
+		for y := yTop; y < yEnd; y++ {
 			px := wall
 			if tex != nil {
-				// Where this pixel falls on the wall, 0 (top) to 1 (bottom).
-				v := (float64(y) + 0.5 - top) / height
-				ty := min(max(int(v*float64(tex.H)), 0), tex.H-1)
-				px.Gray = texturedGray(wall.Gray, tex.Pix[ty*tex.W+tx].Gray)
+				ty := min(max(int(float64(y)*texPerRow+texStart), 0), tex.H-1)
+				px.Gray = colShade[ty]
 			}
-			if cov < 1 {
+			if y == yTop || y == yEnd-1 {
 				// An edge pixel: mix the wall with the floor or ceiling behind
-				// it, so wall edges don't step from pixel to pixel.
-				px = blendPixel(backgroundPixel(f, p, rayX, rayY, y), px, cov)
+				// it by how much of the row the wall covers, so wall edges
+				// don't step from pixel to pixel.
+				if cov := coverage(y, top, bottom); cov < 1 {
+					px = blendPixel(backgroundPixel(f, p, rayX, rayY, y), px, cov)
+				}
 			}
 			f.Pix[y*f.W+x] = px // sets the tint too, so no color is left from last frame
+		}
+		for y := yEnd; y < f.H; y++ {
+			f.Pix[y*f.W+x] = backgroundPixel(f, p, rayX, rayY, y) // floor
 		}
 	}
 }
@@ -189,15 +247,10 @@ func DrawFrame(s *game.State, f *Frame) {
 // floor is cast and textured; the ceiling is always flat near-black (the
 // user's choice after V1: more contrast for the walls, fewer color codes).
 func backgroundPixel(f *Frame, p game.Player, rayX, rayY float64, y int) Pixel {
-	_, ceiling := castDist(f, y)
-	if f.Textures && !ceiling {
+	if f.Textures && !f.rows.ceiling[y] {
 		return castPixel(f, p, rayX, rayY, y)
 	}
-	if !ceiling && f.light.on {
-		// The flat floor has no world position: dark maps just dim it.
-		return Pixel{Gray: toGray(float64(backgroundShade(y, f.H)) * f.light.ambient)}
-	}
-	return Pixel{Gray: backgroundShade(y, f.H)}
+	return Pixel{Gray: f.rows.flat[y]}
 }
 
 // coverage returns how much of pixel row y (from y to y+1) lies between
@@ -228,19 +281,12 @@ func blendPixel(back, front Pixel, cov float64) Pixel {
 // ray's direction has length 1 along the view direction, so the point is
 // player + ray*d.
 func castPixel(f *Frame, p game.Player, rayX, rayY float64, y int) Pixel {
-	d, _ := castDist(f, y)
-	mips := floorMips
-	// Texture pixels one screen pixel covers (V3): across a row, neighbor
-	// columns' rays are 2*PlaneLen/W apart, so their points are that times
-	// d apart; down a column, the distance changes by d*d/K per row (K as
-	// in castDist: d = K/offset). Far away the second is much bigger.
-	k := float64(f.W) / (4 * game.PlaneLen * f.PixelAspect)
-	tex := mips.level(math.Max(2*game.PlaneLen*d/float64(f.W), d*d/k) * float64(mips[0].W))
+	d, tex := f.rows.dist[y], f.rows.tex[y] // worked out once per row (V8)
 	wx, wy := p.X+rayX*d, p.Y+rayY*d
 	// The fraction of the world position inside its cell picks the texel.
 	tx := min(int((wx-math.Floor(wx))*float64(tex.W)), tex.W-1)
 	ty := min(int((wy-math.Floor(wy))*float64(tex.H)), tex.H-1)
-	shade := toGray(floorBase / (1 + f.fogK()*d) * f.light.smooth(wx, wy)) // fog and lamp light (M4)
+	shade := toGray(f.rows.shade[y] * f.light.smooth(wx, wy)) // fog (per row) and lamp light (M4)
 	return Pixel{Gray: texturedGray(shade, tex.Pix[ty*tex.W+tx].Gray)}
 }
 

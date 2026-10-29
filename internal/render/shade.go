@@ -58,5 +58,15 @@ func wallShadeFog(dist float64, side int, fog float64) uint8 {
 // doesn't panic on an out-of-range float -> uint8 conversion; it gives a
 // garbage value, so the clamp matters.
 func toGray(v float64) uint8 {
-	return uint8(clamp(math.Round(v), 0, 255))
+	// Plain comparisons instead of math.Round and math.Min/Max: this runs
+	// for every pixel (V8). Adding 0.5 and truncating rounds the same way
+	// for the values that get here (0 or more).
+	v += 0.5
+	switch {
+	case v <= 0:
+		return 0
+	case v >= 255:
+		return 255
+	}
+	return uint8(v)
 }
