@@ -364,29 +364,51 @@ All the ideas from the 2026-10-25/26 discussion, added to the plan first (D40). 
 
 ## Gameplay
 
-### [ ] M10: Medkits and armor
-- Medkit pickups (heal) and armor (absorbs part of the damage); decide how they work with the slow regeneration.
+Decided with the user on 2026-10-30 (D49). Order and batches: **batch 1** M10, M11, M12, M14, M16; **batch 2** M13, M15, M17, M18. The user reviews after each batch. Every new thing gets its own sound effect.
 
-### [ ] M11: More weapons
-- For example a shotgun (short range, spread) and a rifle (accurate, slow), found as pickups, switched with 1/2/3. Changes the PRD's "one gun" rule.
+**Tiers (changed for M12 and M13):** a tier lasts 20 kills or **3 minutes** (was 4), whichever comes first, so a player who only hides still moves up. New enemy types and smarter behavior arrive by tier:
 
-### [ ] M12: More enemy types
-- For example a fast runner zombie, a slow tank, an exploder that blows up near you.
+| Tier | Reached at (whichever first) | New enemy (M12) | Enemies learn (M13) |
+|---|---|---|---|
+| 1 | start | zombies, shooters (as now) | nothing new (as now) |
+| 2 | 20 kills or 3:00 | runner | hear gunshots and come to the sound |
+| 3 | 40 kills or 6:00 | tank | shooters take cover behind props |
+| 4 | 60 kills or 9:00 | exploder | zombies come from several sides |
+| 5+ | every 20 kills or 3:00 | all types | faster spawns, tougher enemies (as now) |
 
-### [ ] M13: Smarter enemies
-- Enemies hear gunshots and come to the sound; shooters take cover behind props; zombies come from several sides.
+### [ ] M10: Medkits and armor (batch 1)
+- Regeneration only up to 75 HP (same delay and speed as now); above that only medkits heal.
+- Medkit pickups heal (amount tuned in M18); armor pickups give 50 armor, up to 100. Armor takes half of each hit until it runs out. The HUD shows armor.
+- Both spawn like ammo boxes; their own sound when picked up.
 
-### [ ] M14: Hazards
-- Explosive barrels you can shoot (they hurt enemies and you), acid floor.
+### [ ] M11: More weapons (batch 1)
+- Keep the current gun; add a shotgun (several pellets in a spread, strong up close, slow) and a rifle (accurate, high damage, slow).
+- Each gun has its own ammo type, found as pickups. You start with the current gun and find the others on the map (gun pickups).
+- Switch with 1, 2, 3 and the mouse wheel. Changes the PRD's "one gun" rule.
+- Own sprites for the gun in hand and pickups; own shot sounds.
 
-### [ ] M15: Waves
-- Waves with short breaks between them (reload, loot), as a choice next to the endless survival of now.
+### [ ] M12: More enemy types (batch 1)
+- Runner (fast, weak) from tier 2, tank (slow, tough, hits hard) from tier 3, exploder (runs at you, blows up near you or when shot) from tier 4; see the tier table.
+- Own sprites and sounds.
 
-### [ ] M16: Game feel
-- Sprint with stamina, a marker showing where a hit came from, a hit marker on the crosshair, screen shake on big hits, footstep sounds.
+### [ ] M13: Smarter enemies (batch 2)
+- Enemies start dumb (as now) and learn by tier (table above): tier 2 they hear gunshots and come to the sound; tier 3 shooters take cover behind props; tier 4 zombies come from several sides.
+- Anti-camping: after 60 seconds without a kill, every enemy hunts the player directly (heads straight for them), until the next kill.
 
-### [ ] M17: 3D sound
-- Louder when close, quieter far away, left/right stereo, so you hear where enemies are.
+### [ ] M14: Hazards (batch 1)
+- Explosive barrels: a new red barrel map character; the gray barrel stays plain cover. Shooting one blows it up and hurts enemies and the player nearby; chain reactions with other red barrels.
+- Acid floor: a new green map character that hurts while you stand on it; placed on a few maps.
+- Explosion sound.
 
-### [ ] M18: Balancing and a new demo
-- Carried over from P1-18: playtest tiers 3+, ammo cap, the new pickups and weapons; record a new demo. Always last.
+### [ ] M15: Waves (batch 2)
+- A second mode next to endless survival, chosen when you press Play: 10 waves with a 15-second break between them (reload, pick things up); you win after wave 10. Bests kept per mode.
+
+### [ ] M16: Game feel (batch 1)
+- Sprint while F is held, with stamina (drains while sprinting, refills when not); the HUD shows it.
+- A marker showing which way a hit came from; a hit marker on the crosshair when you hit; screen shake on big hits (explosions, tank hits); footstep sounds while walking.
+
+### [ ] M17: 3D sound (batch 2)
+- Louder when close, quieter far away, and panned left/right toward the source, so you hear where enemies are. Needs stereo playback (oto supports it).
+
+### [ ] M18: Balancing and a new demo (batch 2, always last)
+- Carried over from P1-18: playtest tiers 3+, the ammo cap, the new pickups, weapons, enemies, hazards and waves; record a new demo.

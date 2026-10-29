@@ -307,3 +307,10 @@ Format: what, why, trade-off, revisit when.
 - Why: at 60 FPS a frame has 16.7 ms; our draw + present were most of it in a big window. The minimap hid the horizon, where enemies appear.
 - Not changed: present (filling tcell's buffer, mostly tcell's own Put) and show (the terminal). In big windows those still limit the frame rate; 30 FPS or Render scale auto help.
 - Revisit when: the user's re-test; if present is still the limit, an adapter-side cache that skips unchanged cells (helps when standing still, not while turning).
+
+## D49: Gameplay plan M10-M18 (2026-10-30)
+- What: decided with the user, details in TASKS.md "Gameplay". Two batches with a review after each: batch 1 M10 (medkits, armor), M11 (shotgun and rifle), M12 (runner, tank, exploder), M14 (red explosive barrels, acid floor), M16 (sprint on F with stamina, hit-direction marker, hit marker, screen shake, footsteps); batch 2 M13 (smarter enemies, anti-camping), M15 (waves mode), M17 (3D sound), M18 (balancing and demo, last). Choices: regeneration only up to 75 HP; armor takes half of each hit, up to 100, pickups give 50; each gun has its own ammo; guns found on the map, switched with 1/2/3 and the mouse wheel (this ends the PRD's "one gun" rule, updated with M11); waves: 10 waves, 15 s breaks, a win after wave 10, chosen at Play; stereo 3D sound; every new thing gets a sound.
+- Tiers: a tier now lasts 20 kills or 3 minutes (was 4), whichever first. New enemy types (runner tier 2, tank tier 3, exploder tier 4) and enemy learning (tier 2 hearing gunshots, tier 3 shooters using cover, tier 4 flanking) come by tier, so a player who only hides still meets them at 3:00, 6:00, 9:00, and an aggressive one sooner. Anti-camping (M13): after 60 s without a kill, every enemy hunts the player directly until the next kill.
+- Why: the user wanted difficulty to grow with time as well as kills, enemies to start dumb and learn, and camping not to be safe.
+- Trade-off: the shorter tier time makes the mid game harder; M18 balances it.
+- Revisit when: the batch 1 review, and M18.

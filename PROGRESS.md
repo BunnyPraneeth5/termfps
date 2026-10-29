@@ -246,3 +246,8 @@ Template:
 - Reviewed the user's Take 4 recording (frames extracted with ffmpeg): looks good; zoomed out at 60 FPS it ran 30-53 FPS (draw 5-9 ms, present 5-8 ms, show 3-21 ms); at normal zoom the minimap covered about half the view's height.
 - Done (one commit each; build, vet, gofmt, all tests pass): V8 faster DrawFrame (250x65 open hall 2.1 -> 0.87 ms, D48); M1 follow-up: minimap at most a third of the view rows.
 - Not done: user's re-test on screen; present and show not changed (tcell and the terminal); not pushed.
+
+## 2026-10-30 (plan for M10-M18)
+- Pushed V6-V8, M1-M9 and the minimap follow-up (ffdeb6f..3c608d3); CI passed on Windows and Ubuntu.
+- Planned M10-M18 with the user (D49): two batches (M10, M11, M12, M14, M16; then M13, M15, M17, M18), tiers every 20 kills or 3 minutes, new enemies and enemy learning by tier, anti-camping after 60 s without a kill. Only the .md files changed; no code.
+- Next: the user says when to start batch 1.
