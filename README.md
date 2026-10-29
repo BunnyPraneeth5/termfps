@@ -155,7 +155,7 @@ Flags override the saved settings for that launch.
 | `-keys async\|events` | `async` on Windows, `events` elsewhere | `async` reads real key state (Windows only, ignored while the window isn't focused). `events` uses terminal key events. Terminals that report key releases (Windows Terminal, kitty, Ghostty, foot, WezTerm outside Windows) give exact held keys, so moving and turning at the same time works; the HUD then shows `keys events (releases)`. Other terminals only repeat the last key pressed, so moving and turning at the same time may not work, and a quick tap turns and moves a little (about 25 degrees). |
 | `-aspect X` | `1.0` | Pixel height / width (0.5-2.0). Change it if walls look squashed or stretched with your font. |
 | `-textures=false` | on | Flat gray walls instead of brick, stone and metal textures. |
-| `-map file.txt` | none | Play a map of your own: it's added to Select map and picked. Maps in a `maps` folder next to your save file (`%AppData%	ermfps\maps` on Windows, `~/.config/termfps/maps` on Linux) are added too, always unlocked. The format is in ARCHITECTURE.md ("Map format"); a map without a `; name:` line is named after its file. |
+| `-map file.txt` | none | Play a map of your own: it's added to Select map and picked. Maps in a `maps` folder next to your save file (`%AppData%\termfps\maps` on Windows, `~/.config/termfps/maps` on Linux) are added too, always unlocked. The format is in ARCHITECTURE.md ("Map format"); a map without a `; name:` line is named after its file. |
 
 Example: `.\termfps.exe -fps 60 -aspect 0.9`
 
