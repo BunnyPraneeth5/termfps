@@ -238,5 +238,6 @@ Template:
   - M5 `a6d2436`: the four maps rebuilt with rooms, doors, cover, lamps and lighting (D47 design rules).
   - M6: The Office and The Subway.
 - Tests: game, world, render, save, term pass with the new tests; Smart App Control blocked app (M7-M9 menu/config tests) and main (map loading, design rules, custom maps; ran once for M9) at various points. Not worked around. The map build script checked widths, borders, doors and reachability.
-- Not done: `go test ./...` by the user; on-screen review of M1-M9 (user); V6, V7 on-screen check still open; not pushed.
+- Final run after M6: build, vet, gofmt clean and `go test ./...` passes for every package here, main and app included (the blocked tests ran this time).
+- Not done: on-screen review of M1-M9 (user); V6, V7 on-screen check still open; not pushed.
 - Next: the user's review.
