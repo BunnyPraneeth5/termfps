@@ -344,7 +344,7 @@ All the ideas from the 2026-10-25/26 discussion, added to the plan first (D40). 
 ### [~] M5: Redesign all four maps
 - Rebuilt from scratch with M2-M4, so every map follows the same design rules: real layouts (rooms, a loading dock, buildings you can enter), cover, landmarks.
 
-### [ ] M6: New maps
+### [~] M6: New maps
 - Two to four more, for example a sewer, an office floor, a hospital, a subway station.
 
 ### [~] M7: Map unlock rule

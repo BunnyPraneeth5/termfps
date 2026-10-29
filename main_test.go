@@ -27,6 +27,8 @@ func TestEmbeddedMapsParse(t *testing.T) {
 		{"The Warehouse", 32, 32},
 		{"The Yard", 64, 32},
 		{"The Tunnel", 16, 64},
+		{"The Office", 32, 24}, // M6
+		{"The Subway", 48, 20}, // M6
 	}
 	if len(maps) != len(want) {
 		t.Fatalf("%d maps, want %d", len(maps), len(want))

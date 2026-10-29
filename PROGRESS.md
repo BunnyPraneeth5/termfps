@@ -224,3 +224,19 @@ Template:
 - V7 committed: texture contrast up (texMin 0.3), floor base 140. Build, vet, gofmt, all tests pass.
 - Next: user's review of V7 on screen and the V6 decision.
 - Update: the user chose to keep V6; committed as it was built and tested (Settings "Render scale", default auto).
+
+## 2026-10-29 (M1-M9: maps and world)
+- The user chose M1-M9 as the next batch, then a review.
+- Done (one commit each; build, vet, gofmt clean):
+  - M1 `27e1d5f`: minimap window at most 16x16 cells, with a border.
+  - M2 `7191119`: props b c i l L , x as sprites; crates, barrels, pillars are cover (shots and line of sight); lamps block movement; CastRay on a shared DDA walker.
+  - M3 `2c54074`: sliding doors D: open when the player or an enemy is near, stay 2.5 s, never close on someone; rays and shots through the gap; enemies path through doors.
+  - M4 `9debf75`: "; fog:" and "; darkness:" headers; lamps light what they can see within 4.5 cells (walls, closed doors, cover cast shadows); L flickers.
+  - M7 `b014ad0`: Settings "Map unlocks": survive 5:00 (default), 2:00, all open.
+  - M8 `a0b05cb`: minimap fog of war (Settings, on by default).
+  - M9 `7a6e054`: custom maps: a maps folder next to save.json and -map file.txt; always open.
+  - M5 `a6d2436`: the four maps rebuilt with rooms, doors, cover, lamps and lighting (D47 design rules).
+  - M6: The Office and The Subway.
+- Tests: game, world, render, save, term pass with the new tests; Smart App Control blocked app (M7-M9 menu/config tests) and main (map loading, design rules, custom maps; ran once for M9) at various points. Not worked around. The map build script checked widths, borders, doors and reachability.
+- Not done: `go test ./...` by the user; on-screen review of M1-M9 (user); V6, V7 on-screen check still open; not pushed.
+- Next: the user's review.
