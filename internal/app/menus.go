@@ -114,6 +114,9 @@ func (a *App) mapMenu() *menuScreen {
 		if b, ok := a.progress.Best[m.Name]; ok { // ok is false if the map has no best yet
 			it.Label += fmt.Sprintf("   best %s, %d kills", render.Clock(b.Time), b.Kills)
 		}
+		if i >= a.builtinMaps() {
+			it.Label += "   (your map)" // M9
+		}
 		if a.mapLocked(i) {
 			it.Disabled = true
 			it.Label += fmt.Sprintf("   locked: survive %s on %s", render.Clock(unlockAfter(a.cfg.UnlockRule)), a.maps[i-1].Name)

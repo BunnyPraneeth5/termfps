@@ -6,10 +6,12 @@ package main
 
 import (
 	"embed"
+	"errors"
 	"flag"
 	"fmt"
 	"io/fs"
 	"os"
+	"path/filepath"
 	"runtime"
 	"runtime/debug"
 	"strings"
@@ -41,7 +43,7 @@ func main() {
 // process exit code. exitCode is a named result so the deferred panic
 // handler can change it.
 func run() (exitCode int) {
-	flagCfg, explicit, ok := parseFlags()
+	flagCfg, explicit, mapPath, ok := parseFlags()
 	if !ok {
 		return 2
 	}
@@ -61,6 +63,27 @@ func run() (exitCode int) {
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "termfps:", err)
 		return 1
+	}
+	// The player's own maps (M9) come after the built-in ones: those in the
+	// maps folder next to the save file, then the one given with -map.
+	cfg.BuiltinMaps = len(maps)
+	taken := map[string]bool{}
+	for _, m := range maps {
+		taken[m.Name] = true
+	}
+	if saved.Store != nil {
+		custom, problem := loadCustomMaps(filepath.Join(filepath.Dir(saved.Store.Path), "maps"), taken)
+		maps = append(maps, custom...)
+		saved.Message = strings.TrimSpace(saved.Message + " " + problem)
+	}
+	if mapPath != "" {
+		m, err := loadMapFile(mapPath, taken)
+		if err != nil {
+			fmt.Fprintln(os.Stderr, "termfps: -map:", err)
+			return 2
+		}
+		maps = append(maps, m)
+		cfg.StartMap = len(maps) - 1 // Play starts on it
 	}
 
 	// Open audio before the screen: audio libraries may print warnings, which
@@ -130,8 +153,9 @@ func withFlags(cfg, flagCfg app.Config, explicit map[string]bool) app.Config {
 // parseFlags reads and checks the command-line flags. On a bad value it
 // prints why and returns ok = false. explicit holds the names of the flags
 // given on the command line (not left at their defaults).
-func parseFlags() (cfg app.Config, explicit map[string]bool, ok bool) {
+func parseFlags() (cfg app.Config, explicit map[string]bool, mapPath string, ok bool) {
 	targetFPS := flag.Int("fps", 30, "target frames per second (1-240)")
+	mapFile := flag.String("map", "", "a map file of your own to play: it's added to Select map and picked (M9)")
 	// Real key state (async) is the default on Windows, where it exists (D19).
 	defaultKeys := "events"
 	if runtime.GOOS == "windows" {
@@ -148,22 +172,22 @@ func parseFlags() (cfg app.Config, explicit map[string]bool, ok bool) {
 
 	if *aspect < 0.5 || *aspect > 2.0 {
 		fmt.Fprintf(os.Stderr, "termfps: -aspect must be between 0.5 and 2.0, got %v\n", *aspect)
-		return cfg, nil, false
+		return cfg, nil, "", false
 	}
 	if *targetFPS < 1 || *targetFPS > 240 {
 		fmt.Fprintf(os.Stderr, "termfps: -fps must be between 1 and 240, got %d\n", *targetFPS)
-		return cfg, nil, false
+		return cfg, nil, "", false
 	}
 	switch *keyMode {
 	case "events":
 	case "async":
 		if err := input.AsyncSupported(); err != nil {
 			fmt.Fprintln(os.Stderr, "termfps: -keys async:", err)
-			return cfg, nil, false
+			return cfg, nil, "", false
 		}
 	default:
 		fmt.Fprintf(os.Stderr, "termfps: -keys must be events or async, got %q\n", *keyMode)
-		return cfg, nil, false
+		return cfg, nil, "", false
 	}
 
 	return app.Config{
@@ -183,7 +207,7 @@ func parseFlags() (cfg app.Config, explicit map[string]bool, ok bool) {
 		RenderScale:     "auto",
 		UnlockRule:      "5:00",
 		MinimapFog:      true,
-	}, explicit, true
+	}, explicit, *mapFile, true
 }
 
 // loadMaps parses every maps/*.txt file in fsys, in file name order (the
@@ -214,4 +238,56 @@ func loadMaps(fsys fs.FS) ([]*world.Map, error) {
 		return nil, fmt.Errorf("no maps in maps/")
 	}
 	return maps, nil
+}
+
+// loadCustomMaps reads the player's own maps from dir (M9): every .txt
+// file, in file name order. A missing folder just means none. A file that
+// can't be used is skipped, and problem names it for the menus.
+func loadCustomMaps(dir string, taken map[string]bool) (maps []*world.Map, problem string) {
+	entries, err := os.ReadDir(dir) // sorted by file name
+	if errors.Is(err, fs.ErrNotExist) {
+		return nil, ""
+	}
+	if err != nil {
+		return nil, fmt.Sprintf("Couldn't read your maps folder: %v.", err)
+	}
+	var bad []string
+	for _, e := range entries {
+		if e.IsDir() || !strings.EqualFold(filepath.Ext(e.Name()), ".txt") {
+			continue
+		}
+		m, err := loadMapFile(filepath.Join(dir, e.Name()), taken)
+		if err != nil {
+			bad = append(bad, err.Error())
+			continue
+		}
+		maps = append(maps, m)
+	}
+	if len(bad) > 0 {
+		problem = "Skipped maps: " + strings.Join(bad, "; ") + "."
+	}
+	return maps, problem
+}
+
+// loadMapFile reads one map of the player's own. Without a "; name:"
+// header it's named after the file; a name already taken gets the file
+// name added, so every map in the menu (and its best) is told apart.
+func loadMapFile(path string, taken map[string]bool) (*world.Map, error) {
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return nil, err // the error already names the file
+	}
+	base := filepath.Base(path)
+	m, err := world.Parse(data)
+	if err != nil {
+		return nil, fmt.Errorf("%s: %w", base, err)
+	}
+	if m.Name == "" {
+		m.Name = strings.TrimSuffix(base, filepath.Ext(base))
+	}
+	if taken[m.Name] {
+		m.Name += " (" + base + ")"
+	}
+	taken[m.Name] = true
+	return m, nil
 }

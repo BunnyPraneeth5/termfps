@@ -2,6 +2,9 @@ package main
 
 import (
 	"io/fs"
+	"os"
+	"path/filepath"
+	"strings"
 	"testing"
 	"testing/fstest"
 
@@ -78,5 +81,42 @@ func TestWithFlags(t *testing.T) {
 	got := withFlags(saved, flags, map[string]bool{"fps": true, "textures": true})
 	if got.FPS != 120 || !got.Textures || got.KeyMode != "events" || got.PixelAspect != 1.5 {
 		t.Errorf("withFlags = %+v, want fps and textures from flags, the rest saved", got)
+	}
+}
+
+// The player's own maps (M9): every .txt file in the folder, in name order;
+// a map without a name is named after its file, a taken name gets the file
+// name added, and a broken file is skipped and named in the problem.
+func TestLoadCustomMaps(t *testing.T) {
+	dir := t.TempDir() // removed when the test ends
+	files := map[string]string{
+		"a.txt":    "; name: The Arena\n###\n#P#\n###\n", // name taken by a built-in map
+		"b.txt":    "###\n#P#\n###\n",                    // no name header
+		"c.txt":    "; name: C\n#P#\n",                   // too small: broken
+		"notes.md": "not a map",
+		"d.TXT":    "; name: D\n###\n#P#\n###\n",
+	}
+	for name, content := range files {
+		if err := os.WriteFile(filepath.Join(dir, name), []byte(content), 0o644); err != nil {
+			t.Fatal(err)
+		}
+	}
+	taken := map[string]bool{"The Arena": true}
+	maps, problem := loadCustomMaps(dir, taken)
+	var names []string
+	for _, m := range maps {
+		names = append(names, m.Name)
+	}
+	if got := strings.Join(names, ", "); got != "The Arena (a.txt), b, D" {
+		t.Errorf("custom maps = %q, want \"The Arena (a.txt), b, D\"", got)
+	}
+	if !strings.Contains(problem, "c.txt") {
+		t.Errorf("problem = %q, want it to name the broken c.txt", problem)
+	}
+	if maps, problem := loadCustomMaps(filepath.Join(dir, "missing"), taken); maps != nil || problem != "" {
+		t.Errorf("missing folder: %v, %q; want no maps and no problem", maps, problem)
+	}
+	if _, err := loadMapFile(filepath.Join(dir, "nope.txt"), taken); err == nil {
+		t.Error("loadMapFile of a missing file: no error")
 	}
 }

@@ -331,3 +331,23 @@ func TestUnlockRuleSetting(t *testing.T) {
 		t.Errorf("the open rule changed the saved progress to %d", a.progress.UnlockedMaps)
 	}
 }
+
+// The player's own maps (M9) are never locked and don't count for unlocks;
+// StartMap picks the one -map named.
+func TestCustomMapsOpen(t *testing.T) {
+	m, err := world.Parse([]byte(testMap))
+	if err != nil {
+		t.Fatal(err)
+	}
+	cfg := Config{FPS: 30, KeyMode: "events", PixelAspect: 1, BuiltinMaps: 2, StartMap: 2}
+	a := New(term.NewFake(80, 24), []*world.Map{m, m.Clone(), m.Clone()}, cfg, t0)
+	if !a.mapLocked(1) || a.mapLocked(2) {
+		t.Errorf("locked: built-in 2 %v, custom %v; want true, false", a.mapLocked(1), a.mapLocked(2))
+	}
+	if a.mapIndex != 2 {
+		t.Errorf("map index %d, want 2 (StartMap)", a.mapIndex)
+	}
+	if a.builtinMaps() != 2 {
+		t.Errorf("builtinMaps = %d, want 2", a.builtinMaps())
+	}
+}

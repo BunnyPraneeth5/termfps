@@ -115,7 +115,7 @@ func (p *playingScreen) tick(a *App, now time.Time, dt float64) {
 	if st.HasEvent(game.EventTierUp) {
 		a.tierUntil = now.Add(tierNoticeFor)
 	}
-	n := unlocks(a.progress.UnlockedMaps, a.mapIndex, st.Time, len(a.maps), unlockAfter(a.cfg.UnlockRule))
+	n := unlocks(a.progress.UnlockedMaps, a.mapIndex, st.Time, a.builtinMaps(), unlockAfter(a.cfg.UnlockRule))
 	if a.cfg.UnlockRule != "open" && n > a.progress.UnlockedMaps { // with all maps open there is nothing to announce
 		a.progress.UnlockedMaps = n
 		a.persist()

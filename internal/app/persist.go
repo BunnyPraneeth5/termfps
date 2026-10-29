@@ -60,7 +60,7 @@ func (a *App) useSaved(s Saved) {
 	if a.progress.Best == nil {
 		a.progress.Best = map[string]save.Best{} // a nil map can't be written to
 	}
-	a.progress.UnlockedMaps = min(max(a.progress.UnlockedMaps, 1), len(a.maps))
+	a.progress.UnlockedMaps = min(max(a.progress.UnlockedMaps, 1), a.builtinMaps())
 	a.switchTo(a.titleMenu()) // rebuilt, so it shows the load problem
 }
 

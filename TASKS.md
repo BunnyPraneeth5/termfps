@@ -354,7 +354,7 @@ All the ideas from the 2026-10-25/26 discussion, added to the plan first (D40). 
 ### [~] M8: Minimap fog of war
 - The minimap shows only places you've seen.
 
-### [ ] M9: Custom maps
+### [~] M9: Custom maps
 - A `-map file.txt` flag and a maps folder next to the save file, for your own maps.
 
 ## Gameplay

@@ -47,6 +47,19 @@ type Config struct {
 	UnlockRule string
 	// MinimapFog shows only the cells already seen on the minimap (M8).
 	MinimapFog bool
+	// BuiltinMaps is how many of the maps are the game's own (M9); the rest
+	// are the player's, always open. 0 means all of them (tests).
+	BuiltinMaps int
+	// StartMap is the map Play starts on at first (M9: -map picks one).
+	StartMap int
+}
+
+// builtinMaps is how many maps are the game's own, which unlock in order.
+func (a *App) builtinMaps() int {
+	if a.cfg.BuiltinMaps > 0 {
+		return min(a.cfg.BuiltinMaps, len(a.maps))
+	}
+	return len(a.maps)
 }
 
 // unlockRules are the UnlockRule choices, in menu order, with their labels.
@@ -64,9 +77,10 @@ func unlockAfter(rule string) float64 {
 	return 5 * 60
 }
 
-// mapLocked reports whether map i can't be played yet.
+// mapLocked reports whether map i can't be played yet. The player's own
+// maps (M9) are never locked.
 func (a *App) mapLocked(i int) bool {
-	return a.cfg.UnlockRule != "open" && i >= a.progress.UnlockedMaps
+	return a.cfg.UnlockRule != "open" && i >= a.progress.UnlockedMaps && i < a.builtinMaps()
 }
 
 // renderScale is the Frame scale for a terminal cols wide.
@@ -160,6 +174,9 @@ func New(scr term.Screen, maps []*world.Map, cfg Config, now time.Time) *App {
 		focused: true,
 		start:   now,
 		last:    now,
+	}
+	if cfg.StartMap > 0 && cfg.StartMap < len(maps) {
+		a.mapIndex = cfg.StartMap // -map (M9)
 	}
 	// A state exists from the start, so the render mode has a home before
 	// the first run.
