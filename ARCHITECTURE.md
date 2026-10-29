@@ -265,7 +265,7 @@ A grid distance map (BFS) from the player's cell, recomputed only when the playe
 - Weapon overlay and crosshair are drawn into the Frame after sprites, so all render modes show them.
 
 ### Maps
-`//go:embed maps/*.txt` into an `embed.FS`; every file is parsed at startup (a broken map is an error before the screen opens, like now). Optional first lines starting with `;` are headers (`; name: The Warehouse`). The minimap draws a window (at most 16x16 cells since M1) centered on the player when the map is bigger than the space it has, inside a one-cell border.
+`//go:embed maps/*.txt` into an `embed.FS`; every file is parsed at startup (a broken map is an error before the screen opens, like now). Optional first lines starting with `;` are headers (`; name: The Warehouse`). The minimap draws a window (at most 16x16 cells since M1, and at most a third of the view rows across and down, D48) centered on the player when the map is bigger than the space it has, inside a one-cell border.
 
 ### Saving
 `os.UserConfigDir()` + `termfps/save.json`. Write to `save.json.tmp`, then rename over `save.json`. On load: missing file = defaults (first run); unparsable or invalid file = rename to `save.json.bad`, use defaults, show a message in the menu; a file that exists but can't be read is left alone, with a message. Flags given on the command line win over saved settings (D34).

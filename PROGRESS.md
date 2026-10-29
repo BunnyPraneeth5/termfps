@@ -241,3 +241,8 @@ Template:
 - Final run after M6: build, vet, gofmt clean and `go test ./...` passes for every package here, main and app included (the blocked tests ran this time).
 - Not done: on-screen review of M1-M9 (user); V6, V7 on-screen check still open; not pushed.
 - Next: the user's review.
+
+## 2026-10-30 (Take 4 review: V8, minimap size)
+- Reviewed the user's Take 4 recording (frames extracted with ffmpeg): looks good; zoomed out at 60 FPS it ran 30-53 FPS (draw 5-9 ms, present 5-8 ms, show 3-21 ms); at normal zoom the minimap covered about half the view's height.
+- Done (one commit each; build, vet, gofmt, all tests pass): V8 faster DrawFrame (250x65 open hall 2.1 -> 0.87 ms, D48); M1 follow-up: minimap at most a third of the view rows.
+- Not done: user's re-test on screen; present and show not changed (tcell and the terminal); not pushed.

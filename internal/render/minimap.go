@@ -48,8 +48,12 @@ const (
 func DrawMinimap(s term.Screen, st *game.State, fog bool) bool {
 	m := st.Map
 	w, h := s.Size()
-	viewW := min(m.W, minimapMaxW, (w-2)/minimapCellWidth) // the border's two columns
-	viewH := min(m.H, minimapMaxH, h-3)                    // the border's two rows, and the HUD row
+	// At most a third of the view rows across and down (M1 follow-up), so
+	// on a normal-size terminal it stays clear of the horizon, where
+	// enemies show up.
+	limit := max(minimapMinCells, (h-1)/3)
+	viewW := min(m.W, minimapMaxW, (w-2)/minimapCellWidth, limit) // the border's two columns
+	viewH := min(m.H, minimapMaxH, h-3, limit)                    // the border's two rows, and the HUD row
 	if viewW < min(m.W, minimapMinCells) || viewH < min(m.H, minimapMinCells) {
 		return false
 	}

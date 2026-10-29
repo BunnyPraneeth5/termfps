@@ -335,6 +335,7 @@ All the ideas from the 2026-10-25/26 discussion, added to the plan first (D40). 
 
 ### [~] M1: Minimap size and border
 - The scrolling window shows at most 16x16 map cells (now 24x16); a 16x16 map like the Arena keeps its full size. A border goes around the minimap so it stands apart from the 3D view.
+- Follow-up (D48, from the Take 4 review): the window is also at most a third of the view rows across and down, so on a normal-size terminal it stays clear of the horizon.
 
 ### [~] M2: Props
 - Barrels, crates, pillars, lamps, debris, bodies: map characters drawn as sprites. Some block movement and bullets (crates, pillars), some don't (debris).

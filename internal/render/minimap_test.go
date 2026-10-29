@@ -117,8 +117,9 @@ func TestMinimapWindow(t *testing.T) {
 	}
 }
 
-// On a map bigger than the minimap's space, it shows a 16x16 window around
-// the player (M1), and the player's arrow is inside it.
+// On a map bigger than the minimap's space, it shows a window around the
+// player, and the player's arrow is inside it. On 80x24 the window is 7x7
+// cells: at most a third of the 23 view rows (M1 follow-up).
 func TestDrawMinimapScrolls(t *testing.T) {
 	scr := term.NewFake(80, 24)
 	var b strings.Builder
@@ -143,20 +144,20 @@ func TestDrawMinimapScrolls(t *testing.T) {
 	if !DrawMinimap(scr, st, false) {
 		t.Fatal("DrawMinimap returned false for a big map on 80x24")
 	}
-	// Window origin: x 40-8 = 32, y 20-8 = 12. Player at view cell (8, 8).
-	const x0 = 80 - 16*2 - 1
-	if str, _ := scr.Get(x0+8*2, 1+8); str != "→" {
-		t.Errorf("view cell (8, 8) = %q, want the player's arrow →", str)
+	// Window origin: x 40-3 = 37, y 20-3 = 17. Player at view cell (3, 3).
+	const x0 = 80 - 7*2 - 1
+	if str, _ := scr.Get(x0+3*2, 1+3); str != "→" {
+		t.Errorf("view cell (3, 3) = %q, want the player's arrow →", str)
 	}
-	// Row 17 is the bottom border; below it is the 3D view.
-	if str, _ := scr.Get(x0, 17); str != "─" {
-		t.Errorf("row 17 = %q, want the bottom border", str)
+	// Row 8 is the bottom border; below it is the 3D view.
+	if str, _ := scr.Get(x0, 8); str != "─" {
+		t.Errorf("row 8 = %q, want the bottom border", str)
 	}
-	if _, style := scr.Get(x0, 18); style == minimapFloor || style == minimapWall {
-		t.Error("minimap drew more than 16 rows")
+	if _, style := scr.Get(x0, 9); style == minimapFloor || style == minimapWall {
+		t.Error("minimap drew more than 7 rows")
 	}
 	if _, style := scr.Get(x0-2, 1); style == minimapFloor || style == minimapWall {
-		t.Error("minimap drew more than 16 cells across")
+		t.Error("minimap drew more than 7 cells across")
 	}
 }
 
@@ -184,5 +185,36 @@ func TestDrawMinimapFog(t *testing.T) {
 	}
 	if str, _ := scr.Get(x0+2, 1+3); str != "→" {
 		t.Errorf("player cell = %q, want the arrow even unseen", str)
+	}
+}
+
+// On a taller terminal the window grows with it, up to 16x16 cells: at 60
+// rows a third is 19, so a 64x32 map shows 16x16.
+func TestMinimapGrowsWithTerminal(t *testing.T) {
+	var b strings.Builder
+	for y := 0; y < 32; y++ {
+		for x := 0; x < 64; x++ {
+			switch {
+			case x == 0 || y == 0 || x == 63 || y == 31:
+				b.WriteByte('#')
+			case x == 40 && y == 20:
+				b.WriteByte('P')
+			default:
+				b.WriteByte('.')
+			}
+		}
+		b.WriteByte('\n')
+	}
+	m, err := world.Parse([]byte(b.String()))
+	if err != nil {
+		t.Fatal(err)
+	}
+	scr := term.NewFake(160, 60)
+	DrawMinimap(scr, game.NewState(m), false)
+	if str, _ := scr.Get(160-16*2-2, 0); str != "┌" {
+		t.Errorf("top-left border = %q, want ┌ for a 16-cell window", str)
+	}
+	if str, _ := scr.Get(160-16*2-2, 17); str != "└" {
+		t.Errorf("bottom-left border = %q, want └ after 16 rows", str)
 	}
 }
