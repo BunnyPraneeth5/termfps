@@ -295,3 +295,9 @@ Format: what, why, trade-off, revisit when.
 - Trade-off: V7 makes textures busier, so a few more color changes per frame.
 - Revisit when: a big-window mode is wanted (then: an FPS cap by size, or ASCII by size).
 - Update: the user chose to keep V6 and commit it (auto is the default, so windows up to 160 columns are unchanged).
+
+## D47: Map design rules and the new maps (2026-10-29)
+- What: M5 rebuilt the four maps (same names and sizes, so saved bests and unlocks still match) and M6 added The Office (32x24) and The Subway (48x20), unlocking after The Tunnel. Every built-in map follows the same rules: rooms or areas joined by doors and openings, with at least one loop (no long dead ends to get cornered in); cover props (crates, barrels, pillars) in every open area; each area recognizable by its wall material and lamps; a lighting header that fits the place (outdoor yard: light fog; tunnel and subway: dark, flickering lamps); 1-3 starting enemies and a few red targets. `TestEmbeddedMapsFollowDesignRules` checks the countable parts. The maps are drawn by a script (in the session scratchpad, not the repo) that also checks widths, borders, doors and reachability.
+- Other choices made without asking (for the user's review): M7 is a setting with the old 5:00 as default; M3 doors open by walking up (no key); lamps block movement but not shots; the minimap fog of war is on by default.
+- Trade-off: darker maps make enemies harder to see; tune with the darkness header.
+- Revisit when: the user's on-screen review of M1-M9.

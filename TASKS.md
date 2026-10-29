@@ -341,7 +341,7 @@ All the ideas from the 2026-10-25/26 discussion, added to the plan first (D40). 
 ### [~] M4: Lighting per map
 - Header lines for fog and darkness; lamps that light nearby walls and floor; some flickering lights.
 
-### [ ] M5: Redesign all four maps
+### [~] M5: Redesign all four maps
 - Rebuilt from scratch with M2-M4, so every map follows the same design rules: real layouts (rooms, a loading dock, buildings you can enter), cover, landmarks.
 
 ### [ ] M6: New maps

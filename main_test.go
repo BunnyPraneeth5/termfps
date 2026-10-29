@@ -41,6 +41,8 @@ func TestEmbeddedMapsParse(t *testing.T) {
 
 // Every open cell must be reachable from the spawn, so the whole map can be
 // walked (PRD success criterion) and the spawner never picks a sealed cell.
+// Doors count as open (enemies and the player open them); cells a prop
+// fills don't need to be reached.
 func TestEmbeddedMapsAllReachable(t *testing.T) {
 	maps, err := loadMaps(mapFiles)
 	if err != nil {
@@ -49,7 +51,7 @@ func TestEmbeddedMapsAllReachable(t *testing.T) {
 	for _, m := range maps {
 		dist := world.DistanceField(m, int(m.SpawnX), int(m.SpawnY), nil)
 		for i, c := range m.Cells {
-			if !c.Solid() && dist[i] < 0 {
+			if !c.Solid() && !c.BlocksMove() && dist[i] < 0 {
 				t.Errorf("%s: open cell (%d, %d) can't be reached from the spawn", m.Name, i%m.W, i/m.W)
 			}
 		}
@@ -118,5 +120,37 @@ func TestLoadCustomMaps(t *testing.T) {
 	}
 	if _, err := loadMapFile(filepath.Join(dir, "nope.txt"), taken); err == nil {
 		t.Error("loadMapFile of a missing file: no error")
+	}
+}
+
+// The map design rules (M5, D47): every built-in map has a lighting
+// header, lamps, cover, a door, starting enemies and red targets.
+func TestEmbeddedMapsFollowDesignRules(t *testing.T) {
+	maps, err := loadMaps(mapFiles)
+	if err != nil {
+		t.Fatalf("loadMaps: %v", err)
+	}
+	for _, m := range maps {
+		cover, targets := 0, 0
+		for _, c := range m.Cells {
+			switch {
+			case c.BlocksShot():
+				cover++
+			case c == world.Target:
+				targets++
+			}
+		}
+		switch {
+		case m.Fog == 0 && m.Darkness == 0:
+			t.Errorf("%s: no fog or darkness header", m.Name)
+		case len(m.Lamps) == 0:
+			t.Errorf("%s: no lamps", m.Name)
+		case cover < 3:
+			t.Errorf("%s: %d cover props, want 3 or more", m.Name, cover)
+		case len(m.Doors) == 0:
+			t.Errorf("%s: no doors", m.Name)
+		case len(m.EnemyStarts) == 0 || targets == 0:
+			t.Errorf("%s: %d starting enemies, %d targets; want some of each", m.Name, len(m.EnemyStarts), targets)
+		}
 	}
 }
