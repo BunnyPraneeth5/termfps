@@ -24,14 +24,20 @@ const (
 	Hurt
 	Pickup
 	TierUp
-	Medkit       // M10
-	ArmorUp      // M10: picking up armor
-	ArmorHit     // M10: armor took part of a hit
-	ShotgunBlast // M11
-	RifleShot    // M11
-	GunSwitch    // M11
-	GunPickup    // M11: finding a new gun
-	NumEffects   // not an effect: how many there are
+	Medkit        // M10
+	ArmorUp       // M10: picking up armor
+	ArmorHit      // M10: armor took part of a hit
+	ShotgunBlast  // M11
+	RifleShot     // M11
+	GunSwitch     // M11
+	GunPickup     // M11: finding a new gun
+	Explosion     // M12
+	FuseBeep      // M12: an exploder lit its fuse
+	TankSmash     // M12: a tank hit you
+	RunnerScreech // M12: a runner arrived
+	TankRoar      // M12: a tank arrived
+	ExploderHiss  // M12: an exploder arrived
+	NumEffects    // not an effect: how many there are
 )
 
 // peak is the loudest sample any effect may have, below 1.0 so several
@@ -136,6 +142,35 @@ func Generate(e Effect) []float64 {
 				v += 0.35 * square(sweep(dt, 0.22, 500, 1100)) * decay(dt, 9)
 			}
 			return v
+		})
+	case Explosion: // a long, low roar of noise with a deep boom
+		low := 0.0
+		s = synth(1.3, func(t float64) float64 {
+			low += (noise() - low) * 0.05 // a simple low-pass: rumbling noise
+			return 2.5*low*attack(t, 0.005)*decay(t, 2.5) + 0.8*math.Sin(2*math.Pi*sweep(t, 1.3, 60, 25))*decay(t, 3) + 0.5*noise()*decay(t, 20)
+		})
+	case FuseBeep: // three fast high beeps
+		s = synth(0.45, func(t float64) float64 {
+			dt := math.Mod(t, 0.15)
+			return 0.4 * square(1800*dt) * decay(dt, 30)
+		})
+	case TankSmash: // a heavy thud with a crunch
+		s = synth(0.4, func(t float64) float64 {
+			return 0.9*math.Sin(2*math.Pi*sweep(t, 0.4, 110, 45))*decay(t, 9) + 0.5*noise()*decay(t, 30)
+		})
+	case RunnerScreech: // a rising, rough shriek
+		s = synth(0.5, func(t float64) float64 {
+			f := sweep(t, 0.5, 600, 1300) + 4*math.Sin(2*math.Pi*30*t)
+			return 0.4 * saw(f) * attack(t, 0.05) * decay(t, 5)
+		})
+	case TankRoar: // a very low, long growl
+		s = synth(1.2, func(t float64) float64 {
+			f := 55 - 15*t + 4*math.Sin(2*math.Pi*6*t)
+			return 0.6 * (saw(f*t) + 0.5*square(f*t/2)) * attack(t, 0.2) * decay(t, 2)
+		})
+	case ExploderHiss: // a hiss that swells, like a lit fuse
+		s = synth(0.8, func(t float64) float64 {
+			return 0.5 * noise() * attack(t, 0.4) * decay(t, 4) * (0.7 + 0.3*math.Sin(2*math.Pi*9*t))
 		})
 	default:
 		panic("audio: unknown effect")

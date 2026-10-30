@@ -63,6 +63,7 @@ func Update(s *State, in Input, dt float64) {
 	movePlayer(s, in, dt)
 	markSeen(s) // after moving: what the player sees from where they are now
 	updateEnemies(s, dt)
+	updateBlasts(s, dt) // after shots and enemies, so a blast they set off goes off this frame
 	updateSurvival(s, dt)
 	updatePickups(s, dt)
 }

@@ -67,3 +67,11 @@ func TestGunShotSounds(t *testing.T) {
 		t.Errorf("rifle shot sounds = %v, want only the rifle", got)
 	}
 }
+
+// The M12 enemies arrive with their own sound instead of the groan.
+func TestNewEnemySpawnSounds(t *testing.T) {
+	got := soundsFor([]game.Event{game.EventEnemySpawned, game.EventTankSpawned})
+	if !slices.Equal(got, []audio.Effect{audio.TankRoar}) {
+		t.Errorf("tank spawn sounds = %v, want only the roar", got)
+	}
+}

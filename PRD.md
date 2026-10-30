@@ -70,7 +70,7 @@ Tasks: TASKS.md "P1". Decisions: DECISIONS.md D21-D31.
 
 **Survival rules**
 - Enemies spawn at random free cells that you can't see and that are at least a few cells away.
-- **Difficulty tiers:** every **20 kills or 4 minutes, whichever comes first**, the next tier starts. Enemies get more HP and damage, move a bit faster, and spawn more often, with more alive at once. The HUD shows the tier. Exact numbers are tuned in balancing (P1-18).
+- **Difficulty tiers:** every **20 kills or 3 minutes (4 before M12, D49), whichever comes first**, the next tier starts; from tier 2, 3 and 4 runners, tanks and exploders join (M12). Enemies get more HP and damage, move a bit faster, and spawn more often, with more alive at once. The HUD shows the tier. Exact numbers are tuned in balancing (P1-18).
 - **Score:** kills, time survived, tier reached.
 - **Player:** 100 HP. Health pickups or slow regeneration are open for balancing (P1-18), not planned yet.
 

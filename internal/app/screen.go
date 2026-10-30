@@ -180,9 +180,10 @@ func (a *App) drawScene() {
 	render.DrawFrame(st, &a.frame)
 	a.sprites = a.sprites[:0]
 	for _, e := range st.Enemies {
-		a.sprites = append(a.sprites, render.Sprite{
-			X: e.X, Y: e.Y, Image: enemyImage(e.Kind), Height: 0.8, Flash: e.Flashing(),
-		})
+		a.sprites = append(a.sprites, render.EnemySprite(e))
+	}
+	for _, b := range st.Booms { // explosions (M12)
+		a.sprites = append(a.sprites, render.BoomSprite(b))
 	}
 	for _, pr := range st.Map.Props { // barrels, crates, lamps, ... (M2)
 		a.sprites = append(a.sprites, render.PropSprite(pr.Kind, pr.X, pr.Y))
@@ -194,17 +195,6 @@ func (a *App) drawScene() {
 	render.DrawWeapon(&a.frame, st.Player)
 	render.DrawCrosshair(&a.frame)
 	render.DrawHurt(&a.frame, st.Player)
-}
-
-// enemyImage is the sprite picture for an enemy kind.
-func enemyImage(k game.EnemyKind) *render.Image {
-	switch k {
-	case game.KindZombie:
-		return render.ZombieImage
-	case game.KindShooter:
-		return render.ShooterImage
-	}
-	panic(fmt.Sprintf("no image for enemy kind %d", k))
 }
 
 // isGunKey reports whether the key is a gun number key (1-3, M11).

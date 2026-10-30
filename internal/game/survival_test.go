@@ -63,7 +63,7 @@ func TestTierUpByTime(t *testing.T) {
 	s.Time = TierTime - frameDT/2
 	Update(s, Input{}, frameDT)
 	if s.Tier != 2 {
-		t.Errorf("tier %d after 4 minutes, want 2", s.Tier)
+		t.Errorf("tier %d after 3 minutes, want 2", s.Tier)
 	}
 }
 
@@ -121,17 +121,15 @@ func TestSpawnScaledByTier(t *testing.T) {
 		t.Fatal("nothing spawned")
 	}
 	e := s.Enemies[0]
-	base := ZombieHP
-	if e.Kind == KindShooter {
-		base = ShooterHP
-	}
+	base := newEnemy(e.Kind, 0, 0).HP
 	want := int(math.Round(float64(base) * TierFor(3).HPMul))
 	if e.HP != want || e.damageMul != TierFor(3).DamageMul {
 		t.Errorf("tier 3 spawn: HP %d, damage x%.2f; want %d and x%.2f", e.HP, e.damageMul, want, TierFor(3).DamageMul)
 	}
 }
 
-// Over many spawns at a high tier, about half are shooters.
+// Over many spawns at a high tier, about half of the zombies and shooters
+// are shooters (the M12 kinds come on top).
 func TestShooterShare(t *testing.T) {
 	s := survivalState(t)
 	s.Tier = 10 // ShooterShare 0.5 (capped)
@@ -140,14 +138,17 @@ func TestShooterShare(t *testing.T) {
 		Update(s, Input{}, frameDT)
 		s.Player.HP = PlayerMaxHP
 		if count(s, EventEnemySpawned) > 0 {
-			total++
-			if s.Enemies[len(s.Enemies)-1].Kind == KindShooter {
+			switch s.Enemies[len(s.Enemies)-1].Kind {
+			case KindShooter:
 				shooters++
+				total++
+			case KindZombie:
+				total++
 			}
 			s.Enemies = s.Enemies[:0] // clear so spawning continues
 		}
 	}
-	if total < 30 {
+	if total < 20 {
 		t.Fatalf("only %d spawns", total)
 	}
 	if share := float64(shooters) / float64(total); share < 0.3 || share > 0.7 {

@@ -38,6 +38,28 @@ const (
 	ShooterAccPerCell = 0.11
 	ShooterAccMin     = 0.25
 
+	RunnerHP             = 20  // M12: one pistol shot at tier 2
+	RunnerSpeed          = 3.2 // a little faster than the player walks
+	RunnerMeleeDamageMin = 4
+	RunnerMeleeDamageMax = 6
+	RunnerMeleeInterval  = 0.6
+	RunnerFirstHitDelay  = 0.2
+
+	TankHP             = 300 // M12: 3 rifle shots, 12 pistol shots
+	TankSpeed          = 0.9
+	TankMeleeRange     = 0.95
+	TankMeleeDamageMin = 20
+	TankMeleeDamageMax = 26
+	TankMeleeInterval  = 1.6
+	TankFirstHitDelay  = 0.6
+	TankHitRadius      = 0.4 // it's big
+
+	ExploderHP        = 40 // M12
+	ExploderSpeed     = 2.2
+	ExploderFuseRange = 1.3 // it lights its fuse this close to the player
+	ExploderFuse      = 0.6 // seconds from lighting the fuse to the blast
+	ExploderDamage    = 50  // blast damage at its center (Explosion falls off from there)
+
 	// EnemyHitRadius: a shot hits an enemy if it passes this close to its
 	// center (about the width of its sprite).
 	EnemyHitRadius = 0.3
@@ -53,8 +75,11 @@ const (
 type EnemyKind int
 
 const (
-	KindZombie  EnemyKind = iota // green, melee
-	KindShooter                  // red, ranged
+	KindZombie   EnemyKind = iota // green, melee
+	KindShooter                   // red, ranged
+	KindRunner                    // blue, fast and weak, melee (M12, tier 2)
+	KindTank                      // big and gray, slow, tough, hits hard (M12, tier 3)
+	KindExploder                  // yellow, runs at you and blows up (M12, tier 4)
 )
 
 // Enemy is one enemy in the world.
@@ -66,6 +91,7 @@ type Enemy struct {
 	attackCD float64 // seconds until it may attack again
 	flash    float64 // seconds left of its white "hit" flash
 	sawLast  bool    // shooter: it saw the player last frame
+	fuse     float64 // exploder: seconds until it blows up; 0 = not lit (M12)
 
 	// Tier scaling (P1-08), set when it spawns; 1 for map enemies.
 	damageMul, speedMul float64
@@ -76,9 +102,31 @@ func (e Enemy) damage(base int) int {
 	return int(math.Round(float64(base) * e.damageMul))
 }
 
-// Flashing reports whether the enemy was just shot (drawn white).
+// Flashing reports whether the enemy is drawn white: it was just shot, or
+// it's an exploder whose fuse is lit (it blinks, M12).
 func (e Enemy) Flashing() bool {
-	return e.flash > 0
+	return e.flash > 0 || (e.fuse > 0 && int(e.fuse*12)%2 == 0)
+}
+
+// melee is how a melee enemy kind moves and hits.
+type melee struct {
+	speed, reach, interval, firstDelay float64
+	damageMin, damageMax               int
+}
+
+// meleeKinds holds the numbers of the enemies that walk up and hit.
+var meleeKinds = map[EnemyKind]melee{
+	KindZombie: {ZombieSpeed, ZombieMeleeRange, ZombieMeleeInterval, ZombieFirstHitDelay, ZombieMeleeDamageMin, ZombieMeleeDamageMax},
+	KindRunner: {RunnerSpeed, ZombieMeleeRange, RunnerMeleeInterval, RunnerFirstHitDelay, RunnerMeleeDamageMin, RunnerMeleeDamageMax},
+	KindTank:   {TankSpeed, TankMeleeRange, TankMeleeInterval, TankFirstHitDelay, TankMeleeDamageMin, TankMeleeDamageMax},
+}
+
+// hitRadius is how close to its center a shot must pass to hit it.
+func (e Enemy) hitRadius() float64 {
+	if e.Kind == KindTank {
+		return TankHitRadius
+	}
+	return EnemyHitRadius
 }
 
 // newZombie returns a zombie standing at (x, y).
@@ -89,6 +137,24 @@ func newZombie(x, y float64) Enemy {
 // newShooter returns a shooter standing at (x, y).
 func newShooter(x, y float64) Enemy {
 	return Enemy{Kind: KindShooter, X: x, Y: y, HP: ShooterHP, damageMul: 1, speedMul: 1}
+}
+
+// newEnemy returns an enemy of kind k standing at (x, y) (M12).
+func newEnemy(k EnemyKind, x, y float64) Enemy {
+	e := Enemy{Kind: k, X: x, Y: y, damageMul: 1, speedMul: 1}
+	switch k {
+	case KindZombie:
+		return newZombie(x, y)
+	case KindShooter:
+		return newShooter(x, y)
+	case KindRunner:
+		e.HP, e.attackCD = RunnerHP, RunnerFirstHitDelay
+	case KindTank:
+		e.HP, e.attackCD = TankHP, TankFirstHitDelay
+	case KindExploder:
+		e.HP = ExploderHP
+	}
+	return e
 }
 
 // updateEnemies moves every enemy and lets it attack. It refreshes the
@@ -103,30 +169,56 @@ func updateEnemies(s *State, dt float64) {
 		e.flash = max(e.flash-dt, 0)
 		e.attackCD = max(e.attackCD-dt, 0)
 		switch e.Kind {
-		case KindZombie:
-			updateZombie(s, e, dt)
+		case KindZombie, KindRunner, KindTank:
+			updateMelee(s, e, meleeKinds[e.Kind], dt)
 		case KindShooter:
 			updateShooter(s, e, dt)
+		case KindExploder:
+			updateExploder(s, e, dt)
 		}
 		if s.Player.Dead() {
-			return
+			break
+		}
+	}
+	// Exploders that went off are gone (they aren't kills: the player
+	// didn't shoot them). DeleteFunc keeps the others in order.
+	s.Enemies = slices.DeleteFunc(s.Enemies, func(e Enemy) bool { return e.HP <= 0 })
+}
+
+// updateMelee walks a zombie, runner or tank toward the player and hits
+// when in reach.
+func updateMelee(s *State, e *Enemy, m melee, dt float64) {
+	p := s.Player
+	if math.Hypot(p.X-e.X, p.Y-e.Y) > m.reach {
+		e.attackCD = max(e.attackCD, m.firstDelay) // fresh delay on (re)arrival
+		chase(s, e, m.speed*e.speedMul*dt)
+		return
+	}
+	if e.attackCD == 0 {
+		base := m.damageMin + s.Rand.IntN(m.damageMax-m.damageMin+1) // IntN(n): 0..n-1
+		hurtPlayer(s, e.damage(base))
+		e.attackCD = m.interval
+		if e.Kind == KindTank {
+			s.Events = append(s.Events, EventTankHit)
 		}
 	}
 }
 
-// updateZombie walks toward the player and hits when in reach.
-func updateZombie(s *State, e *Enemy, dt float64) {
-	p := s.Player
-	if math.Hypot(p.X-e.X, p.Y-e.Y) > ZombieMeleeRange {
-		e.attackCD = max(e.attackCD, ZombieFirstHitDelay) // fresh delay on (re)arrival
-		chase(s, e, ZombieSpeed*e.speedMul*dt)
-		return
+// updateExploder runs at the player and lights its fuse when close; when
+// the fuse burns down it blows up where it is (M12).
+func updateExploder(s *State, e *Enemy, dt float64) {
+	if e.fuse > 0 {
+		e.fuse -= dt
+		if e.fuse <= 0 {
+			e.HP = 0 // removed after the loop
+			addBlast(s, e.X, e.Y, e.damage(ExploderDamage), 0)
+			return
+		}
+	} else if math.Hypot(s.Player.X-e.X, s.Player.Y-e.Y) <= ExploderFuseRange {
+		e.fuse = ExploderFuse
+		s.Events = append(s.Events, EventExploderArmed)
 	}
-	if e.attackCD == 0 {
-		base := ZombieMeleeDamageMin + s.Rand.IntN(ZombieMeleeDamageMax-ZombieMeleeDamageMin+1) // IntN(n): 0..n-1
-		hurtPlayer(s, e.damage(base))
-		e.attackCD = ZombieMeleeInterval
-	}
+	chase(s, e, ExploderSpeed*e.speedMul*dt)
 }
 
 // updateShooter fires when it sees the player within range, backs off when
@@ -236,7 +328,7 @@ func shotHitsEnemy(s *State, dirX, dirY, maxDist float64) int {
 		if along <= 0 || along >= best {
 			continue
 		}
-		if off := math.Abs(rx*dirY - ry*dirX); off <= EnemyHitRadius { // sideways distance
+		if off := math.Abs(rx*dirY - ry*dirX); off <= e.hitRadius() { // sideways distance
 			hit, best = i, along
 		}
 	}
@@ -244,12 +336,19 @@ func shotHitsEnemy(s *State, dirX, dirY, maxDist float64) int {
 }
 
 // damageEnemy hurts enemy i; at 0 HP it is removed and counts as a kill.
+// An exploder killed this way blows up where it was (M12).
 func damageEnemy(s *State, i, damage int) {
 	e := &s.Enemies[i]
+	if e.HP <= 0 {
+		return // already dead (an exploder whose fuse just ran out)
+	}
 	e.HP -= damage
 	e.flash = enemyFlashTime
 	s.Events = append(s.Events, EventEnemyHit)
 	if e.HP <= 0 {
+		if e.Kind == KindExploder {
+			addBlast(s, e.X, e.Y, e.damage(ExploderDamage), 0)
+		}
 		s.Enemies = slices.Delete(s.Enemies, i, i+1) // remove it, keeping the order
 		s.Kills++
 		s.Events = append(s.Events, EventEnemyKilled)

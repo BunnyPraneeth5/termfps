@@ -29,6 +29,12 @@ const (
 	EventShotgunFired                       // the shot was a shotgun's (also EventShotFired, M11)
 	EventRifleFired                         // the shot was a rifle's (also EventShotFired, M11)
 	EventGunTaken                           // the player found a new gun (M11)
+	EventExplosion                          // something blew up (M12)
+	EventExploderArmed                      // an exploder lit its fuse (M12)
+	EventTankHit                            // a tank hit the player (M12)
+	EventRunnerSpawned                      // the spawner added a runner (also EventEnemySpawned, M12)
+	EventTankSpawned                        // the spawner added a tank (also EventEnemySpawned, M12)
+	EventExploderSpawned                    // the spawner added an exploder (also EventEnemySpawned, M12)
 )
 
 // HasEvent reports whether e happened in the last Update.

@@ -387,7 +387,7 @@ Decided with the user on 2026-10-30 (D49). Order and batches: **batch 1** M10, M
 - Switch with 1, 2, 3 and the mouse wheel. Changes the PRD's "one gun" rule.
 - Own sprites for the gun in hand and pickups; own shot sounds.
 
-### [ ] M12: More enemy types (batch 1)
+### [~] M12: More enemy types (batch 1)
 - Runner (fast, weak) from tier 2, tank (slow, tough, hits hard) from tier 3, exploder (runs at you, blows up near you or when shot) from tier 4; see the tier table.
 - Own sprites and sounds.
 

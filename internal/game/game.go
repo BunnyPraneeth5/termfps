@@ -93,6 +93,11 @@ type State struct {
 	// Map.Cells, for the minimap's fog of war (M8).
 	Seen []bool
 
+	// Booms are the explosions on screen (M12); blasts are explosions
+	// waiting to go off.
+	Booms  []Boom
+	blasts []blast
+
 	// dist is the distance field from the player's cell (distCell), used by
 	// enemies to walk around walls. -1 = not computed yet.
 	dist     []int

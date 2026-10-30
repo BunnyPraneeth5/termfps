@@ -28,10 +28,12 @@ type HUD struct {
 // compass names the 8 directions in the same order as the minimap arrows.
 var compass = [8]string{"E", "SE", "S", "SW", "W", "NW", "N", "NE"}
 
-// DrawHUD writes the HUD on the last row. The first part (health, armor, ammo,
-// kills, tier, time, facing) always shows. The extras (FPS, render mode, position, timings,
-// key mode) are added in order only while they fit whole, so nothing is cut
-// off mid-word at 80 columns. A Notice goes on the row(s) just above, over
+// DrawHUD writes the HUD on the last row. The first part (health, armor,
+// gun and ammo, kills, tier, time) always shows. The extras (FPS, render
+// mode, facing, timings, position, key mode) are added in order only while
+// they fit whole, so nothing is cut off mid-word at 80 columns. (Facing
+// moved from the first part to the extras in M12: armor and the gun name
+// took its room; the minimap arrow shows it too.) A Notice goes on the row(s) just above, over
 // the bottom of the 3D view, never over the minimap (which sits at the top).
 func DrawHUD(s term.Screen, h HUD) {
 	w, rows := s.Size()
@@ -42,8 +44,8 @@ func DrawHUD(s term.Screen, h HUD) {
 
 	p := h.Player
 	deg := int(math.Round(p.Angle*180/math.Pi)) % 360
-	line := fmt.Sprintf("HP %3d ARMOR %d | %s | KILLS %d | TIER %d | %s | %3d° %-2s",
-		p.HP, p.Armor, ammoText(*p.Weapon()), h.Kills, h.Tier, Clock(h.Time), deg, compass[dirIndex(p.Angle)])
+	line := fmt.Sprintf("HP %3d ARMOR %d | %s | KILLS %d | TIER %d | %s",
+		p.HP, p.Armor, ammoText(*p.Weapon()), h.Kills, h.Tier, Clock(h.Time))
 
 	var extras []string
 	if h.MinimapHidden {
@@ -52,8 +54,9 @@ func DrawHUD(s term.Screen, h HUD) {
 	extras = append(extras,
 		fmt.Sprintf(" | FPS %4.1f", h.FPS),
 		" | "+h.Mode.String(),
-		fmt.Sprintf(" | x %5.2f y %5.2f", p.X, p.Y),
+		fmt.Sprintf(" | %3d° %s", deg, compass[dirIndex(p.Angle)]),
 		fmt.Sprintf(" | draw %.2f present %.2f show %.2f ms", ms(h.Draw), ms(h.Present), ms(h.Show)),
+		fmt.Sprintf(" | x %5.2f y %5.2f", p.X, p.Y),
 		" | "+h.Keys,
 	)
 	for _, e := range extras {

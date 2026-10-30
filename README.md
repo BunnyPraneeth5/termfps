@@ -119,9 +119,17 @@ area around you and scrolls as you move.
 - **Shooters (red)** keep their distance and shoot when they can see you
   (8 damage, less accurate from far away). Each takes 2 hits. Break line of
   sight to stay safe.
-- More enemies keep coming, out of your sight. Every 20 kills or 4 minutes
+- More enemies keep coming, out of your sight. Every 20 kills or 3 minutes
   the **tier** goes up: enemies get tougher, faster and more frequent, and
-  more of them are shooters. How long can you last?
+  more of them are shooters. New kinds join as the tiers go up:
+  - **Runners (blue)** from tier 2: fast and weak (one pistol shot).
+  - **Tanks (big, gray)** from tier 3: slow, take 300 damage, hit for 20-26.
+  - **Exploders (yellow)** from tier 4: run at you, light a fuse when close
+    (they blink and beep) and blow up a moment later. Shoot them first: they
+    blow up where they stand, hurting the enemies around them.
+  - Explosions hurt everyone within 2.5 cells, less farther away; walls
+    shield you, crates don't.
+- How long can you last?
 - **Guns:** you start with the **pistol** (25 rounds, 3 shots per second).
   The **shotgun** (8 pellets in a spread: deadly up close, weak far away, 6
   shells) shows up on the map after 0:30, the **rifle** (accurate, 100
@@ -151,10 +159,10 @@ area around you and scrolls as you move.
   characters in color on a dim fill of the same color.
 - **Minimap** (top right): walls, floor, red blocks, pickups, and an arrow
   showing where you are and which way you face.
-- **HUD** (bottom line): health, armor, ammo, kills, tier, time survived, facing
-  angle and compass direction.
-  If the window is wide enough, it also shows FPS, render mode, position,
-  frame timings and the input mode.
+- **HUD** (bottom line): health, armor, the gun in hand and its ammo, kills,
+  tier, time survived.
+  If the window is wide enough, it also shows FPS, render mode, facing angle
+  and compass direction, frame timings, position and the input mode.
 
 ## Options
 

@@ -12,11 +12,15 @@ import (
 
 // Enemy and pickup images, parsed from the built-in assets at startup.
 var (
-	ZombieImage  = mustParseImage("zombie", assets.Zombie)
-	ShooterImage = mustParseImage("shooter", assets.Shooter)
-	AmmoImage    = mustParseImage("ammo", assets.Ammo)
-	medkitImage  = mustParseImage("medkit", assets.Medkit)
-	armorImage   = mustParseImage("armor", assets.ArmorVest)
+	ZombieImage   = mustParseImage("zombie", assets.Zombie)
+	ShooterImage  = mustParseImage("shooter", assets.Shooter)
+	runnerImage   = mustParseImage("runner", assets.Runner)
+	tankImage     = mustParseImage("tank", assets.Tank)
+	exploderImage = mustParseImage("exploder", assets.Exploder)
+	boomImage     = mustParseImage("boom", assets.Boom)
+	AmmoImage     = mustParseImage("ammo", assets.Ammo)
+	medkitImage   = mustParseImage("medkit", assets.Medkit)
+	armorImage    = mustParseImage("armor", assets.ArmorVest)
 
 	// Ammo for the shotgun and rifle, and the guns lying on the floor (M11).
 	shellsImage        = mustParseImage("shells", assets.Shells)
@@ -63,6 +67,7 @@ type Sprite struct {
 	Image  *Image
 	Height float64 // height in map cells (1 = as tall as a wall)
 	Flash  bool    // draw every opaque pixel white (just got shot)
+	Glow   bool    // gives its own light: no fog or map darkness (explosions, M12)
 
 	dist float64 // distance from the camera, for sorting (set by DrawSprites)
 }
@@ -135,6 +140,9 @@ func drawSprite(f *Frame, p game.Player, s Sprite) {
 	// The same distance fog as walls, and the light of the sprite's cell
 	// (M4). No side darkening: sprites always face the camera.
 	fog := 1 / (1 + f.fogK()*depth) * f.light.at(int(math.Floor(s.X)), int(math.Floor(s.Y)))
+	if s.Glow {
+		fog = 1
+	}
 
 	x0 := max(int(math.Floor(left)), 0)
 	x1 := min(int(math.Ceil(left+pixW)), f.W)
@@ -191,4 +199,31 @@ func PickupSprite(pk game.Pickup) Sprite {
 		panic(fmt.Sprintf("render: no sprite for pickup kind %d, gun %d", pk.Kind, pk.Gun))
 	}
 	return s
+}
+
+// EnemySprite returns the sprite for enemy e: its picture and height by
+// kind, white while it flashes.
+func EnemySprite(e game.Enemy) Sprite {
+	s := Sprite{X: e.X, Y: e.Y, Height: 0.8, Flash: e.Flashing()}
+	switch e.Kind {
+	case game.KindZombie:
+		s.Image = ZombieImage
+	case game.KindShooter:
+		s.Image = ShooterImage
+	case game.KindRunner:
+		s.Image, s.Height = runnerImage, 0.75
+	case game.KindTank:
+		s.Image, s.Height = tankImage, 1.0
+	case game.KindExploder:
+		s.Image, s.Height = exploderImage, 0.65
+	default:
+		panic(fmt.Sprintf("render: no sprite for enemy kind %d", e.Kind))
+	}
+	return s
+}
+
+// BoomSprite returns the sprite for an explosion (M12): it grows as it
+// ages and gives its own light.
+func BoomSprite(b game.Boom) Sprite {
+	return Sprite{X: b.X, Y: b.Y, Image: boomImage, Height: 0.7 + 0.8*b.Age/game.BoomTime, Glow: true}
 }

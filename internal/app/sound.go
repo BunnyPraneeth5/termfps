@@ -14,21 +14,27 @@ type Sound struct {
 // eventSounds says which effect each game event plays (D37). Events not
 // listed are silent.
 var eventSounds = map[game.Event]audio.Effect{
-	game.EventShotFired:     audio.Gunshot,
-	game.EventEmptyClick:    audio.EmptyClick,
-	game.EventReloadStarted: audio.Reload,
-	game.EventEnemyShot:     audio.EnemyShot,
-	game.EventPlayerHurt:    audio.Hurt,
-	game.EventPickupTaken:   audio.Pickup,
-	game.EventMedkitTaken:   audio.Medkit,
-	game.EventArmorTaken:    audio.ArmorUp,
-	game.EventArmorHit:      audio.ArmorHit,
-	game.EventTierUp:        audio.TierUp,
-	game.EventEnemySpawned:  audio.ZombieGroan, // "something arrived" cue
-	game.EventShotgunFired:  audio.ShotgunBlast,
-	game.EventRifleFired:    audio.RifleShot,
-	game.EventGunSwitched:   audio.GunSwitch,
-	game.EventGunTaken:      audio.GunPickup,
+	game.EventShotFired:       audio.Gunshot,
+	game.EventEmptyClick:      audio.EmptyClick,
+	game.EventReloadStarted:   audio.Reload,
+	game.EventEnemyShot:       audio.EnemyShot,
+	game.EventPlayerHurt:      audio.Hurt,
+	game.EventPickupTaken:     audio.Pickup,
+	game.EventMedkitTaken:     audio.Medkit,
+	game.EventArmorTaken:      audio.ArmorUp,
+	game.EventArmorHit:        audio.ArmorHit,
+	game.EventTierUp:          audio.TierUp,
+	game.EventEnemySpawned:    audio.ZombieGroan, // "something arrived" cue
+	game.EventShotgunFired:    audio.ShotgunBlast,
+	game.EventRifleFired:      audio.RifleShot,
+	game.EventGunSwitched:     audio.GunSwitch,
+	game.EventGunTaken:        audio.GunPickup,
+	game.EventExplosion:       audio.Explosion,
+	game.EventExploderArmed:   audio.FuseBeep,
+	game.EventTankHit:         audio.TankSmash,
+	game.EventRunnerSpawned:   audio.RunnerScreech,
+	game.EventTankSpawned:     audio.TankRoar,
+	game.EventExploderSpawned: audio.ExploderHiss,
 }
 
 // soundReplaces: when an event here comes with the event it names in the
@@ -37,6 +43,10 @@ var eventSounds = map[game.Event]audio.Effect{
 var soundReplaces = map[game.Event]game.Event{
 	game.EventShotgunFired: game.EventShotFired,
 	game.EventRifleFired:   game.EventShotFired,
+	// The M12 kinds arrive with their own sound instead of the groan.
+	game.EventRunnerSpawned:   game.EventEnemySpawned,
+	game.EventTankSpawned:     game.EventEnemySpawned,
+	game.EventExploderSpawned: game.EventEnemySpawned,
 }
 
 // soundsFor returns the effects for one frame's events, each at most once

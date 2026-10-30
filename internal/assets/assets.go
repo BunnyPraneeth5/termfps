@@ -100,3 +100,18 @@ var Shells []byte
 
 //go:embed rounds.txt
 var Rounds []byte
+
+// The M12 enemies: runner (blue, fast), tank (big, gray), exploder
+// (yellow), and the explosion burst.
+//
+//go:embed runner.txt
+var Runner []byte
+
+//go:embed tank.txt
+var Tank []byte
+
+//go:embed exploder.txt
+var Exploder []byte
+
+//go:embed boom.txt
+var Boom []byte

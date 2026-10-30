@@ -30,13 +30,14 @@ func hudLine(t *testing.T, cols int, h HUD) string {
 
 func TestHUDCoreAt80Columns(t *testing.T) {
 	line := hudLine(t, 80, sampleHUD())
-	for _, want := range []string{"HP", "PISTOL", "KILLS 0", "TIER 0", "0:00", "270° N", "FPS 30.0", "| half-block"} {
+	for _, want := range []string{"HP", "PISTOL", "KILLS 0", "TIER 0", "0:00", "FPS 30.0", "| half-block"} {
 		if !strings.Contains(line, want) {
 			t.Errorf("HUD %q missing %q", line, want)
 		}
 	}
-	// The timings don't fit after the core part at 80 and are left out whole.
-	if strings.Contains(line, "draw") || strings.Contains(line, "keys") {
+	// Facing and the timings don't fit after the core part at 80 and are
+	// left out whole.
+	if strings.Contains(line, "270°") || strings.Contains(line, "draw") || strings.Contains(line, "keys") {
 		t.Errorf("HUD %q includes extras that don't fit at 80", line)
 	}
 }
@@ -122,9 +123,9 @@ func TestHUDNoPartialExtras(t *testing.T) {
 }
 
 func TestHUDWideShowsEverything(t *testing.T) {
-	line := hudLine(t, 160, sampleHUD())
+	line := hudLine(t, 170, sampleHUD())
 	if !strings.Contains(line, "keys async (focused)") || !strings.Contains(line, "draw 0.07") {
-		t.Errorf("HUD %q missing extras at 160 columns", line)
+		t.Errorf("HUD %q missing extras at 170 columns", line)
 	}
 }
 
@@ -150,7 +151,7 @@ func TestHUDOnlyLastRow(t *testing.T) {
 func TestHUDAngleWraps(t *testing.T) {
 	h := sampleHUD()
 	h.Player.Angle = 2*math.Pi - 0.001 // 359.94°, rounds to 360 -> 0
-	if line := hudLine(t, 80, h); !strings.Contains(line, "  0° E") {
+	if line := hudLine(t, 100, h); !strings.Contains(line, "  0° E") {
 		t.Errorf("HUD %q, want 0° E", line)
 	}
 }
@@ -204,5 +205,12 @@ func TestHUDGunName(t *testing.T) {
 	h.Player.Gun = game.Shotgun
 	if line := hudLine(t, 80, h); !strings.Contains(line, "| SHOTGUN  4 / 12 |") {
 		t.Errorf("HUD %q, want SHOTGUN  4 / 12", line)
+	}
+}
+
+// Facing (M12: moved to the extras) shows when there's room.
+func TestHUDFacingWhenWide(t *testing.T) {
+	if line := hudLine(t, 100, sampleHUD()); !strings.Contains(line, "| half-block | 270° N") {
+		t.Errorf("HUD %q, want facing after the mode at 100 columns", line)
 	}
 }

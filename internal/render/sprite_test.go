@@ -183,7 +183,8 @@ func TestEnemyAssetsParse(t *testing.T) {
 	for name, data := range map[string][]byte{"zombie": assets.Zombie, "shooter": assets.Shooter, "ammo": assets.Ammo,
 		"medkit": assets.Medkit, "armor": assets.ArmorVest,
 		"shotgun": assets.Shotgun, "rifle": assets.Rifle, "shotgunpickup": assets.ShotgunPickup,
-		"riflepickup": assets.RiflePickup, "shells": assets.Shells, "rounds": assets.Rounds} {
+		"riflepickup": assets.RiflePickup, "shells": assets.Shells, "rounds": assets.Rounds,
+		"runner": assets.Runner, "tank": assets.Tank, "exploder": assets.Exploder, "boom": assets.Boom} {
 		if _, err := ParseImage(data); err != nil {
 			t.Errorf("%s: %v", name, err)
 		}
@@ -228,5 +229,18 @@ func TestPickupSprites(t *testing.T) {
 		if s := PickupSprite(pk); s.Image == nil || s.Height <= 0 {
 			t.Errorf("pickup %+v: no sprite", pk)
 		}
+	}
+}
+
+// Every enemy kind (M12) has a sprite, and explosions glow and grow.
+func TestEnemyAndBoomSprites(t *testing.T) {
+	for k := game.KindZombie; k <= game.KindExploder; k++ {
+		if s := EnemySprite(game.Enemy{Kind: k}); s.Image == nil || s.Height <= 0 {
+			t.Errorf("enemy kind %d: no sprite", k)
+		}
+	}
+	young, old := BoomSprite(game.Boom{}), BoomSprite(game.Boom{Age: game.BoomTime * 0.9})
+	if !young.Glow || old.Height <= young.Height {
+		t.Errorf("boom sprites: glow %v, height %.2f -> %.2f; want glowing and growing", young.Glow, young.Height, old.Height)
 	}
 }
