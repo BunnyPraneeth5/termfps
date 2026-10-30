@@ -25,16 +25,34 @@ var eventSounds = map[game.Event]audio.Effect{
 	game.EventArmorHit:      audio.ArmorHit,
 	game.EventTierUp:        audio.TierUp,
 	game.EventEnemySpawned:  audio.ZombieGroan, // "something arrived" cue
+	game.EventShotgunFired:  audio.ShotgunBlast,
+	game.EventRifleFired:    audio.RifleShot,
+	game.EventGunSwitched:   audio.GunSwitch,
+	game.EventGunTaken:      audio.GunPickup,
+}
+
+// soundReplaces: when an event here comes with the event it names in the
+// same frame, only its own sound plays (a shotgun shot is also a shot, but
+// shouldn't also sound like the pistol).
+var soundReplaces = map[game.Event]game.Event{
+	game.EventShotgunFired: game.EventShotFired,
+	game.EventRifleFired:   game.EventShotFired,
 }
 
 // soundsFor returns the effects for one frame's events, each at most once
 // (three spawns in one frame groan once).
 func soundsFor(events []game.Event) []audio.Effect {
 	var seen [audio.NumEffects]bool
+	replaced := map[game.Event]bool{}
+	for _, ev := range events {
+		if r, ok := soundReplaces[ev]; ok {
+			replaced[r] = true
+		}
+	}
 	var out []audio.Effect
 	for _, ev := range events {
 		e, ok := eventSounds[ev]
-		if ok && !seen[e] {
+		if ok && !seen[e] && !replaced[ev] {
 			seen[e] = true
 			out = append(out, e)
 		}

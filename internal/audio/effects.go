@@ -24,10 +24,14 @@ const (
 	Hurt
 	Pickup
 	TierUp
-	Medkit     // M10
-	ArmorUp    // M10: picking up armor
-	ArmorHit   // M10: armor took part of a hit
-	NumEffects // not an effect: how many there are
+	Medkit       // M10
+	ArmorUp      // M10: picking up armor
+	ArmorHit     // M10: armor took part of a hit
+	ShotgunBlast // M11
+	RifleShot    // M11
+	GunSwitch    // M11
+	GunPickup    // M11: finding a new gun
+	NumEffects   // not an effect: how many there are
 )
 
 // peak is the loudest sample any effect may have, below 1.0 so several
@@ -108,6 +112,30 @@ func Generate(e Effect) []float64 {
 	case ArmorHit: // a dull metal clank
 		s = synth(0.2, func(t float64) float64 {
 			return (0.4*noise()*decay(t, 40) + 0.5*math.Sin(2*math.Pi*420*t)*decay(t, 16) + 0.3*math.Sin(2*math.Pi*1130*t)*decay(t, 25))
+		})
+	case ShotgunBlast: // a wide, long noise burst over a deep boom
+		s = synth(0.45, func(t float64) float64 {
+			return 0.9*noise()*decay(t, 12) + 0.8*math.Sin(2*math.Pi*sweep(t, 0.45, 90, 40))*decay(t, 7)
+		})
+	case RifleShot: // a sharp crack with a ringing tail
+		s = synth(0.6, func(t float64) float64 {
+			return noise()*decay(t, 45) + 0.4*noise()*decay(t, 6)*0.5 + 0.5*math.Sin(2*math.Pi*120*t)*decay(t, 9)
+		})
+	case GunSwitch: // two quick metal clicks
+		s = synth(0.15, func(t float64) float64 {
+			v := 0.5 * square(2200*t) * decay(t, 120)
+			if dt := t - 0.07; dt >= 0 {
+				v += 0.5 * square(1500*dt) * decay(dt, 90)
+			}
+			return v
+		})
+	case GunPickup: // a rack (noise slide) and a rising beep
+		s = synth(0.4, func(t float64) float64 {
+			v := 0.5 * noise() * attack(t, 0.02) * decay(t, 18)
+			if dt := t - 0.18; dt >= 0 {
+				v += 0.35 * square(sweep(dt, 0.22, 500, 1100)) * decay(dt, 9)
+			}
+			return v
 		})
 	default:
 		panic("audio: unknown effect")

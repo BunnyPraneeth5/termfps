@@ -381,7 +381,7 @@ Decided with the user on 2026-10-30 (D49). Order and batches: **batch 1** M10, M
 - Medkit pickups heal (amount tuned in M18); armor pickups give 50 armor, up to 100. Armor takes half of each hit until it runs out. The HUD shows armor.
 - Both spawn like ammo boxes; their own sound when picked up.
 
-### [ ] M11: More weapons (batch 1)
+### [~] M11: More weapons (batch 1)
 - Keep the current gun; add a shotgun (several pellets in a spread, strong up close, slow) and a rifle (accurate, high damage, slow).
 - Each gun has its own ammo type, found as pickups. You start with the current gun and find the others on the map (gun pickups).
 - Switch with 1, 2, 3 and the mouse wheel. Changes the PRD's "one gun" rule.

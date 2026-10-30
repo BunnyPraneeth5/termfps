@@ -43,7 +43,7 @@ func DrawHUD(s term.Screen, h HUD) {
 	p := h.Player
 	deg := int(math.Round(p.Angle*180/math.Pi)) % 360
 	line := fmt.Sprintf("HP %3d ARMOR %d | %s | KILLS %d | TIER %d | %s | %3d° %-2s",
-		p.HP, p.Armor, ammoText(p.Weapon), h.Kills, h.Tier, Clock(h.Time), deg, compass[dirIndex(p.Angle)])
+		p.HP, p.Armor, ammoText(*p.Weapon()), h.Kills, h.Tier, Clock(h.Time), deg, compass[dirIndex(p.Angle)])
 
 	var extras []string
 	if h.MinimapHidden {
@@ -122,9 +122,10 @@ func Clock(seconds float64) string {
 	return fmt.Sprintf("%d:%02d", s/60, s%60)
 }
 
-// ammoText is the HUD's ammo part: rounds in the gun / spare rounds.
+// ammoText is the HUD's ammo part: the gun in hand (M11), rounds in it /
+// spare rounds.
 func ammoText(w game.Weapon) string {
-	s := fmt.Sprintf("AMMO %2d / %d", w.Mag, w.Reserve)
+	s := fmt.Sprintf("%s %2d / %d", w.Kind.Stats().Name, w.Mag, w.Reserve)
 	if w.Reloading() {
 		s += " RELOADING"
 	}

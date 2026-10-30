@@ -144,3 +144,21 @@ func TestPump(t *testing.T) {
 		t.Errorf("second event = %+v", ev)
 	}
 }
+
+func TestGunKey(t *testing.T) {
+	for r, want := range map[rune]int{'1': 1, '2': 2, '3': 3, '4': 0, '0': 0, 'w': 0} {
+		n, ok := GunKey(term.Key{Code: term.KeyRune, Rune: r})
+		if n != want || ok != (want != 0) {
+			t.Errorf("GunKey(%q) = %d, %v; want %d", r, n, ok, want)
+		}
+	}
+}
+
+func TestMouseWheel(t *testing.T) {
+	cases := map[term.Buttons]int{term.ButtonWheelUp: -1, term.ButtonWheelDown: 1, term.ButtonLeft: 0, 0: 0}
+	for b, want := range cases {
+		if got := MouseWheel(term.Mouse{Buttons: b}); got != want {
+			t.Errorf("MouseWheel(%b) = %d, want %d", b, got, want)
+		}
+	}
+}

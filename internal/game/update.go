@@ -28,6 +28,11 @@ type Input struct {
 	Reload                  bool // reload asked for this frame
 	ToggleMinimap           bool // one-shot: true only on the frame M was pressed
 	CycleRenderMode         bool // one-shot: true only on the frame V was pressed
+	// SelectGun picks a gun by its number key, 1-3 (0 = none); CycleGun
+	// moves to the next (+1) or previous (-1) gun the player has, for the
+	// mouse wheel. Both one-shot (M11).
+	SelectGun int
+	CycleGun  int
 	// TurnSlow and MoveSlow take a fraction (0-1) off the turn and move
 	// speed. Terminal key events use them while a key might still be a
 	// short tap (P1-14). 0 = full speed, so other input can leave them out.

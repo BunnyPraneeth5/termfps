@@ -79,3 +79,24 @@ var Medkit []byte
 
 //go:embed armor.txt
 var ArmorVest []byte
+
+// The shotgun and rifle in hand, lying on the floor as pickups, and their
+// ammo: shotgun shells and rifle rounds (M11). Ammo is the pistol's.
+//
+//go:embed shotgun.txt
+var Shotgun []byte
+
+//go:embed rifle.txt
+var Rifle []byte
+
+//go:embed shotgunpickup.txt
+var ShotgunPickup []byte
+
+//go:embed riflepickup.txt
+var RiflePickup []byte
+
+//go:embed shells.txt
+var Shells []byte
+
+//go:embed rounds.txt
+var Rounds []byte

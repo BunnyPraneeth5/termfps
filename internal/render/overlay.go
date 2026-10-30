@@ -63,9 +63,14 @@ func DrawHurt(f *Frame, p game.Player) {
 	}
 }
 
-// The gun and its muzzle flash, parsed from the built-in assets at startup.
+// The guns in hand (M11: one per GunKind) and the muzzle flash, parsed
+// from the built-in assets at startup.
 var (
-	gunImage   = mustParseImage("gun", assets.Gun)
+	gunImages = [game.NumGuns]*Image{
+		game.Pistol:  mustParseImage("gun", assets.Gun),
+		game.Shotgun: mustParseImage("shotgun", assets.Shotgun),
+		game.Rifle:   mustParseImage("rifle", assets.Rifle),
+	}
 	flashImage = mustParseImage("flash", assets.Flash)
 )
 
@@ -80,7 +85,7 @@ const (
 	bobLift = 0.05
 )
 
-// DrawWeapon draws the gun at the bottom center of the Frame, swaying with
+// DrawWeapon draws the gun in hand at the bottom center of the Frame, swaying with
 // the walking bob, kicked down while the muzzle flash shows, with the flash
 // above the barrel. Call it after the 3D view and sprites, before the
 // crosshair. Being part of the Frame, it shows in every render mode.
@@ -88,17 +93,18 @@ func DrawWeapon(f *Frame, p game.Player) {
 	if f.W <= 0 || f.H <= 0 {
 		return
 	}
+	gunImage := gunImages[p.Weapon().Kind]
 	dh := max(int(math.Round(float64(f.H)*gunHeight)), 1)
 	dw := max(dh*gunImage.W/gunImage.H, 1) // pixels are square, keep the shape
 
 	x0 := f.W/2 - dw/2 + int(math.Round(math.Sin(p.Bob)*bobSway*float64(dw))) // 0 at rest
 	y0 := f.H - dh + int(math.Round(math.Abs(math.Sin(p.Bob))*bobLift*float64(dh)))
-	if p.Weapon.Flashing() {
+	if p.Weapon().Flashing() {
 		y0 += int(math.Round(recoilShare * float64(dh)))
 	}
 	drawImage(f, gunImage, x0, y0, dw, dh)
 
-	if p.Weapon.Flashing() {
+	if p.Weapon().Flashing() {
 		fh := max(dh/3, 3)
 		fw := fh * flashImage.W / flashImage.H
 		// Centered on the barrel tip, overlapping it a little.

@@ -24,7 +24,7 @@ func run(s *State, in Input, n int, count Event) int {
 
 func TestNewWeapon(t *testing.T) {
 	s := newOpenState(t)
-	if w := s.Player.Weapon; w.Mag != 25 || w.Reserve != 50 || w.Reloading() {
+	if w := s.Player.Weapon(); w.Mag != 25 || w.Reserve != 50 || w.Reloading() {
 		t.Errorf("start weapon = %+v, want 25 in the gun, 50 spare, not reloading", w)
 	}
 }
@@ -36,14 +36,14 @@ func TestFireRate(t *testing.T) {
 	if shots != 3 {
 		t.Errorf("shots in 1 s = %d, want 3", shots)
 	}
-	if s.Player.Weapon.Mag != 22 {
-		t.Errorf("magazine = %d after 3 shots, want 22", s.Player.Weapon.Mag)
+	if s.Player.Weapon().Mag != 22 {
+		t.Errorf("magazine = %d after 3 shots, want 22", s.Player.Weapon().Mag)
 	}
 }
 
 func TestReloadTiming(t *testing.T) {
 	s := newOpenState(t)
-	s.Player.Weapon.Mag = 10
+	s.Player.Weapon().Mag = 10
 	if run(s, Input{Reload: true}, 1, EventReloadStarted) != 1 {
 		t.Fatal("R didn't start a reload")
 	}
@@ -51,13 +51,13 @@ func TestReloadTiming(t *testing.T) {
 	if shots := run(s, Input{Fire: true}, 42, EventShotFired); shots != 0 {
 		t.Errorf("fired %d times while reloading", shots)
 	}
-	if !s.Player.Weapon.Reloading() {
+	if !s.Player.Weapon().Reloading() {
 		t.Fatal("reload finished before 1.5 s")
 	}
 	if run(s, Input{}, 3, EventReloaded) != 1 {
 		t.Fatal("reload didn't finish by 1.5 s")
 	}
-	if w := s.Player.Weapon; w.Mag != 25 || w.Reserve != 35 {
+	if w := s.Player.Weapon(); w.Mag != 25 || w.Reserve != 35 {
 		t.Errorf("after reload: %d in the gun, %d spare; want 25 and 35", w.Mag, w.Reserve)
 	}
 }
@@ -65,13 +65,13 @@ func TestReloadTiming(t *testing.T) {
 // Emptying the magazine starts a reload by itself.
 func TestAutoReload(t *testing.T) {
 	s := newOpenState(t)
-	s.Player.Weapon.Mag = 1
+	s.Player.Weapon().Mag = 1
 	Update(s, Input{Fire: true}, frameDT)
-	if s.Player.Weapon.Mag != 0 || !s.Player.Weapon.Reloading() {
-		t.Fatalf("after the last round: %+v, want empty and reloading", s.Player.Weapon)
+	if s.Player.Weapon().Mag != 0 || !s.Player.Weapon().Reloading() {
+		t.Fatalf("after the last round: %+v, want empty and reloading", *s.Player.Weapon())
 	}
 	run(s, Input{}, 46, 0) // 1.53 s
-	if w := s.Player.Weapon; w.Mag != 25 || w.Reserve != 25 {
+	if w := s.Player.Weapon(); w.Mag != 25 || w.Reserve != 25 {
 		t.Errorf("after auto-reload: %d in the gun, %d spare; want 25 and 25", w.Mag, w.Reserve)
 	}
 }
@@ -79,9 +79,9 @@ func TestAutoReload(t *testing.T) {
 // With fewer spares than the magazine needs, reload takes what's there.
 func TestPartialReload(t *testing.T) {
 	s := newOpenState(t)
-	s.Player.Weapon.Mag, s.Player.Weapon.Reserve = 0, 10
+	s.Player.Weapon().Mag, s.Player.Weapon().Reserve = 0, 10
 	run(s, Input{Reload: true}, 50, 0)
-	if w := s.Player.Weapon; w.Mag != 10 || w.Reserve != 0 {
+	if w := s.Player.Weapon(); w.Mag != 10 || w.Reserve != 0 {
 		t.Errorf("after reload: %d in the gun, %d spare; want 10 and 0", w.Mag, w.Reserve)
 	}
 }
@@ -91,7 +91,7 @@ func TestReloadNotNeeded(t *testing.T) {
 	if run(s, Input{Reload: true}, 1, EventReloadStarted) != 0 {
 		t.Error("reload started with a full magazine")
 	}
-	s.Player.Weapon.Mag, s.Player.Weapon.Reserve = 5, 0
+	s.Player.Weapon().Mag, s.Player.Weapon().Reserve = 5, 0
 	if run(s, Input{Reload: true}, 1, EventReloadStarted) != 0 {
 		t.Error("reload started with no spare rounds")
 	}
@@ -100,12 +100,12 @@ func TestReloadNotNeeded(t *testing.T) {
 // With no rounds anywhere, firing only clicks (once per fire interval).
 func TestEmptyClick(t *testing.T) {
 	s := newOpenState(t)
-	s.Player.Weapon.Mag, s.Player.Weapon.Reserve = 0, 0
+	s.Player.Weapon().Mag, s.Player.Weapon().Reserve = 0, 0
 	if shots := run(s, Input{Fire: true}, 30, EventShotFired); shots != 0 {
 		t.Errorf("fired %d shots with no ammo", shots)
 	}
 	s2 := newOpenState(t)
-	s2.Player.Weapon.Mag, s2.Player.Weapon.Reserve = 0, 0
+	s2.Player.Weapon().Mag, s2.Player.Weapon().Reserve = 0, 0
 	if clicks := run(s2, Input{Fire: true}, 30, EventEmptyClick); clicks != 3 {
 		t.Errorf("empty clicks in 1 s = %d, want 3", clicks)
 	}
@@ -150,11 +150,11 @@ func TestWallBlocksShot(t *testing.T) {
 func TestFlashTiming(t *testing.T) {
 	s := newOpenState(t)
 	Update(s, Input{Fire: true}, frameDT)
-	if !s.Player.Weapon.Flashing() {
+	if !s.Player.Weapon().Flashing() {
 		t.Fatal("no flash right after a shot")
 	}
 	run(s, Input{}, 4, 0) // 0.13 s later (0.1 s plus float rounding is 4 frames)
-	if s.Player.Weapon.Flashing() {
+	if s.Player.Weapon().Flashing() {
 		t.Error("flash still on 0.13 s after the shot")
 	}
 }

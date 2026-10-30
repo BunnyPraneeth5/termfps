@@ -18,6 +18,12 @@ var (
 	medkitImage  = mustParseImage("medkit", assets.Medkit)
 	armorImage   = mustParseImage("armor", assets.ArmorVest)
 
+	// Ammo for the shotgun and rifle, and the guns lying on the floor (M11).
+	shellsImage        = mustParseImage("shells", assets.Shells)
+	roundsImage        = mustParseImage("rounds", assets.Rounds)
+	shotgunPickupImage = mustParseImage("shotgunpickup", assets.ShotgunPickup)
+	riflePickupImage   = mustParseImage("riflepickup", assets.RiflePickup)
+
 	barrelImage = mustParseImage("barrel", assets.Barrel)
 	crateImage  = mustParseImage("crate", assets.Crate)
 	pillarImage = mustParseImage("pillar", assets.Pillar)
@@ -162,19 +168,27 @@ func drawSprite(f *Frame, p game.Player, s Sprite) {
 	}
 }
 
-// PickupSprite returns the sprite for a pickup lying at (x, y): an ammo
-// box, a medkit or armor (M10).
+// PickupSprite returns the sprite for a pickup lying at (x, y): ammo for
+// one of the guns, a medkit, armor (M10) or a gun (M11).
 func PickupSprite(pk game.Pickup) Sprite {
 	s := Sprite{X: pk.X, Y: pk.Y}
-	switch pk.Kind {
-	case game.AmmoBox:
+	switch {
+	case pk.Kind == game.AmmoBox && pk.Gun == game.Shotgun:
+		s.Image, s.Height = shellsImage, 0.22
+	case pk.Kind == game.AmmoBox && pk.Gun == game.Rifle:
+		s.Image, s.Height = roundsImage, 0.25
+	case pk.Kind == game.AmmoBox:
 		s.Image, s.Height = AmmoImage, 0.3
-	case game.Medkit:
+	case pk.Kind == game.GunPickup && pk.Gun == game.Shotgun:
+		s.Image, s.Height = shotgunPickupImage, 0.2
+	case pk.Kind == game.GunPickup && pk.Gun == game.Rifle:
+		s.Image, s.Height = riflePickupImage, 0.2
+	case pk.Kind == game.Medkit:
 		s.Image, s.Height = medkitImage, 0.3
-	case game.ArmorVest:
+	case pk.Kind == game.ArmorVest:
 		s.Image, s.Height = armorImage, 0.35
 	default:
-		panic(fmt.Sprintf("render: no sprite for pickup kind %d", pk.Kind))
+		panic(fmt.Sprintf("render: no sprite for pickup kind %d, gun %d", pk.Kind, pk.Gun))
 	}
 	return s
 }

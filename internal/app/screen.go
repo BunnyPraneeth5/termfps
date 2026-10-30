@@ -28,8 +28,10 @@ type screen interface {
 type mouseButton int
 
 const (
-	mouseLeft  mouseButton = iota // shoot; pick menu items
-	mouseRight                    // reload
+	mouseLeft      mouseButton = iota // shoot; pick menu items
+	mouseRight                        // reload
+	mouseWheelUp                      // previous gun (M11); one call per notch, always "down"
+	mouseWheelDown                    // next gun (M11)
 )
 
 // playingScreen is the game itself: 3D view, minimap and HUD.
@@ -41,6 +43,8 @@ type playingScreen struct {
 	cycleMode     bool
 	fire          bool
 	reload        bool
+	selectGun     int // gun number key pressed (M11), 0 = none
+	cycleGun      int // wheel notches since the last frame: + next gun, - previous
 
 	// shooting is true while the left button, pressed during the game, is
 	// held: it fires like holding Space. A button still held from a menu
@@ -68,6 +72,8 @@ func (p *playingScreen) key(a *App, ev term.Key) {
 		p.fire = true
 	case input.IsReload(ev):
 		p.reload = true
+	case isGunKey(ev):
+		p.selectGun, _ = input.GunKey(ev)
 	default:
 		if k, ok := input.KeyFor(ev); ok {
 			a.keys.Press(k, ev.When)
@@ -76,7 +82,7 @@ func (p *playingScreen) key(a *App, ev term.Key) {
 }
 
 // mouse: the left button shoots (held = keeps firing), the right button
-// reloads (P1-16). There's no mouse-look (D28), so the position is unused.
+// reloads (P1-16). The wheel switches guns (M11). There's no mouse-look (D28), so the position is unused.
 func (p *playingScreen) mouse(a *App, b mouseButton, down bool, x, y int) {
 	switch {
 	case b == mouseLeft && down:
@@ -86,6 +92,10 @@ func (p *playingScreen) mouse(a *App, b mouseButton, down bool, x, y int) {
 		p.shooting = false
 	case b == mouseRight && down:
 		p.reload = true
+	case b == mouseWheelUp:
+		p.cycleGun--
+	case b == mouseWheelDown:
+		p.cycleGun++
 	}
 }
 
@@ -100,7 +110,9 @@ func (p *playingScreen) tick(a *App, now time.Time, dt float64) {
 	in.ToggleMinimap, in.CycleRenderMode = p.toggleMinimap, p.cycleMode
 	in.Fire = in.Fire || p.fire || p.shooting
 	in.Reload = in.Reload || p.reload
+	in.SelectGun, in.CycleGun = p.selectGun, max(min(p.cycleGun, 1), -1) // one gun per frame
 	p.toggleMinimap, p.cycleMode, p.fire, p.reload = false, false, false, false
+	p.selectGun, p.cycleGun = 0, 0
 
 	st := a.state
 	game.Update(st, in, dt)
@@ -193,4 +205,10 @@ func enemyImage(k game.EnemyKind) *render.Image {
 		return render.ShooterImage
 	}
 	panic(fmt.Sprintf("no image for enemy kind %d", k))
+}
+
+// isGunKey reports whether the key is a gun number key (1-3, M11).
+func isGunKey(ev term.Key) bool {
+	_, ok := input.GunKey(ev)
+	return ok
 }

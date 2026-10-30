@@ -30,7 +30,7 @@ func hudLine(t *testing.T, cols int, h HUD) string {
 
 func TestHUDCoreAt80Columns(t *testing.T) {
 	line := hudLine(t, 80, sampleHUD())
-	for _, want := range []string{"HP", "AMMO", "KILLS 0", "TIER 0", "0:00", "270° N", "FPS 30.0", "| half-block"} {
+	for _, want := range []string{"HP", "PISTOL", "KILLS 0", "TIER 0", "0:00", "270° N", "FPS 30.0", "| half-block"} {
 		if !strings.Contains(line, want) {
 			t.Errorf("HUD %q missing %q", line, want)
 		}
@@ -65,9 +65,9 @@ func TestClock(t *testing.T) {
 
 func TestHUDAmmo(t *testing.T) {
 	h := sampleHUD()
-	h.Player.Weapon = game.Weapon{Mag: 18, Reserve: 50}
-	if line := hudLine(t, 80, h); !strings.Contains(line, "AMMO 18 / 50 |") {
-		t.Errorf("HUD %q, want AMMO 18 / 50", line)
+	h.Player.Guns[game.Pistol] = game.Weapon{Kind: game.Pistol, Owned: true, Mag: 18, Reserve: 50}
+	if line := hudLine(t, 80, h); !strings.Contains(line, "PISTOL 18 / 50 |") {
+		t.Errorf("HUD %q, want PISTOL 18 / 50", line)
 	}
 }
 
@@ -158,8 +158,8 @@ func TestHUDAngleWraps(t *testing.T) {
 func TestHUDHealthFirst(t *testing.T) {
 	h := sampleHUD()
 	h.Player.HP = 73
-	if line := hudLine(t, 80, h); !strings.HasPrefix(line, "HP  73 ARMOR 0 | AMMO") {
-		t.Errorf("HUD %q, want it to start with HP  73 ARMOR 0 | AMMO", line)
+	if line := hudLine(t, 80, h); !strings.HasPrefix(line, "HP  73 ARMOR 0 | PISTOL") {
+		t.Errorf("HUD %q, want it to start with HP  73 ARMOR 0 | PISTOL", line)
 	}
 }
 
@@ -193,5 +193,16 @@ func TestHUDArmor(t *testing.T) {
 	h.Player.HP, h.Player.Armor = 64, 50
 	if line := hudLine(t, 80, h); !strings.HasPrefix(line, "HP  64 ARMOR 50 |") {
 		t.Errorf("HUD %q, want it to start with HP  64 ARMOR 50", line)
+	}
+}
+
+// The HUD names the gun in hand (M11).
+func TestHUDGunName(t *testing.T) {
+	h := sampleHUD()
+	h.Player.Guns = game.StartGuns()
+	h.Player.Guns[game.Shotgun] = game.Weapon{Kind: game.Shotgun, Owned: true, Mag: 4, Reserve: 12}
+	h.Player.Gun = game.Shotgun
+	if line := hudLine(t, 80, h); !strings.Contains(line, "| SHOTGUN  4 / 12 |") {
+		t.Errorf("HUD %q, want SHOTGUN  4 / 12", line)
 	}
 }

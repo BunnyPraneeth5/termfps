@@ -25,6 +25,10 @@ const (
 	EventMedkitTaken                        // the player took a medkit (M10)
 	EventArmorTaken                         // the player took armor (M10)
 	EventArmorHit                           // armor took part of a hit (M10)
+	EventGunSwitched                        // another gun is in hand (M11)
+	EventShotgunFired                       // the shot was a shotgun's (also EventShotFired, M11)
+	EventRifleFired                         // the shot was a rifle's (also EventShotFired, M11)
+	EventGunTaken                           // the player found a new gun (M11)
 )
 
 // HasEvent reports whether e happened in the last Update.

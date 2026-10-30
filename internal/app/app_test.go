@@ -234,14 +234,14 @@ func TestFocusLostReleasesKeys(t *testing.T) {
 func TestSpaceFiresAndRReloads(t *testing.T) {
 	a, s := newTestApp(t)
 	a.step(t0.Add(time.Second/30), []term.Event{key(term.KeyRune, ' ')})
-	if got := a.state.Player.Weapon.Mag; got != 24 {
+	if got := a.state.Player.Weapon().Mag; got != 24 {
 		t.Errorf("magazine = %d after Space, want 24", got)
 	}
-	if hud := s.Row(23); !strings.Contains(hud, "AMMO 24 / 50") {
-		t.Errorf("HUD %q, want AMMO 24 / 50", hud)
+	if hud := s.Row(23); !strings.Contains(hud, "PISTOL 24 / 50") {
+		t.Errorf("HUD %q, want PISTOL 24 / 50", hud)
 	}
 	a.step(t0.Add(2*time.Second/30), []term.Event{key(term.KeyRune, 'r')})
-	if !a.state.Player.Weapon.Reloading() {
+	if !a.state.Player.Weapon().Reloading() {
 		t.Error("R didn't start a reload")
 	}
 }
@@ -337,14 +337,14 @@ func TestMouseShootsAndReloads(t *testing.T) {
 		a.step(now, evs)
 	}
 	step(mouseAt(term.ButtonLeft), mouseAt(0)) // a quick click within one frame
-	if got := a.state.Player.Weapon.Mag; got != 24 {
+	if got := a.state.Player.Weapon().Mag; got != 24 {
 		t.Fatalf("magazine = %d after a click, want 24", got)
 	}
 	step(mouseAt(term.ButtonLeft)) // press and hold
 	for range 30 {
 		step() // one second held, no more events
 	}
-	held := a.state.Player.Weapon.Mag
+	held := a.state.Player.Weapon().Mag
 	if held > 22 { // at least 2 shots: the first click's cooldown delays the next
 		t.Errorf("magazine = %d after holding the button 1 s, want at least 2 more shots", held)
 	}
@@ -352,11 +352,11 @@ func TestMouseShootsAndReloads(t *testing.T) {
 	for range 30 {
 		step()
 	}
-	if a.state.Player.Weapon.Mag != held {
-		t.Errorf("kept firing after release: magazine %d, was %d", a.state.Player.Weapon.Mag, held)
+	if a.state.Player.Weapon().Mag != held {
+		t.Errorf("kept firing after release: magazine %d, was %d", a.state.Player.Weapon().Mag, held)
 	}
 	step(mouseAt(term.ButtonRight), mouseAt(0))
-	if !a.state.Player.Weapon.Reloading() {
+	if !a.state.Player.Weapon().Reloading() {
 		t.Error("right-click didn't start a reload")
 	}
 }
@@ -373,7 +373,7 @@ func TestMenuClickDoesNotFire(t *testing.T) {
 		now = now.Add(time.Second / 30)
 		a.step(now, nil)
 	}
-	if got := a.state.Player.Weapon.Mag; got != 25 {
+	if got := a.state.Player.Weapon().Mag; got != 25 {
 		t.Errorf("magazine = %d, want 25: a held button from the menu fired", got)
 	}
 }

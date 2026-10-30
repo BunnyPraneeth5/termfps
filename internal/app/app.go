@@ -344,6 +344,12 @@ func (a *App) step(now time.Time, events []term.Event) (quit bool) {
 				a.current.mouse(a, mouseRight, right, x, y)
 			}
 			a.leftDown, a.rightDown = left, right
+			switch input.MouseWheel(ev) {
+			case -1:
+				a.current.mouse(a, mouseWheelUp, true, x, y)
+			case 1:
+				a.current.mouse(a, mouseWheelDown, true, x, y)
+			}
 		}
 		if a.quit {
 			return true

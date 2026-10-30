@@ -14,9 +14,12 @@ const PlaneLen = 0.66
 // Player is the camera in the world. See ARCHITECTURE.md "Coordinates":
 // y points down, Angle 0 faces east, a growing Angle turns right (clockwise).
 type Player struct {
-	X, Y   float64 // position in map units
-	Angle  float64 // radians, kept in [0, 2*pi)
-	Weapon Weapon
+	X, Y  float64 // position in map units
+	Angle float64 // radians, kept in [0, 2*pi)
+	// Guns are the player's guns (M11), found or not; Gun is the one in
+	// hand. Weapon returns it.
+	Guns [NumGuns]Weapon
+	Gun  GunKind
 	// Bob is the walking bob phase in radians, [0, 2*pi). It advances with
 	// distance walked; the gun graphic sways with it.
 	Bob float64
@@ -27,6 +30,12 @@ type Player struct {
 	hurt      float64 // seconds left of the red "you got hit" flash
 	sinceHurt float64 // seconds since the last hit (regeneration waits for RegenDelay)
 	regen     float64 // HP regenerated but not yet whole (HP is a whole number)
+}
+
+// Weapon returns the gun in the player's hands. It's a pointer, so
+// changes through it change the player's gun.
+func (p *Player) Weapon() *Weapon {
+	return &p.Guns[p.Gun]
 }
 
 // Hurting reports whether the player was just hit (red screen edges).
@@ -95,7 +104,7 @@ type State struct {
 func NewState(m *world.Map) *State {
 	s := &State{
 		Map:         m,
-		Player:      Player{X: m.SpawnX, Y: m.SpawnY, Angle: 0, Weapon: NewWeapon(), HP: PlayerMaxHP},
+		Player:      Player{X: m.SpawnX, Y: m.SpawnY, Angle: 0, Guns: StartGuns(), HP: PlayerMaxHP},
 		ShowMinimap: true,
 		Rand:        rand.New(rand.NewPCG(1, 2)), // fixed seed: repeatable
 		distCell:    -1,

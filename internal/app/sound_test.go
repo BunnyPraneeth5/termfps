@@ -49,9 +49,21 @@ func TestSoundUnavailableShowsInMenu(t *testing.T) {
 		t.Error("title menu doesn't say why sound is off")
 	}
 	a.newRun()
-	a.state.Player.Weapon.Mag = 25
+	a.state.Player.Weapon().Mag = 25
 	press(a, &now, key(term.KeyRune, ' ')) // fire with no player: no crash
-	if a.state.Player.Weapon.Mag != 24 {
+	if a.state.Player.Weapon().Mag != 24 {
 		t.Error("Space didn't fire without a sound player")
+	}
+}
+
+// A shotgun or rifle shot plays its own sound instead of the pistol's (M11).
+func TestGunShotSounds(t *testing.T) {
+	got := soundsFor([]game.Event{game.EventShotFired, game.EventShotgunFired})
+	if !slices.Equal(got, []audio.Effect{audio.ShotgunBlast}) {
+		t.Errorf("shotgun shot sounds = %v, want only the blast", got)
+	}
+	got = soundsFor([]game.Event{game.EventShotFired, game.EventRifleFired})
+	if !slices.Equal(got, []audio.Effect{audio.RifleShot}) {
+		t.Errorf("rifle shot sounds = %v, want only the rifle", got)
 	}
 }

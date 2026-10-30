@@ -69,6 +69,9 @@ const (
 	ButtonLeft Buttons = 1 << iota
 	ButtonRight
 	ButtonMiddle
+	// The wheel (M11) comes as one event per notch with one of these set.
+	ButtonWheelUp
+	ButtonWheelDown
 )
 
 // Resize means the terminal changed size; W and H are the new size in cells.

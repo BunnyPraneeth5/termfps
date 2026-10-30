@@ -106,6 +106,12 @@ func fromTcell(ev tcell.Event) (e Event, ok bool) {
 		if b&tcell.Button3 != 0 {
 			bs |= ButtonMiddle
 		}
+		if b&tcell.WheelUp != 0 {
+			bs |= ButtonWheelUp
+		}
+		if b&tcell.WheelDown != 0 {
+			bs |= ButtonWheelDown
+		}
 		return Mouse{X: x, Y: y, Buttons: bs, When: ev.When()}, true
 	case *tcell.EventResize:
 		w, h := ev.Size()

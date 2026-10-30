@@ -130,7 +130,8 @@ func TestFromTcell(t *testing.T) {
 		{"ctrl+w is not ctrl+c", keyEx(tcell.KeyRune, "w", tcell.ModCtrl, true, 1), Key{Code: KeyRune, Rune: 'w', Mod: ModCtrl}},
 		{"left click", tcell.NewEventMouse(3, 4, tcell.Button1, tcell.ModNone), Mouse{X: 3, Y: 4, Buttons: ButtonLeft}},
 		{"right and middle", tcell.NewEventMouse(0, 0, tcell.Button2|tcell.Button3, tcell.ModNone), Mouse{Buttons: ButtonRight | ButtonMiddle}},
-		{"wheel is no button", tcell.NewEventMouse(1, 1, tcell.WheelUp, tcell.ModNone), Mouse{X: 1, Y: 1}},
+		{"wheel up", tcell.NewEventMouse(1, 1, tcell.WheelUp, tcell.ModNone), Mouse{X: 1, Y: 1, Buttons: ButtonWheelUp}},
+		{"wheel down", tcell.NewEventMouse(1, 1, tcell.WheelDown, tcell.ModNone), Mouse{X: 1, Y: 1, Buttons: ButtonWheelDown}},
 		{"resize", tcell.NewEventResize(100, 30), Resize{W: 100, H: 30}},
 		{"focus", tcell.NewEventFocus(true), Focus{Focused: true}},
 	}

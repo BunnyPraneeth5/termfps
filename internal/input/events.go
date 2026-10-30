@@ -120,3 +120,24 @@ func MenuKeyFor(ev term.Key) (k ui.Key, ok bool) {
 func MouseButtons(ev term.Mouse) (left, right bool) {
 	return ev.Buttons&term.ButtonLeft != 0, ev.Buttons&term.ButtonRight != 0
 }
+
+// GunKey reports which gun number key (1, 2 or 3) was pressed, for
+// switching guns (M11); ok is false for other keys.
+func GunKey(ev term.Key) (n int, ok bool) {
+	if ev.Code == term.KeyRune && ev.Rune >= '1' && ev.Rune <= '3' {
+		return int(ev.Rune - '0'), true
+	}
+	return 0, false
+}
+
+// MouseWheel returns -1 for a wheel notch up, +1 for one down, 0 for a
+// mouse event without wheel motion (M11: down picks the next gun).
+func MouseWheel(ev term.Mouse) int {
+	switch {
+	case ev.Buttons&term.ButtonWheelUp != 0:
+		return -1
+	case ev.Buttons&term.ButtonWheelDown != 0:
+		return 1
+	}
+	return 0
+}

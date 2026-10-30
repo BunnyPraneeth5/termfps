@@ -95,7 +95,7 @@ func gunFrame(p game.Player) *Frame {
 
 // The gun covers the bottom center and leaves the top of the view alone.
 func TestDrawWeaponPlacement(t *testing.T) {
-	f := gunFrame(game.Player{Weapon: game.NewWeapon()})
+	f := gunFrame(game.Player{Guns: game.StartGuns()})
 	if p := f.Pix[(f.H-1)*f.W+f.W/2]; p.Gray == 1 {
 		t.Error("bottom center pixel untouched, want the gun")
 	}
@@ -170,4 +170,24 @@ func mustOpenMap(t *testing.T) *world.Map {
 		t.Fatalf("Parse: %v", err)
 	}
 	return m
+}
+
+// Each gun (M11) draws its own picture at the bottom center.
+func TestDrawEachGun(t *testing.T) {
+	seen := map[string]bool{}
+	for k := range game.NumGuns {
+		p := game.Player{Guns: game.StartGuns(), Gun: k}
+		f := gunFrame(p)
+		if px := f.Pix[(f.H-1)*f.W+f.W/2]; px.Gray == 1 {
+			t.Errorf("gun %d: bottom center untouched", k)
+		}
+		key := ""
+		for _, px := range f.Pix {
+			key += string(rune('a' + px.Gray/32))
+		}
+		if seen[key] {
+			t.Errorf("gun %d looks the same as another gun", k)
+		}
+		seen[key] = true
+	}
 }

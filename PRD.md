@@ -75,7 +75,7 @@ Tasks: TASKS.md "P1". Decisions: DECISIONS.md D21-D31.
 - **Player:** 100 HP. Health pickups or slow regeneration are open for balancing (P1-18), not planned yet.
 
 **Weapon and ammo**
-- One gun. The magazine holds **25**. You start with **25 loaded + 50 spare**.
+- One gun at the start (since M11, D49: three guns, each with its own ammo; the shotgun and rifle are found on the map and picked with 1/2/3 or the mouse wheel). The magazine holds **25**. You start with **25 loaded + 50 spare**.
 - **Space** (or **left-click**) fires: an instant hitscan shot along the crosshair at the screen center, about 3 shots per second while held.
 - **R** (or **right-click**) reloads, taking about 1.5 s with no shooting meanwhile. **Auto-reload** when the magazine hits 0 and there are spares.
 - **Ammo pickups** appear at random free cells at random times (about every 20-40 s, at most 3 on the map). Walking over one gives +25 spare. The spare ammo cap is tuned in balancing.

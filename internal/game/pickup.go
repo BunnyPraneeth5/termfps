@@ -24,9 +24,10 @@ const (
 type PickupKind int
 
 const (
-	AmmoBox PickupKind = iota // the zero value, so Pickup{} is an ammo box
+	AmmoBox PickupKind = iota // the zero value, so Pickup{} is an ammo box (for Pickup.Gun)
 	Medkit
 	ArmorVest
+	GunPickup // a gun lying around (M11): Pickup.Gun
 )
 
 // Pickup is something lying on the floor that the player takes by walking
@@ -34,7 +35,8 @@ const (
 type Pickup struct {
 	X, Y   float64
 	Kind   PickupKind
-	Amount int // rounds, HP or armor it gives
+	Gun    GunKind // an ammo box's or gun pickup's gun (M11; the zero value is the pistol)
+	Amount int     // rounds, HP or armor it gives
 }
 
 // nextPickupDelay picks a random wait before the next pickup.
@@ -72,29 +74,69 @@ func updatePickups(s *State, dt float64) {
 	}
 }
 
-// newPickup picks what the next pickup at (x, y) is.
+// newPickup picks what the next pickup at (x, y) is: a gun the player
+// hasn't found yet once its time has come (M11), otherwise ammo for one
+// of their guns, a medkit or armor.
 func newPickup(s *State, x, y float64) Pickup {
+	if g, ok := gunDue(s); ok {
+		return Pickup{X: x, Y: y, Kind: GunPickup, Gun: g}
+	}
 	r := s.Rand.Float64()
 	switch {
 	case r < ammoShare:
-		return Pickup{X: x, Y: y, Kind: AmmoBox, Amount: PickupAmmo}
+		var owned []GunKind
+		for _, w := range s.Player.Guns {
+			if w.Owned {
+				owned = append(owned, w.Kind)
+			}
+		}
+		g := owned[s.Rand.IntN(len(owned))]
+		return Pickup{X: x, Y: y, Kind: AmmoBox, Gun: g, Amount: g.Stats().BoxAmmo}
 	case r < ammoShare+medkitShare:
 		return Pickup{X: x, Y: y, Kind: Medkit, Amount: MedkitHeal}
 	}
 	return Pickup{X: x, Y: y, Kind: ArmorVest, Amount: ArmorPickup}
 }
 
+// gunDue returns a gun that should appear now: one the player doesn't
+// have, whose Arrives time has passed, and that isn't lying around
+// already.
+func gunDue(s *State) (GunKind, bool) {
+	for k := Pistol + 1; k < NumGuns; k++ {
+		if s.Player.Guns[k].Owned || s.Time < k.Stats().Arrives {
+			continue
+		}
+		lying := false
+		for _, pk := range s.Pickups {
+			lying = lying || (pk.Kind == GunPickup && pk.Gun == k)
+		}
+		if !lying {
+			return k, true
+		}
+	}
+	return 0, false
+}
+
 // take gives pk to the player and reports whether they took it. A pickup
-// the player can't use (full ammo, HP or armor) stays for later.
+// the player can't use (full ammo, HP or armor, ammo for a gun they don't
+// have) stays for later. A new gun goes straight into their hands.
 func take(s *State, pk Pickup) bool {
 	p := &s.Player
 	switch pk.Kind {
 	case AmmoBox:
-		if p.Weapon.Reserve >= MaxReserve {
+		w := &p.Guns[pk.Gun]
+		if !w.Owned || w.Reserve >= w.Kind.Stats().MaxReserve {
 			return false
 		}
-		p.Weapon.Reserve = min(p.Weapon.Reserve+pk.Amount, MaxReserve)
+		w.Reserve = min(w.Reserve+pk.Amount, w.Kind.Stats().MaxReserve)
 		s.Events = append(s.Events, EventPickupTaken)
+	case GunPickup:
+		if p.Guns[pk.Gun].Owned {
+			return false // can't happen: only missing guns appear
+		}
+		p.Guns[pk.Gun] = newGun(pk.Gun)
+		s.Events = append(s.Events, EventGunTaken)
+		switchGun(s, pk.Gun)
 	case Medkit:
 		if p.HP >= PlayerMaxHP {
 			return false

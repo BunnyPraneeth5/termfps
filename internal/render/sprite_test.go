@@ -181,7 +181,9 @@ func TestDrawSpritesNearCoversFar(t *testing.T) {
 
 func TestEnemyAssetsParse(t *testing.T) {
 	for name, data := range map[string][]byte{"zombie": assets.Zombie, "shooter": assets.Shooter, "ammo": assets.Ammo,
-		"medkit": assets.Medkit, "armor": assets.ArmorVest} {
+		"medkit": assets.Medkit, "armor": assets.ArmorVest,
+		"shotgun": assets.Shotgun, "rifle": assets.Rifle, "shotgunpickup": assets.ShotgunPickup,
+		"riflepickup": assets.RiflePickup, "shells": assets.Shells, "rounds": assets.Rounds} {
 		if _, err := ParseImage(data); err != nil {
 			t.Errorf("%s: %v", name, err)
 		}
@@ -212,6 +214,19 @@ func TestPropSprite(t *testing.T) {
 		s := PropSprite(k, 2.5, 3.5)
 		if s.Image == nil || s.Height <= 0 || s.Height > 1 || s.X != 2.5 || s.Y != 3.5 {
 			t.Errorf("PropSprite(%q) = %+v", k, s)
+		}
+	}
+}
+
+// Every pickup kind (M10, M11) has a sprite.
+func TestPickupSprites(t *testing.T) {
+	for _, pk := range []game.Pickup{
+		{Kind: game.AmmoBox}, {Kind: game.AmmoBox, Gun: game.Shotgun}, {Kind: game.AmmoBox, Gun: game.Rifle},
+		{Kind: game.Medkit}, {Kind: game.ArmorVest},
+		{Kind: game.GunPickup, Gun: game.Shotgun}, {Kind: game.GunPickup, Gun: game.Rifle},
+	} {
+		if s := PickupSprite(pk); s.Image == nil || s.Height <= 0 {
+			t.Errorf("pickup %+v: no sprite", pk)
 		}
 	}
 }
