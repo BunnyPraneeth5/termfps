@@ -48,6 +48,8 @@ type Frame struct {
 	fog   float64
 	light lightGrid
 	rows  rowCache
+	// acid is the map being drawn when it has acid floor (M14), else nil.
+	acid *world.Map
 }
 
 // rowCache holds, for every pixel row, what only depends on the row (V8),
@@ -162,6 +164,10 @@ func DrawFrame(s *game.State, f *Frame) {
 		panic("render: Frame.PixelAspect must be > 0") // a bug in the caller, not bad input
 	}
 	f.fog = s.Map.Fog
+	f.acid = nil
+	if s.Map.HasAcid() {
+		f.acid = s.Map
+	}
 	f.light.prepare(s.Map, s.Time)
 	f.prepareRows()
 	p := s.Player
@@ -247,11 +253,25 @@ func DrawFrame(s *game.State, f *Frame) {
 // floor is cast and textured; the ceiling is always flat near-black (the
 // user's choice after V1: more contrast for the walls, fewer color codes).
 func backgroundPixel(f *Frame, p game.Player, rayX, rayY float64, y int) Pixel {
-	if f.Textures && !f.rows.ceiling[y] {
-		return castPixel(f, p, rayX, rayY, y)
+	if f.rows.ceiling[y] {
+		return Pixel{Gray: f.rows.flat[y]}
 	}
-	return Pixel{Gray: f.rows.flat[y]}
+	px := Pixel{Gray: f.rows.flat[y]}
+	if f.Textures {
+		px = castPixel(f, p, rayX, rayY, y)
+	}
+	if f.acid != nil {
+		d := f.rows.dist[y]
+		if f.acid.At(int(math.Floor(p.X+rayX*d)), int(math.Floor(p.Y+rayY*d))) == world.Acid {
+			// Acid (M14) glows a little, so it shows on dark maps too.
+			px = Pixel{Gray: toGray(math.Max(float64(px.Gray), acidGlow*f.rows.shade[y]/floorBase)), Tint: TintGreen}
+		}
+	}
+	return px
 }
+
+// acidGlow is the least brightness of acid floor up close (M14).
+const acidGlow = 120
 
 // coverage returns how much of pixel row y (from y to y+1) lies between
 // top and bottom, from 0 to 1.

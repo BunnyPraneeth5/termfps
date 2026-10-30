@@ -58,7 +58,7 @@ const (
 	ExploderSpeed     = 2.2
 	ExploderFuseRange = 1.3 // it lights its fuse this close to the player
 	ExploderFuse      = 0.6 // seconds from lighting the fuse to the blast
-	ExploderDamage    = 50  // blast damage at its center (Explosion falls off from there)
+	ExploderDamage    = 40  // blast damage up close (blastDamage falls off from there)
 
 	// EnemyHitRadius: a shot hits an enemy if it passes this close to its
 	// center (about the width of its sprite).

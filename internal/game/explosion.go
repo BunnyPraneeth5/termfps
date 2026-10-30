@@ -6,16 +6,20 @@ import (
 	"github.com/BunnyPraneeth5/termfps/internal/world"
 )
 
-// Explosions (M12: exploders). Balancing (M18) may tune them.
+// Explosions (M12: exploders; M14: red barrels). Balancing (M18) may tune
+// them.
 const (
-	ExplosionRadius = 2.5 // cells: blast damage falls off to nothing here
-	BoomTime        = 0.4 // seconds an explosion shows on screen
+	BarrelDamage    = 80   // a red barrel's blast damage up close (M14)
+	ExplosionCore   = 1.0  // cells: full damage this close (M14; linear from 0 before)
+	chainDelay      = 0.15 // seconds before a barrel set off by another blast goes off
+	ExplosionRadius = 2.5  // cells: blast damage falls off to nothing here
+	BoomTime        = 0.4  // seconds an explosion shows on screen
 )
 
 // blast is an explosion waiting to go off after delay seconds.
 type blast struct {
 	x, y   float64
-	damage int // at its center
+	damage int // up close (blastDamage)
 	delay  float64
 }
 
@@ -64,6 +68,13 @@ func explode(s *State, b blast) {
 	if d := math.Hypot(s.Player.X-b.x, s.Player.Y-b.y); d < ExplosionRadius && blastReaches(s.Map, b.x, b.y, s.Player.X, s.Player.Y) {
 		hurtPlayer(s, blastDamage(b.damage, d))
 	}
+	// Red barrels in reach go off too, a moment later (a chain reaction).
+	// blowBarrel changes Props, so loop over a copy.
+	for _, pr := range append([]world.Prop(nil), s.Map.Props...) {
+		if pr.Kind == world.ExplosiveBarrel && math.Hypot(pr.X-b.x, pr.Y-b.y) < ExplosionRadius && blastReaches(s.Map, b.x, b.y, pr.X, pr.Y) {
+			blowBarrel(s, int(pr.X), int(pr.Y), chainDelay)
+		}
+	}
 	// Backwards, so removing a killed enemy doesn't skip the next one.
 	for i := len(s.Enemies) - 1; i >= 0; i-- {
 		e := s.Enemies[i]
@@ -73,9 +84,19 @@ func explode(s *State, b blast) {
 	}
 }
 
-// blastDamage is a blast's damage at d cells from its center.
-func blastDamage(center int, d float64) int {
-	return int(math.Round(float64(center) * (1 - d/ExplosionRadius)))
+// blowBarrel sets off the red barrel in cell (x, y) after delay seconds
+// (M14). It turns into debris right away, so it can't go off twice.
+func blowBarrel(s *State, x, y int, delay float64) {
+	s.Map.ReplaceProp(x, y, world.Debris)
+	s.distCell = -1 // the way is open now: enemies need a fresh distance field
+	addBlast(s, float64(x)+0.5, float64(y)+0.5, BarrelDamage, delay)
+}
+
+// blastDamage is a blast's damage at d cells from its center: all of it
+// within ExplosionCore, then falling off to nothing at ExplosionRadius.
+func blastDamage(full int, d float64) int {
+	f := 1 - (d-ExplosionCore)/(ExplosionRadius-ExplosionCore)
+	return int(math.Round(float64(full) * min(max(f, 0), 1)))
 }
 
 // blastReaches reports whether no wall (or closed door) stands between

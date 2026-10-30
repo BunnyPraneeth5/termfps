@@ -217,14 +217,19 @@ func shoot(s *State, st GunStats) {
 
 // shootRay casts one bullet from the player at angle. The nearest enemy in
 // front of the first solid cell (or prop that blocks shots, M2) takes the
-// damage; otherwise a red target block there is destroyed.
+// damage; otherwise a red barrel there blows up (M14), or a red target
+// block there is destroyed.
 func shootRay(s *State, angle float64, damage int) {
 	p := s.Player
 	dirX, dirY := math.Cos(angle), math.Sin(angle)
 	hit := world.CastRay(s.Map, p.X, p.Y, dirX, dirY) // unit dir: PerpDist = distance
-	cover := world.ShotDistance(s.Map, p.X, p.Y, dirX, dirY, hit.PerpDist)
+	cover, cx, cy := world.ShotBlocker(s.Map, p.X, p.Y, dirX, dirY, hit.PerpDist)
 	if i := shotHitsEnemy(s, dirX, dirY, math.Min(hit.PerpDist, cover)); i >= 0 {
 		damageEnemy(s, i, damage)
+		return
+	}
+	if cx >= 0 && s.Map.At(cx, cy) == world.ExplosiveBarrel {
+		blowBarrel(s, cx, cy, 0) // M14
 		return
 	}
 	if hit.Cell == world.Target && cover > hit.PerpDist {

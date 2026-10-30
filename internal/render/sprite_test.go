@@ -184,7 +184,7 @@ func TestEnemyAssetsParse(t *testing.T) {
 		"medkit": assets.Medkit, "armor": assets.ArmorVest,
 		"shotgun": assets.Shotgun, "rifle": assets.Rifle, "shotgunpickup": assets.ShotgunPickup,
 		"riflepickup": assets.RiflePickup, "shells": assets.Shells, "rounds": assets.Rounds,
-		"runner": assets.Runner, "tank": assets.Tank, "exploder": assets.Exploder, "boom": assets.Boom} {
+		"runner": assets.Runner, "tank": assets.Tank, "exploder": assets.Exploder, "boom": assets.Boom, "redbarrel": assets.RedBarrel} {
 		if _, err := ParseImage(data); err != nil {
 			t.Errorf("%s: %v", name, err)
 		}

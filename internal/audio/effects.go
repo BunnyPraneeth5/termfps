@@ -37,6 +37,7 @@ const (
 	RunnerScreech // M12: a runner arrived
 	TankRoar      // M12: a tank arrived
 	ExploderHiss  // M12: an exploder arrived
+	AcidSizzle    // M14: acid burned you
 	NumEffects    // not an effect: how many there are
 )
 
@@ -171,6 +172,17 @@ func Generate(e Effect) []float64 {
 	case ExploderHiss: // a hiss that swells, like a lit fuse
 		s = synth(0.8, func(t float64) float64 {
 			return 0.5 * noise() * attack(t, 0.4) * decay(t, 4) * (0.7 + 0.3*math.Sin(2*math.Pi*9*t))
+		})
+	case AcidSizzle: // a short, bright, crackling hiss
+		high := 0.0
+		s = synth(0.3, func(t float64) float64 {
+			n := noise()
+			high, n = n, n-high // a simple high-pass: only the hiss
+			crackle := 0.0
+			if rng.Float64() < 0.004 {
+				crackle = 0.8
+			}
+			return (0.35*n + crackle) * attack(t, 0.01) * decay(t, 9)
 		})
 	default:
 		panic("audio: unknown effect")

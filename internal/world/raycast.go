@@ -146,16 +146,23 @@ func VisitCells(m *Map, posX, posY, dirX, dirY float64, visit func(x, y int) boo
 // +Inf if there is none before a wall or maxDist. A prop counts as its
 // whole cell.
 func ShotDistance(m *Map, posX, posY, dirX, dirY, maxDist float64) float64 {
-	dist := math.Inf(1)
-	walkCells(m, posX, posY, dirX, dirY, func(x, y, _ int, enter float64) bool {
-		if enter > maxDist || m.IsSolid(x, y) {
+	dist, _, _ := ShotBlocker(m, posX, posY, dirX, dirY, maxDist)
+	return dist
+}
+
+// ShotBlocker is ShotDistance that also returns the prop's cell (M14: so a
+// shot can blow up a red barrel). x and y are -1 when nothing blocks.
+func ShotBlocker(m *Map, posX, posY, dirX, dirY, maxDist float64) (dist float64, x, y int) {
+	dist, x, y = math.Inf(1), -1, -1
+	walkCells(m, posX, posY, dirX, dirY, func(cx, cy, _ int, enter float64) bool {
+		if enter > maxDist || m.IsSolid(cx, cy) {
 			return false
 		}
-		if m.At(x, y).BlocksShot() {
-			dist = enter
+		if m.At(cx, cy).BlocksShot() {
+			dist, x, y = enter, cx, cy
 			return false
 		}
 		return true
 	})
-	return dist
+	return dist, x, y
 }

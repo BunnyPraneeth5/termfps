@@ -98,6 +98,8 @@ type State struct {
 	Booms  []Boom
 	blasts []blast
 
+	acidTimer float64 // seconds until acid burns the player again (M14)
+
 	// dist is the distance field from the player's cell (distCell), used by
 	// enemies to walk around walls. -1 = not computed yet.
 	dist     []int
@@ -117,6 +119,7 @@ func NewState(m *world.Map) *State {
 		Spawning:    true,
 		spawnTimer:  FirstSpawnDelay,
 		Seen:        make([]bool, m.W*m.H),
+		acidTimer:   acidFirst,
 	}
 	s.pickupTimer = nextPickupDelay(s)
 	for _, e := range m.EnemyStarts {

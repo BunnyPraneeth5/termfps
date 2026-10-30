@@ -282,3 +282,39 @@ func TestFloorCeilingShading(t *testing.T) {
 		}
 	}
 }
+
+// Acid floor (M14) shows green below the horizon, with textures on or off,
+// and never above.
+func TestDrawFrameAcid(t *testing.T) {
+	m, err := world.Parse([]byte("##########\n#P~~~~~~~#\n##########\n"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	s := game.NewState(m)
+	for _, tex := range []bool{true, false} {
+		f := newFrame(80, 24)
+		f.Textures = tex
+		DrawFrame(s, f)
+		top, bottom := 0, 0
+		for i, px := range f.Pix {
+			if px.Tint == TintGreen {
+				if i/f.W < f.H/2 {
+					top++
+				} else {
+					bottom++
+				}
+			}
+		}
+		if bottom == 0 || top != 0 {
+			t.Errorf("textures %v: %d green pixels below the horizon, %d above; want some below, none above", tex, bottom, top)
+		}
+	}
+	plain := newState(t, 1.5, 3.5)
+	f := newFrame(80, 24)
+	DrawFrame(plain, f)
+	for _, px := range f.Pix {
+		if px.Tint == TintGreen {
+			t.Fatal("green floor on a map without acid")
+		}
+	}
+}

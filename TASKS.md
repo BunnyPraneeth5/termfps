@@ -395,7 +395,7 @@ Decided with the user on 2026-10-30 (D49). Order and batches: **batch 1** M10, M
 - Enemies start dumb (as now) and learn by tier (table above): tier 2 they hear gunshots and come to the sound; tier 3 shooters take cover behind props; tier 4 zombies come from several sides.
 - Anti-camping: after 60 seconds without a kill, every enemy hunts the player directly (heads straight for them), until the next kill.
 
-### [ ] M14: Hazards (batch 1)
+### [~] M14: Hazards (batch 1)
 - Explosive barrels: a new red barrel map character; the gray barrel stays plain cover. Shooting one blows it up and hurts enemies and the player nearby; chain reactions with other red barrels.
 - Acid floor: a new green map character that hurts while you stand on it; placed on a few maps.
 - Explosion sound.

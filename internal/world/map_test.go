@@ -273,3 +273,44 @@ func TestLampReach(t *testing.T) {
 		t.Error("the crate's own cell is in the light list")
 	}
 }
+
+// Red barrels (M14) are cover like barrels; acid is open floor.
+func TestParseHazards(t *testing.T) {
+	m, err := Parse([]byte("#######\n#PB~..#\n#######\n"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(m.Props) != 1 || m.Props[0].Kind != ExplosiveBarrel || !m.Blocked(2, 1) || !m.At(2, 1).BlocksShot() {
+		t.Errorf("red barrel: props %+v, blocked %v; want a prop that blocks moves and shots", m.Props, m.Blocked(2, 1))
+	}
+	if m.At(3, 1) != Acid || m.Blocked(3, 1) || m.IsSolid(3, 1) || m.At(3, 1).IsProp() {
+		t.Errorf("acid cell %q: want open floor, not a prop", m.At(3, 1))
+	}
+}
+
+// ReplaceProp swaps a prop for another (or floor), keeps Props in step, and
+// lets lamp light through where the old prop cast a shadow.
+func TestReplaceProp(t *testing.T) {
+	m, err := Parse([]byte("#######\n#PlB..#\n#######\n"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	lit := func(x int) bool {
+		for _, l := range m.Lamps[0].Reach {
+			if l.Index == 1*m.W+x {
+				return true
+			}
+		}
+		return false
+	}
+	if lit(4) {
+		t.Fatal("cell behind the red barrel is lit before it blows up")
+	}
+	m.ReplaceProp(3, 1, Debris)
+	if m.At(3, 1) != Debris || len(m.Props) != 2 || m.Props[1].Kind != Debris || m.Props[1].X != 3.5 {
+		t.Errorf("after ReplaceProp: cell %q, props %+v; want debris in the barrel's place", m.At(3, 1), m.Props)
+	}
+	if !lit(4) {
+		t.Error("cell behind the barrel still dark after it's gone")
+	}
+}

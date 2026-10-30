@@ -209,3 +209,18 @@ func TestCastRayDoor(t *testing.T) {
 		t.Error("open door blocks line of sight")
 	}
 }
+
+// ShotBlocker names the cell of the prop that stops a shot (M14).
+func TestShotBlocker(t *testing.T) {
+	m, err := Parse([]byte("########\n#P..B..#\n########\n"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	d, x, y := ShotBlocker(m, 1.5, 1.5, 1, 0, 10)
+	if x != 4 || y != 1 || d != 2.5 {
+		t.Errorf("ShotBlocker = %v at (%d, %d), want 2.5 at (4, 1)", d, x, y)
+	}
+	if _, x, _ := ShotBlocker(m, 1.5, 1.5, -1, 0, 10); x != -1 {
+		t.Errorf("shot at the wall: blocker x = %d, want -1", x)
+	}
+}

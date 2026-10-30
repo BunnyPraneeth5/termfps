@@ -35,6 +35,7 @@ var eventSounds = map[game.Event]audio.Effect{
 	game.EventRunnerSpawned:   audio.RunnerScreech,
 	game.EventTankSpawned:     audio.TankRoar,
 	game.EventExploderSpawned: audio.ExploderHiss,
+	game.EventAcidBurn:        audio.AcidSizzle,
 }
 
 // soundReplaces: when an event here comes with the event it names in the
@@ -47,6 +48,8 @@ var soundReplaces = map[game.Event]game.Event{
 	game.EventRunnerSpawned:   game.EventEnemySpawned,
 	game.EventTankSpawned:     game.EventEnemySpawned,
 	game.EventExploderSpawned: game.EventEnemySpawned,
+	// Acid sizzles instead of the hurt buzz (M14).
+	game.EventAcidBurn: game.EventPlayerHurt,
 }
 
 // soundsFor returns the effects for one frame's events, each at most once

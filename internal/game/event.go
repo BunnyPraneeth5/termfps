@@ -35,6 +35,7 @@ const (
 	EventRunnerSpawned                      // the spawner added a runner (also EventEnemySpawned, M12)
 	EventTankSpawned                        // the spawner added a tank (also EventEnemySpawned, M12)
 	EventExploderSpawned                    // the spawner added an exploder (also EventEnemySpawned, M12)
+	EventAcidBurn                           // acid burned the player (M14)
 )
 
 // HasEvent reports whether e happened in the last Update.

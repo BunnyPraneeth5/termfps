@@ -47,7 +47,8 @@ func updateDoors(s *State, dt float64) {
 }
 
 // freeCell reports whether cell (x, y) is somewhere an enemy or an ammo box
-// may appear: open floor (or a prop you can walk over), not a door.
+// may appear: open floor (or a prop you can walk over), not a door, not
+// acid (M14).
 func freeCell(m *world.Map, x, y int) bool {
-	return !m.Blocked(x, y) && m.At(x, y) != world.Door
+	return !m.Blocked(x, y) && m.At(x, y) != world.Door && m.At(x, y) != world.Acid
 }

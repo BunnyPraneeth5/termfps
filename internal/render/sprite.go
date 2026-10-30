@@ -28,12 +28,13 @@ var (
 	shotgunPickupImage = mustParseImage("shotgunpickup", assets.ShotgunPickup)
 	riflePickupImage   = mustParseImage("riflepickup", assets.RiflePickup)
 
-	barrelImage = mustParseImage("barrel", assets.Barrel)
-	crateImage  = mustParseImage("crate", assets.Crate)
-	pillarImage = mustParseImage("pillar", assets.Pillar)
-	lampImage   = mustParseImage("lamp", assets.Lamp)
-	debrisImage = mustParseImage("debris", assets.Debris)
-	bodyImage   = mustParseImage("body", assets.Body)
+	barrelImage    = mustParseImage("barrel", assets.Barrel)
+	crateImage     = mustParseImage("crate", assets.Crate)
+	pillarImage    = mustParseImage("pillar", assets.Pillar)
+	lampImage      = mustParseImage("lamp", assets.Lamp)
+	debrisImage    = mustParseImage("debris", assets.Debris)
+	bodyImage      = mustParseImage("body", assets.Body)
+	redBarrelImage = mustParseImage("redbarrel", assets.RedBarrel)
 )
 
 // PropSprite returns the sprite for a prop (M2) standing at (x, y): its
@@ -44,6 +45,8 @@ func PropSprite(kind world.Cell, x, y float64) Sprite {
 	switch kind {
 	case world.Barrel:
 		s.Image, s.Height = barrelImage, 0.55
+	case world.ExplosiveBarrel:
+		s.Image, s.Height = redBarrelImage, 0.55
 	case world.Crate:
 		s.Image, s.Height = crateImage, 0.6
 	case world.Pillar:

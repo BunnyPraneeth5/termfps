@@ -14,7 +14,8 @@ var (
 	minimapFloor  = term.Style{Bg: grayColor(25)}
 	minimapProp   = term.Style{Bg: grayColor(75)} // crates, barrels, pillars, lamps
 	minimapDoor   = term.Style{Bg: rgbColor(130, TintYellow)}
-	minimapUnseen = term.Style{Bg: grayColor(0)} // not seen yet (M8)
+	minimapAcid   = term.Style{Bg: rgbColor(110, TintGreen)} // M14
+	minimapUnseen = term.Style{Bg: grayColor(0)}             // not seen yet (M8)
 	minimapPlayer = term.Style{Bg: grayColor(25), Fg: grayColor(255), Bold: true}
 	minimapAmmo   = term.Style{Bg: grayColor(25), Fg: rgbColor(230, TintYellow)}
 	minimapMedkit = term.Style{Bg: grayColor(25), Fg: rgbColor(230, TintRed)}     // M10
@@ -80,6 +81,9 @@ func DrawMinimap(s term.Screen, st *game.State, fog bool) bool {
 			case m.At(x, y) == world.Target:
 				s.Put(sx, y0+vy, " ", minimapTarget)
 				s.Put(sx+1, y0+vy, " ", minimapTarget)
+			case m.At(x, y) == world.Acid:
+				s.Put(sx, y0+vy, " ", minimapAcid)
+				s.Put(sx+1, y0+vy, " ", minimapAcid)
 			case m.At(x, y) == world.Door && m.Blocked(x, y): // a closed door (M3)
 				s.Put(sx, y0+vy, " ", minimapDoor)
 				s.Put(sx+1, y0+vy, " ", minimapDoor)

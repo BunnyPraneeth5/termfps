@@ -126,8 +126,9 @@ func TestBlastFalloffAndWalls(t *testing.T) {
 	if s.Player.HP != want {
 		t.Errorf("HP %d, want %d (only the open blast, at 1 cell)", s.Player.HP, want)
 	}
-	if blastDamage(50, 0) != 50 || blastDamage(50, ExplosionRadius) != 0 || math.Abs(float64(blastDamage(50, ExplosionRadius/2))-25) > 1 {
-		t.Error("blast damage doesn't fall off linearly from 50 to 0")
+	mid := (ExplosionCore + ExplosionRadius) / 2
+	if blastDamage(50, 0) != 50 || blastDamage(50, ExplosionCore) != 50 || blastDamage(50, ExplosionRadius) != 0 || math.Abs(float64(blastDamage(50, mid))-25) > 1 {
+		t.Error("blast damage isn't full up to the core, then linear down to 0")
 	}
 	if blastReaches(s.Map, 2.5, 1.5, 4.5, 1.5) {
 		t.Error("blast reaches through a wall")

@@ -115,3 +115,8 @@ var Exploder []byte
 
 //go:embed boom.txt
 var Boom []byte
+
+// RedBarrel is the explosive barrel (M14).
+//
+//go:embed redbarrel.txt
+var RedBarrel []byte

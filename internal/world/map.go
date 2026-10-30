@@ -37,6 +37,13 @@ const (
 	FlickerLamp Cell = 'L' // a lamp that flickers (M4)
 	Debris      Cell = ',' // rubble: blocks nothing
 	Body        Cell = 'x' // a body on the floor: blocks nothing
+	// ExplosiveBarrel is a red barrel (M14): cover like Barrel, but a shot
+	// blows it up.
+	ExplosiveBarrel Cell = 'B'
+
+	// Acid is a green floor (M14) that hurts while you stand on it. It's
+	// not a prop: nothing is drawn standing on it.
+	Acid Cell = '~'
 
 	// Door is a sliding door (M3) between two walls. Its state is in
 	// Map.Doors; rays, shots and movement go through it as far as it's open.
@@ -46,7 +53,7 @@ const (
 // IsProp reports whether the cell is a prop (M2).
 func (c Cell) IsProp() bool {
 	switch c {
-	case Barrel, Crate, Pillar, Lamp, FlickerLamp, Debris, Body:
+	case Barrel, Crate, Pillar, Lamp, FlickerLamp, Debris, Body, ExplosiveBarrel:
 		return true
 	}
 	return false
@@ -55,13 +62,13 @@ func (c Cell) IsProp() bool {
 // BlocksMove reports whether a prop in this cell stops the player and
 // enemies. Walls aren't props: see Map.Blocked for everything that blocks.
 func (c Cell) BlocksMove() bool {
-	return c == Barrel || c == Crate || c == Pillar || c == Lamp || c == FlickerLamp
+	return c == Barrel || c == Crate || c == Pillar || c == Lamp || c == FlickerLamp || c == ExplosiveBarrel
 }
 
 // BlocksShot reports whether a prop in this cell stops bullets and line of
 // sight (cover).
 func (c Cell) BlocksShot() bool {
-	return c == Barrel || c == Crate || c == Pillar
+	return c == Barrel || c == Crate || c == Pillar || c == ExplosiveBarrel
 }
 
 // IsWall reports whether the cell is a permanent wall (any texture).
@@ -163,6 +170,27 @@ func (m *Map) DoorAt(x, y int) *SlidingDoor {
 	return nil
 }
 
+// ReplaceProp turns the prop in cell (x, y) into c (Empty, or another prop
+// such as Debris), keeping Props in step, and works out the lamps' light
+// again, since the old prop may have cast a shadow (M14: a red barrel
+// blowing up).
+func (m *Map) ReplaceProp(x, y int, c Cell) {
+	m.Set(x, y, c)
+	cx, cy := float64(x)+0.5, float64(y)+0.5
+	for i, p := range m.Props {
+		if p.X == cx && p.Y == cy {
+			m.Props = append(m.Props[:i], m.Props[i+1:]...)
+			break
+		}
+	}
+	if c.IsProp() {
+		m.Props = append(m.Props, Prop{Kind: c, X: cx, Y: cy})
+	}
+	for i := range m.Lamps {
+		m.Lamps[i].Reach = lampReach(m, m.Lamps[i].X, m.Lamps[i].Y)
+	}
+}
+
 // Prop is a prop placed in the map file; its cell keeps the character.
 type Prop struct {
 	Kind Cell    // the map character, e.g. Crate
@@ -183,6 +211,7 @@ func (m *Map) Clone() *Map {
 	c.EnemyStarts = append([]EnemyStart(nil), m.EnemyStarts...)
 	c.Props = append([]Prop(nil), m.Props...)
 	c.Doors = append([]SlidingDoor(nil), m.Doors...) // doors open and close per run
+	c.Lamps = append([]LightSource(nil), m.Lamps...) // ReplaceProp (M14) changes their Reach per run
 	return &c
 }
 
@@ -322,7 +351,7 @@ func (m *Map) pathBlocked(x, y int) bool {
 // checkChar returns an error if the byte at line[x] is not a known map char.
 func checkChar(line string, x, y int) error {
 	switch Cell(line[x]) {
-	case Wall, Stone, Metal, Empty, Spawn, Target, ZombieStart, ShooterStart, Door:
+	case Wall, Stone, Metal, Empty, Spawn, Target, ZombieStart, ShooterStart, Door, Acid:
 		return nil
 	}
 	if Cell(line[x]).IsProp() {
@@ -331,7 +360,7 @@ func checkChar(line string, x, y int) error {
 	// Decode the full character so the message shows it properly,
 	// even if it is a multi-byte UTF-8 character like 'é'.
 	r, _ := utf8.DecodeRuneInString(line[x:])
-	return fmt.Errorf("row %d, column %d: unknown character %q (use '#', '%%', '&', '.', 'P', 'T', 'Z', 'S', 'D', or a prop: 'b', 'c', 'i', 'l', 'L', ',', 'x')", y+1, x+1, r)
+	return fmt.Errorf("row %d, column %d: unknown character %q (use '#', '%%', '&', '.', 'P', 'T', 'Z', 'S', 'D', '~', or a prop: 'b', 'B', 'c', 'i', 'l', 'L', ',', 'x')", y+1, x+1, r)
 }
 
 // headers are the values of a map file's header lines.
@@ -387,4 +416,15 @@ func parseHeaders(lines []string) (h headers, n int, err error) {
 		n++
 	}
 	return h, n, nil
+}
+
+// HasAcid reports whether the map has acid floor (M14), so the renderer
+// can skip looking for it on maps without.
+func (m *Map) HasAcid() bool {
+	for _, c := range m.Cells {
+		if c == Acid {
+			return true
+		}
+	}
+	return false
 }
