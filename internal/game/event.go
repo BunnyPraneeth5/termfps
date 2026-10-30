@@ -36,6 +36,8 @@ const (
 	EventTankSpawned                        // the spawner added a tank (also EventEnemySpawned, M12)
 	EventExploderSpawned                    // the spawner added an exploder (also EventEnemySpawned, M12)
 	EventAcidBurn                           // acid burned the player (M14)
+	EventFootstep                           // the player took a step (M16)
+	EventOutOfBreath                        // sprinting used up the stamina (M16)
 )
 
 // HasEvent reports whether e happened in the last Update.

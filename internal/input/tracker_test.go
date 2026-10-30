@@ -208,3 +208,16 @@ func TestResetKeepsLearned(t *testing.T) {
 		t.Error("key still held after Reset")
 	}
 }
+
+// F held is sprint (M16).
+func TestTrackerSprint(t *testing.T) {
+	var tr Tracker
+	tr.Press(KeySprint, t0)
+	if !tr.Input(t0).Sprint {
+		t.Error("F pressed but Input.Sprint is false")
+	}
+	tr.Release(KeySprint)
+	if tr.Input(t0).Sprint {
+		t.Error("F released but Input.Sprint is true")
+	}
+}

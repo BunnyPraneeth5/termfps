@@ -34,6 +34,8 @@ func KeyFor(ev term.Key) (k Key, ok bool) {
 			return KeyTurnLeft, true
 		case 'e':
 			return KeyTurnRight, true
+		case 'f':
+			return KeySprint, true // M16
 		}
 	}
 	return 0, false

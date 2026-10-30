@@ -12,11 +12,11 @@ import (
 
 func TestSoundsFor(t *testing.T) {
 	got := soundsFor([]game.Event{
-		game.EventShotFired, game.EventEnemyHit, // a hit has no sound of its own
+		game.EventShotFired, game.EventEnemyHit, // a hit ticks (M16)
 		game.EventEnemySpawned, game.EventEnemySpawned, // two spawns: one groan
 		game.EventPlayerHurt, game.EventRenderModeChanged,
 	})
-	want := []audio.Effect{audio.Gunshot, audio.ZombieGroan, audio.Hurt}
+	want := []audio.Effect{audio.Gunshot, audio.HitTick, audio.ZombieGroan, audio.Hurt}
 	if !slices.Equal(got, want) {
 		t.Errorf("soundsFor = %v, want %v", got, want)
 	}

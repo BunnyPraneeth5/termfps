@@ -24,7 +24,8 @@ const (
 	KeyStrafeRight
 	KeyTurnLeft
 	KeyTurnRight
-	numKeys // not a key: the number of keys above
+	KeySprint // F (M16)
+	numKeys   // not a key: the number of keys above
 )
 
 const (
@@ -174,6 +175,7 @@ func (t *Tracker) Input(now time.Time) game.Input {
 		StrafeRight: t.Held(KeyStrafeRight, now),
 		TurnLeft:    t.Held(KeyTurnLeft, now),
 		TurnRight:   t.Held(KeyTurnRight, now),
+		Sprint:      t.Held(KeySprint, now),
 		TurnSlow:    TapTurnSlow * tap(KeyTurnLeft, KeyTurnRight),
 		MoveSlow:    TapMoveSlow * tap(KeyForward, KeyBack, KeyStrafeLeft, KeyStrafeRight),
 	}

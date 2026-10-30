@@ -196,10 +196,11 @@ func updateMelee(s *State, e *Enemy, m melee, dt float64) {
 	}
 	if e.attackCD == 0 {
 		base := m.damageMin + s.Rand.IntN(m.damageMax-m.damageMin+1) // IntN(n): 0..n-1
-		hurtPlayer(s, e.damage(base))
+		hurtPlayerFrom(s, e.damage(base), e.X, e.Y)
 		e.attackCD = m.interval
 		if e.Kind == KindTank {
 			s.Events = append(s.Events, EventTankHit)
+			shake(s, tankShake) // M16
 		}
 	}
 }
@@ -243,7 +244,7 @@ func updateShooter(s *State, e *Enemy, dt float64) {
 		e.attackCD = ShooterInterval
 		s.Events = append(s.Events, EventEnemyShot)
 		if s.Rand.Float64() < ShooterHitChance(dist) {
-			hurtPlayer(s, e.damage(ShooterDamage))
+			hurtPlayerFrom(s, e.damage(ShooterDamage), e.X, e.Y)
 		}
 	}
 }
@@ -336,11 +337,12 @@ func shotHitsEnemy(s *State, dirX, dirY, maxDist float64) int {
 }
 
 // damageEnemy hurts enemy i; at 0 HP it is removed and counts as a kill.
-// An exploder killed this way blows up where it was (M12).
-func damageEnemy(s *State, i, damage int) {
+// An exploder killed this way blows up where it was (M12). It reports
+// whether the enemy died.
+func damageEnemy(s *State, i, damage int) (killed bool) {
 	e := &s.Enemies[i]
 	if e.HP <= 0 {
-		return // already dead (an exploder whose fuse just ran out)
+		return false // already dead (an exploder whose fuse just ran out)
 	}
 	e.HP -= damage
 	e.flash = enemyFlashTime
@@ -353,4 +355,5 @@ func damageEnemy(s *State, i, damage int) {
 		s.Kills++
 		s.Events = append(s.Events, EventEnemyKilled)
 	}
+	return e.HP <= 0
 }

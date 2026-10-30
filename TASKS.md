@@ -403,7 +403,7 @@ Decided with the user on 2026-10-30 (D49). Order and batches: **batch 1** M10, M
 ### [ ] M15: Waves (batch 2)
 - A second mode next to endless survival, chosen when you press Play: 10 waves with a 15-second break between them (reload, pick things up); you win after wave 10. Bests kept per mode.
 
-### [ ] M16: Game feel (batch 1)
+### [~] M16: Game feel (batch 1)
 - Sprint while F is held, with stamina (drains while sprinting, refills when not); the HUD shows it.
 - A marker showing which way a hit came from; a hit marker on the crosshair when you hit; screen shake on big hits (explosions, tank hits); footstep sounds while walking.
 

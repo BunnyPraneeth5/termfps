@@ -192,8 +192,11 @@ func (a *App) drawScene() {
 		a.sprites = append(a.sprites, render.PickupSprite(pk))
 	}
 	render.DrawSprites(&a.frame, st.Player, a.sprites)
+	render.ShakeView(&a.frame, st.Player) // M16: the world shakes, the gun doesn't
 	render.DrawWeapon(&a.frame, st.Player)
 	render.DrawCrosshair(&a.frame)
+	render.DrawHitMarker(&a.frame, st.Player)    // M16
+	render.DrawHitDirection(&a.frame, st.Player) // M16
 	render.DrawHurt(&a.frame, st.Player)
 }
 

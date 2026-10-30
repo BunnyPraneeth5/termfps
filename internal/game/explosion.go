@@ -65,8 +65,10 @@ func updateBlasts(s *State, dt float64) {
 func explode(s *State, b blast) {
 	s.Booms = append(s.Booms, Boom{X: b.x, Y: b.y})
 	s.Events = append(s.Events, EventExplosion)
-	if d := math.Hypot(s.Player.X-b.x, s.Player.Y-b.y); d < ExplosionRadius && blastReaches(s.Map, b.x, b.y, s.Player.X, s.Player.Y) {
-		hurtPlayer(s, blastDamage(b.damage, d))
+	d := math.Hypot(s.Player.X-b.x, s.Player.Y-b.y)
+	blastShake(s, d) // M16
+	if d < ExplosionRadius && blastReaches(s.Map, b.x, b.y, s.Player.X, s.Player.Y) {
+		hurtPlayerFrom(s, blastDamage(b.damage, d), b.x, b.y)
 	}
 	// Red barrels in reach go off too, a moment later (a chain reaction).
 	// blowBarrel changes Props, so loop over a copy.

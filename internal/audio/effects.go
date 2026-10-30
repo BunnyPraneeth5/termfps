@@ -38,6 +38,9 @@ const (
 	TankRoar      // M12: a tank arrived
 	ExploderHiss  // M12: an exploder arrived
 	AcidSizzle    // M14: acid burned you
+	Footstep      // M16
+	OutOfBreath   // M16: sprinting used up the stamina
+	HitTick       // M16: your shot hit an enemy (with the hit marker)
 	NumEffects    // not an effect: how many there are
 )
 
@@ -183,6 +186,23 @@ func Generate(e Effect) []float64 {
 				crackle = 0.8
 			}
 			return (0.35*n + crackle) * attack(t, 0.01) * decay(t, 9)
+		})
+	case Footstep: // a soft, short, low thud (quiet: it plays a lot)
+		low := 0.0
+		s = synth(0.09, func(t float64) float64 {
+			low += (noise() - low) * 0.15
+			return (0.6*low + 0.15*math.Sin(2*math.Pi*90*t)) * attack(t, 0.004) * decay(t, 45)
+		})
+	case OutOfBreath: // two breaths: in (rising hiss), out (falling)
+		low := 0.0
+		s = synth(1.0, func(t float64) float64 {
+			low += (noise() - low) * 0.3
+			env := math.Sin(math.Pi * math.Mod(t, 0.5) / 0.5) // each breath swells and fades
+			return 0.5 * low * env * env
+		})
+	case HitTick: // a tiny, bright click
+		s = synth(0.05, func(t float64) float64 {
+			return 0.3 * math.Sin(2*math.Pi*2400*t) * decay(t, 90)
 		})
 	default:
 		panic("audio: unknown effect")

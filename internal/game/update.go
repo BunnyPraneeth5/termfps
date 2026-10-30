@@ -26,6 +26,7 @@ type Input struct {
 	TurnLeft, TurnRight     bool
 	Fire                    bool // fire button held (or pressed) this frame
 	Reload                  bool // reload asked for this frame
+	Sprint                  bool // F held: sprint while there's stamina (M16)
 	ToggleMinimap           bool // one-shot: true only on the frame M was pressed
 	CycleRenderMode         bool // one-shot: true only on the frame V was pressed
 	// SelectGun picks a gun by its number key, 1-3 (0 = none); CycleGun
@@ -49,6 +50,7 @@ func Update(s *State, in Input, dt float64) {
 	s.Time += dt
 	s.Player.hurt = max(s.Player.hurt-dt, 0)
 	regenerate(&s.Player, dt)
+	updateFeel(s, dt) // first, so markers started this frame show in full (M16)
 
 	if in.ToggleMinimap {
 		s.ShowMinimap = !s.ShowMinimap
@@ -67,6 +69,7 @@ func Update(s *State, in Input, dt float64) {
 	updateAcid(s, dt)
 	updateSurvival(s, dt)
 	updatePickups(s, dt)
+	shakeView(s) // last: shakes started by anything above show this frame (M16)
 }
 
 // Health regeneration (2026-10-21 balancing, D30; capped at RegenMaxHP in
@@ -98,6 +101,8 @@ func movePlayer(s *State, in Input, dt float64) {
 	turn := axis(in.TurnRight, in.TurnLeft) // right = growing angle (y points down)
 	p.Angle = normalizeAngle(p.Angle + turn*TurnSpeed*(1-in.TurnSlow)*dt)
 
+	sprinting := p.sprinting(in)
+	updateStamina(s, sprinting, dt)
 	forward := axis(in.Forward, in.Back)
 	strafe := axis(in.StrafeRight, in.StrafeLeft)
 	if forward == 0 && strafe == 0 {
@@ -110,11 +115,20 @@ func movePlayer(s *State, in Input, dt float64) {
 	// Forward + strafe together would be sqrt(2) times faster; normalize.
 	length := math.Hypot(moveX, moveY)
 	speed := MoveSpeed * (1 - in.MoveSlow)
+	if sprinting {
+		speed *= SprintMul
+	}
 	dx := moveX / length * speed * dt
 	dy := moveY / length * speed * dt
 	oldX, oldY := p.X, p.Y
 	p.X, p.Y = world.TryMove(s.Map, p.X, p.Y, dx, dy, Radius)
-	p.Bob = normalizeAngle(p.Bob + math.Hypot(p.X-oldX, p.Y-oldY)*BobPerCell)
+	bob := p.Bob + math.Hypot(p.X-oldX, p.Y-oldY)*BobPerCell
+	if math.Floor(bob/math.Pi) > math.Floor(p.Bob/math.Pi) {
+		// A footstep (M16) each time the bob passes the middle or the end
+		// of its sway: every 0.75 cells walked.
+		s.Events = append(s.Events, EventFootstep)
+	}
+	p.Bob = normalizeAngle(bob)
 }
 
 // axis turns a pair of opposite keys into +1, -1 or 0 (both or neither).

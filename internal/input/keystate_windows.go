@@ -30,7 +30,7 @@ func AsyncSupported() error {
 	return procGetAsyncKeyState.Find()
 }
 
-// AsyncInput reads which movement, fire and reload keys are physically
+// AsyncInput reads which movement, sprint, fire and reload keys are physically
 // down right now.
 // It sees keys pressed in any window, so the caller must ignore it while
 // the terminal doesn't have focus.
@@ -42,6 +42,7 @@ func AsyncInput() game.Input {
 		StrafeRight: down('D'),
 		TurnLeft:    down('Q') || down(vkLeft),
 		TurnRight:   down('E') || down(vkRight),
+		Sprint:      down('F'), // M16
 		Fire:        down(vkSpace),
 		Reload:      down('R'),
 	}

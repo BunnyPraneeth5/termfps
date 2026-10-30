@@ -26,10 +26,20 @@ type Player struct {
 	HP  int // 0 = dead
 	// Armor (M10), 0 to MaxArmor, takes half of each hit until it runs out.
 	Armor int
+	// Stamina (M16) is 0 to 1: sprinting (F) uses it up, resting refills it.
+	Stamina float64
 
 	hurt      float64 // seconds left of the red "you got hit" flash
 	sinceHurt float64 // seconds since the last hit (regeneration waits for RegenDelay)
 	regen     float64 // HP regenerated but not yet whole (HP is a whole number)
+
+	// Game feel (M16), see feel.go.
+	tired             bool    // ran out of stamina; no sprinting until StaminaResume
+	hitFrom, hitDir   float64 // world angle toward the last hit's source; seconds its marker shows
+	hitMark           float64 // seconds the crosshair hit marker shows
+	hitKill           bool    // that hit was a kill
+	shake, shakePower float64 // seconds of screen shake left; its strength (0-1)
+	shakeX, shakeY    float64 // this frame's push, -1 to 1
 }
 
 // Weapon returns the gun in the player's hands. It's a pointer, so
@@ -111,7 +121,7 @@ type State struct {
 func NewState(m *world.Map) *State {
 	s := &State{
 		Map:         m,
-		Player:      Player{X: m.SpawnX, Y: m.SpawnY, Angle: 0, Guns: StartGuns(), HP: PlayerMaxHP},
+		Player:      Player{X: m.SpawnX, Y: m.SpawnY, Angle: 0, Guns: StartGuns(), HP: PlayerMaxHP, Stamina: 1},
 		ShowMinimap: true,
 		Rand:        rand.New(rand.NewPCG(1, 2)), // fixed seed: repeatable
 		distCell:    -1,

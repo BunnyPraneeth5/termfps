@@ -36,6 +36,9 @@ var eventSounds = map[game.Event]audio.Effect{
 	game.EventTankSpawned:     audio.TankRoar,
 	game.EventExploderSpawned: audio.ExploderHiss,
 	game.EventAcidBurn:        audio.AcidSizzle,
+	game.EventFootstep:        audio.Footstep,
+	game.EventOutOfBreath:     audio.OutOfBreath,
+	game.EventEnemyHit:        audio.HitTick, // M16, with the hit marker
 }
 
 // soundReplaces: when an event here comes with the event it names in the

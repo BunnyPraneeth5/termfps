@@ -225,7 +225,7 @@ func shootRay(s *State, angle float64, damage int) {
 	hit := world.CastRay(s.Map, p.X, p.Y, dirX, dirY) // unit dir: PerpDist = distance
 	cover, cx, cy := world.ShotBlocker(s.Map, p.X, p.Y, dirX, dirY, hit.PerpDist)
 	if i := shotHitsEnemy(s, dirX, dirY, math.Min(hit.PerpDist, cover)); i >= 0 {
-		damageEnemy(s, i, damage)
+		markHit(s, damageEnemy(s, i, damage)) // M16
 		return
 	}
 	if cx >= 0 && s.Map.At(cx, cy) == world.ExplosiveBarrel {

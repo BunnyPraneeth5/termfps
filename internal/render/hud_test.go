@@ -13,7 +13,7 @@ import (
 func sampleHUD() HUD {
 	return HUD{
 		FPS:     30,
-		Player:  game.Player{X: 12.34, Y: 5.67, Angle: 3 * math.Pi / 2}, // facing north
+		Player:  game.Player{X: 12.34, Y: 5.67, Angle: 3 * math.Pi / 2, Stamina: 1}, // facing north
 		Draw:    70 * time.Microsecond,
 		Present: 1100 * time.Microsecond,
 		Show:    2 * time.Millisecond,

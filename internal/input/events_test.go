@@ -20,6 +20,7 @@ func TestKeyFor(t *testing.T) {
 		{"D", term.Key{Code: term.KeyRune, Rune: 'D'}, KeyStrafeRight},
 		{"q", term.Key{Code: term.KeyRune, Rune: 'q'}, KeyTurnLeft},
 		{"E", term.Key{Code: term.KeyRune, Rune: 'E'}, KeyTurnRight},
+		{"F", term.Key{Code: term.KeyRune, Rune: 'F'}, KeySprint},
 		{"Left", term.Key{Code: term.KeyLeft}, KeyTurnLeft},
 		{"Right", term.Key{Code: term.KeyRight}, KeyTurnRight},
 		{"Up", term.Key{Code: term.KeyUp}, KeyForward},

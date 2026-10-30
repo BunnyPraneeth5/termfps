@@ -29,7 +29,8 @@ type HUD struct {
 var compass = [8]string{"E", "SE", "S", "SW", "W", "NW", "N", "NE"}
 
 // DrawHUD writes the HUD on the last row. The first part (health, armor,
-// gun and ammo, kills, tier, time) always shows. The extras (FPS, render
+// gun and ammo, kills, tier, time; stamina while it isn't full) always
+// shows. The extras (FPS, render
 // mode, facing, timings, position, key mode) are added in order only while
 // they fit whole, so nothing is cut off mid-word at 80 columns. (Facing
 // moved from the first part to the extras in M12: armor and the gun name
@@ -46,6 +47,9 @@ func DrawHUD(s term.Screen, h HUD) {
 	deg := int(math.Round(p.Angle*180/math.Pi)) % 360
 	line := fmt.Sprintf("HP %3d ARMOR %d | %s | KILLS %d | TIER %d | %s",
 		p.HP, p.Armor, ammoText(*p.Weapon()), h.Kills, h.Tier, Clock(h.Time))
+	if p.Stamina < 1 { // only while sprinting or catching breath (M16)
+		line += fmt.Sprintf(" | STAMINA %d%%", int(p.Stamina*100))
+	}
 
 	var extras []string
 	if h.MinimapHidden {

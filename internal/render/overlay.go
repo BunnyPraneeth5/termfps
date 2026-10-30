@@ -111,3 +111,105 @@ func DrawWeapon(f *Frame, p game.Player) {
 		drawImage(f, flashImage, x0+dw/2-fw/2, y0-fh+fh/4, fw, fh)
 	}
 }
+
+// shakePixels is how far a full-strength shake (M16) pushes the view, as a
+// share of the Frame height.
+const shakePixels = 0.035
+
+// ShakeView moves the whole Frame by the player's shake push (M16), filling
+// the uncovered edge with the edge pixels. Call it after the sprites and
+// before the gun, so the world shakes and the gun stays put.
+func ShakeView(f *Frame, p game.Player) {
+	sx, sy := p.Shake()
+	dx := int(math.Round(sx * shakePixels * float64(f.H)))
+	dy := int(math.Round(sy * shakePixels * float64(f.H)))
+	if f.W <= 0 || f.H <= 0 || (dx == 0 && dy == 0) {
+		return
+	}
+	dx = min(max(dx, -f.W+1), f.W-1)
+	dy = min(max(dy, -f.H+1), f.H-1)
+	// Rows: moving down, fill from the bottom up so each row is copied
+	// before it is overwritten (and the other way when moving up).
+	row := func(y int) []Pixel { return f.Pix[y*f.W : (y+1)*f.W] }
+	if dy > 0 {
+		for y := f.H - 1; y >= 0; y-- {
+			copy(row(y), row(max(y-dy, 0)))
+		}
+	} else if dy < 0 {
+		for y := 0; y < f.H; y++ {
+			copy(row(y), row(min(y-dy, f.H-1)))
+		}
+	}
+	// Columns: copy handles overlapping slices, like C's memmove.
+	for y := 0; y < f.H; y++ {
+		r := row(y)
+		if dx > 0 {
+			copy(r[dx:], r[:f.W-dx])
+			for x := 0; x < dx; x++ {
+				r[x] = r[dx]
+			}
+		} else if dx < 0 {
+			copy(r[:f.W+dx], r[-dx:])
+			for x := f.W + dx; x < f.W; x++ {
+				r[x] = r[f.W+dx-1]
+			}
+		}
+	}
+}
+
+// DrawHitMarker draws four short diagonal ticks around the crosshair while
+// the player's shot just hit an enemy (M16): white for a hit, red for a
+// kill. Call it after DrawCrosshair.
+func DrawHitMarker(f *Frame, p game.Player) {
+	on, kill := p.HitMarker()
+	if !on || f.W <= 0 || f.H <= 0 {
+		return
+	}
+	px := Pixel{Gray: 255}
+	if kill {
+		px = Pixel{Gray: 230, Tint: TintRed}
+	}
+	cx, cy := f.W/2, f.H/2
+	for d := crosshairArm + 1; d <= crosshairArm+2; d++ {
+		for _, s := range [4][2]int{{1, 1}, {1, -1}, {-1, 1}, {-1, -1}} {
+			x, y := cx+s[0]*d, cy+s[1]*d
+			if x >= 0 && y >= 0 && x < f.W && y < f.H {
+				f.Pix[y*f.W+x] = px
+			}
+		}
+	}
+}
+
+// Hit direction marker (M16): a red arc around the crosshair on the side
+// the last hit came from (straight up = in front, down = behind).
+const (
+	hitArcRadius = 0.28 // share of the Frame height
+	hitArcWidth  = 0.5  // radians the arc spans
+	hitArcThick  = 2    // pixels
+)
+
+// DrawHitDirection draws the hit direction marker, fading as it ages.
+// Call it after the gun and crosshair.
+func DrawHitDirection(f *Frame, p game.Player) {
+	angle, strength, ok := p.HitDirection()
+	if !ok || f.W <= 0 || f.H <= 0 {
+		return
+	}
+	rel := angle - p.Angle // 0 = straight ahead, growing clockwise like Angle
+	gray := toGray(120 + 135*strength)
+	cx, cy := float64(f.W)/2, float64(f.H)/2
+	r0 := hitArcRadius * float64(f.H)
+	steps := max(int(r0*hitArcWidth*2), 8) // enough points that the arc has no gaps
+	for i := 0; i <= steps; i++ {
+		a := rel - hitArcWidth/2 + hitArcWidth*float64(i)/float64(steps)
+		for t := 0; t < hitArcThick; t++ {
+			r := r0 + float64(t)
+			// On screen, ahead is up (-y) and clockwise is to the right.
+			x := int(math.Round(cx + r*math.Sin(a)))
+			y := int(math.Round(cy - r*math.Cos(a)))
+			if x >= 0 && y >= 0 && x < f.W && y < f.H {
+				f.Pix[y*f.W+x] = Pixel{Gray: gray, Tint: TintRed}
+			}
+		}
+	}
+}
