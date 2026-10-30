@@ -314,3 +314,16 @@ Format: what, why, trade-off, revisit when.
 - Why: the user wanted difficulty to grow with time as well as kills, enemies to start dumb and learn, and camping not to be safe.
 - Trade-off: the shorter tier time makes the mid game harder; M18 balances it.
 - Revisit when: the batch 1 review, and M18.
+
+## D50: Batch 1 details (M10, M11, M12, M14, M16) (2026-10-30)
+- What: the numbers and choices D49 left open, picked while building, for the user's review (M18 balances them).
+  - M10: medkit +40 HP. Pickups every 15-30 s (was 20-40), at most 4 on the map (was 3): 55% ammo, 25% medkit, 20% armor. A pickup you can't use stays. Armor takes half of a hit rounded up. Armor is blue, a new tint (`TintBlue`, `term.ColorBlue`).
+  - M11: the old gun is the "pistol" (unchanged). Shotgun: 6 shells, 0.8 s between shots, 2 s reload, 8 pellets of 12 damage spread over ±0.1 rad (evenly, plus a little randomness), 30 spare max, boxes +6, comes with 12. Rifle: 5 rounds, 1 s, 2 s reload, 100 damage, 25 spare max, boxes +5, comes with 10. Guns appear through the pickup spawner once their time has come (shotgun 0:30, rifle 1:30), one at a time; taking one puts it in hand. Ammo boxes are for a random gun you own. Switching cancels a reload and waits 0.35 s before the new gun fires. Wheel down = next gun. `Player.Weapon` became `Player.Weapon()` over `Player.Guns`.
+  - M12: runner 20 HP (one pistol shot at tier 2), 3.2 cells/s, 4-6 damage every 0.6 s. Tank 300 HP, 0.9 cells/s, 20-26 every 1.6 s, easier to hit (0.4 hit radius). Exploder 40 HP, 2.2 cells/s, lights a 0.6 s fuse within 1.3 cells (blinks, beeps), 40 damage. Shares from their tier on: runner 20%, tank 10%, exploder 15% of spawns; the rest are zombies and shooters as before (tier 1 draws the same random numbers as before M12). An exploder that blows itself up isn't a kill; one you shoot is, and so is everything its blast kills. Each new kind arrives with its own sound instead of the groan.
+  - Explosions: full damage within 1 cell, falling to 0 at 2.5 cells; walls and closed doors shield, props don't; they show as a glowing burst for 0.4 s.
+  - M14: red barrel `B` (80 damage), acid `~` (5 HP every 0.5 s, first burn 0.15 s after stepping in; enemies ignore it; nothing spawns on it). A blown barrel becomes debris; red barrels in reach go off 0.15 s later. Placed: red barrels in the Warehouse, Yard, Tunnel and Subway; acid in the Tunnel and the Subway track bed. `Map.Clone` now copies the lamps, since a barrel blowing up changes their light for that run only.
+  - M16: sprint 1.6x, 4 s from full, refills in 5 s, after running out wait until 30%. Footstep every 0.75 cells. Hit direction: a red arc around the crosshair for 0.8 s. Hit marker: ticks for 0.15 s, red on a kill, with a tick sound. Shake: 0.35 s, up to 3.5% of the view height; explosions within 8 cells (stronger closer) and tank hits.
+  - HUD: armor and the gun name made the first part longer, so facing (angle and compass) moved to the extras after FPS and mode; at 80 columns it doesn't show (the minimap arrow does). Stamina shows only while not full.
+- Why: D49 fixed what each feature is; these are the smallest choices that make them playable and testable.
+- Trade-off: many new numbers at once; balancing is M18's job.
+- Revisit when: the user's batch 1 review, and M18.

@@ -251,3 +251,14 @@ Template:
 - Pushed V6-V8, M1-M9 and the minimap follow-up (ffdeb6f..3c608d3); CI passed on Windows and Ubuntu.
 - Planned M10-M18 with the user (D49): two batches (M10, M11, M12, M14, M16; then M13, M15, M17, M18), tiers every 20 kills or 3 minutes, new enemies and enemy learning by tier, anti-camping after 60 s without a kill. Only the .md files changed; no code.
 - Next: the user says when to start batch 1.
+
+## 2026-10-30 (batch 1: M10, M11, M12, M14, M16)
+- The user started batch 1. Done, one commit each (details and numbers in D50):
+  - M10 `45ae8f5`: medkits and armor pickups; regeneration up to 75 HP; armor on the HUD; own sounds.
+  - M11 `9d16f5b`: shotgun and rifle with their own ammo, found on the map (0:30, 1:30); 1/2/3 and the mouse wheel switch; own art and sounds.
+  - M12 `a0efabf`: runner (tier 2), tank (tier 3), exploder (tier 4); explosions; tiers every 3 minutes; HUD facing moved to the extras (armor and gun name took its room at 80 columns).
+  - M14 `f0f9724`: red explosive barrels (chain reactions) and acid floor, placed on four maps.
+  - M16 `16a3ce0`: sprint on F with stamina, hit direction arc, hit markers, screen shake, footsteps.
+- Tests: build, vet, gofmt clean after every task. Smart App Control blocked different test binaries at different times (not worked around). The final run passed every package except game, which was blocked; its last run that got through passed everything except a sprint test I then corrected (only that rewrite hasn't run). The HUD width problem from M10/M11 was caught by the render tests once they ran, and fixed in M12.
+- Not done: on-screen review of batch 1 (user); `go test ./internal/game` on the user's machine; not pushed.
+- Next: the user's review, then batch 2 (M13, M15, M17, M18).
