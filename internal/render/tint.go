@@ -11,6 +11,7 @@ const (
 	TintRed                // target blocks, shooter enemies
 	TintGreen              // zombies (P1-06)
 	TintYellow             // muzzle flash (P1-04)
+	TintBlue               // armor (M10)
 )
 
 // rgbColor turns a gray brightness and a tint into a 24-bit color for the
@@ -25,6 +26,8 @@ func rgbColor(g uint8, t Tint) term.Color {
 		return term.RGB(low, g, low)
 	case TintYellow:
 		return term.RGB(g, g, low)
+	case TintBlue:
+		return term.RGB(low, g/2, g) // some green too, so dark blue stays visible
 	}
 	return term.RGB(g, g, g)
 }
@@ -40,6 +43,8 @@ func basicColor(t Tint) term.Color {
 		return term.ColorGreen
 	case TintYellow:
 		return term.ColorYellow
+	case TintBlue:
+		return term.ColorBlue
 	}
 	return term.ColorDefault
 }

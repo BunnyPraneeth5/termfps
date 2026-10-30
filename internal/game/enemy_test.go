@@ -130,7 +130,7 @@ func TestZombieMeleeAndDeath(t *testing.T) {
 	}
 }
 
-// Healing starts 4 s after the last hit, at 5 HP per second, up to 100.
+// Healing starts 4 s after the last hit, at 5 HP per second, up to 75 (M10).
 func TestRegeneration(t *testing.T) {
 	s := stateFrom(t, "#####\n#P..#\n#####\n")
 	hurtPlayer(s, 40) // 60 HP left
@@ -143,8 +143,37 @@ func TestRegeneration(t *testing.T) {
 		t.Errorf("HP %d after ~2 s of healing, want about 70", s.Player.HP)
 	}
 	run(s, Input{}, 20*30, 0)
-	if s.Player.HP != PlayerMaxHP {
-		t.Errorf("HP %d after a long rest, want capped at %d", s.Player.HP, PlayerMaxHP)
+	if s.Player.HP != RegenMaxHP {
+		t.Errorf("HP %d after a long rest, want capped at %d", s.Player.HP, RegenMaxHP)
+	}
+}
+
+// Above the regeneration cap, resting doesn't heal (or lower HP).
+func TestNoRegenerationAboveCap(t *testing.T) {
+	s := stateFrom(t, "#####\n#P..#\n#####\n")
+	hurtPlayer(s, 10) // 90 HP
+	run(s, Input{}, 20*30, 0)
+	if s.Player.HP != 90 {
+		t.Errorf("HP %d after resting at 90, want 90", s.Player.HP)
+	}
+}
+
+// Armor takes half of each hit (rounded up) until it runs out (M10).
+func TestArmorTakesHalf(t *testing.T) {
+	s := stateFrom(t, "#####\n#P..#\n#####\n")
+	s.Player.Armor = 6
+	hurtPlayer(s, 10) // armor takes 5
+	if s.Player.HP != 95 || s.Player.Armor != 1 || count(s, EventArmorHit) != 1 {
+		t.Fatalf("after a 10 hit with 6 armor: HP %d, armor %d; want 95 and 1", s.Player.HP, s.Player.Armor)
+	}
+	hurtPlayer(s, 10) // only 1 armor left
+	if s.Player.HP != 86 || s.Player.Armor != 0 {
+		t.Fatalf("after a 10 hit with 1 armor: HP %d, armor %d; want 86 and 0", s.Player.HP, s.Player.Armor)
+	}
+	s.Events = s.Events[:0]
+	hurtPlayer(s, 10)
+	if s.Player.HP != 76 || count(s, EventArmorHit) != 0 {
+		t.Errorf("after a 10 hit without armor: HP %d, want 76 and no armor event", s.Player.HP)
 	}
 }
 

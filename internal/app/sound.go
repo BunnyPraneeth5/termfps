@@ -20,6 +20,9 @@ var eventSounds = map[game.Event]audio.Effect{
 	game.EventEnemyShot:     audio.EnemyShot,
 	game.EventPlayerHurt:    audio.Hurt,
 	game.EventPickupTaken:   audio.Pickup,
+	game.EventMedkitTaken:   audio.Medkit,
+	game.EventArmorTaken:    audio.ArmorUp,
+	game.EventArmorHit:      audio.ArmorHit,
 	game.EventTierUp:        audio.TierUp,
 	game.EventEnemySpawned:  audio.ZombieGroan, // "something arrived" cue
 }

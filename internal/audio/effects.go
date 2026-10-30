@@ -24,6 +24,9 @@ const (
 	Hurt
 	Pickup
 	TierUp
+	Medkit     // M10
+	ArmorUp    // M10: picking up armor
+	ArmorHit   // M10: armor took part of a hit
 	NumEffects // not an effect: how many there are
 )
 
@@ -83,6 +86,28 @@ func Generate(e Effect) []float64 {
 			i := min(int(t/step), len(notes)-1)
 			dt := t - float64(i)*step
 			return 0.35 * square(notes[i]*dt) * decay(dt, 8)
+		})
+	case Medkit: // a soft rising chord: healing
+		s = synth(0.35, func(t float64) float64 {
+			v := 0.0
+			for i, f := range [...]float64{523, 659, 784} {
+				if dt := t - 0.06*float64(i); dt >= 0 {
+					v += 0.25 * math.Sin(2*math.Pi*f*dt) * attack(dt, 0.01) * decay(dt, 7)
+				}
+			}
+			return v
+		})
+	case ArmorUp: // a metal clink, then a low buckle
+		s = synth(0.3, func(t float64) float64 {
+			v := 0.35 * (math.Sin(2*math.Pi*1800*t) + math.Sin(2*math.Pi*2650*t)) * decay(t, 18)
+			if dt := t - 0.12; dt >= 0 {
+				v += 0.5 * square(sweep(dt, 0.18, 160, 220)) * decay(dt, 14)
+			}
+			return v
+		})
+	case ArmorHit: // a dull metal clank
+		s = synth(0.2, func(t float64) float64 {
+			return (0.4*noise()*decay(t, 40) + 0.5*math.Sin(2*math.Pi*420*t)*decay(t, 16) + 0.3*math.Sin(2*math.Pi*1130*t)*decay(t, 25))
 		})
 	default:
 		panic("audio: unknown effect")

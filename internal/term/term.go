@@ -50,6 +50,7 @@ const (
 	ColorRed
 	ColorGreen
 	ColorYellow
+	ColorBlue // armor (M10)
 )
 
 // isRGB marks a Color that holds red, green and blue in its low 24 bits.

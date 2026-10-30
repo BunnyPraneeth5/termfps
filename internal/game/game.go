@@ -21,6 +21,8 @@ type Player struct {
 	// distance walked; the gun graphic sways with it.
 	Bob float64
 	HP  int // 0 = dead
+	// Armor (M10), 0 to MaxArmor, takes half of each hit until it runs out.
+	Armor int
 
 	hurt      float64 // seconds left of the red "you got hit" flash
 	sinceHurt float64 // seconds since the last hit (regeneration waits for RegenDelay)

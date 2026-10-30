@@ -28,7 +28,7 @@ type HUD struct {
 // compass names the 8 directions in the same order as the minimap arrows.
 var compass = [8]string{"E", "SE", "S", "SW", "W", "NW", "N", "NE"}
 
-// DrawHUD writes the HUD on the last row. The first part (health, ammo,
+// DrawHUD writes the HUD on the last row. The first part (health, armor, ammo,
 // kills, tier, time, facing) always shows. The extras (FPS, render mode, position, timings,
 // key mode) are added in order only while they fit whole, so nothing is cut
 // off mid-word at 80 columns. A Notice goes on the row(s) just above, over
@@ -42,8 +42,8 @@ func DrawHUD(s term.Screen, h HUD) {
 
 	p := h.Player
 	deg := int(math.Round(p.Angle*180/math.Pi)) % 360
-	line := fmt.Sprintf("HP %3d | %s | KILLS %d | TIER %d | %s | %3d° %-2s",
-		p.HP, ammoText(p.Weapon), h.Kills, h.Tier, Clock(h.Time), deg, compass[dirIndex(p.Angle)])
+	line := fmt.Sprintf("HP %3d ARMOR %d | %s | KILLS %d | TIER %d | %s | %3d° %-2s",
+		p.HP, p.Armor, ammoText(p.Weapon), h.Kills, h.Tier, Clock(h.Time), deg, compass[dirIndex(p.Angle)])
 
 	var extras []string
 	if h.MinimapHidden {

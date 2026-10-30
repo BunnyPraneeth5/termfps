@@ -18,8 +18,8 @@ type Image struct {
 //
 //	.        transparent
 //	0-9      gray, from black (0) to bright (9)
-//	r g y    dim red, green, yellow
-//	R G Y    bright red, green, yellow
+//	r g y b  dim red, green, yellow, blue
+//	R G Y B  bright red, green, yellow, blue
 //
 // Like maps, it accepts \r\n line endings and ignores trailing empty
 // lines. All rows must be the same width.
@@ -70,8 +70,12 @@ func imagePixel(c byte) (p Pixel, opaque bool, err error) {
 		return Pixel{Gray: 170, Tint: TintYellow}, true, nil
 	case 'Y':
 		return Pixel{Gray: 250, Tint: TintYellow}, true, nil
+	case 'b':
+		return Pixel{Gray: 140, Tint: TintBlue}, true, nil
+	case 'B':
+		return Pixel{Gray: 230, Tint: TintBlue}, true, nil
 	}
-	return Pixel{}, false, fmt.Errorf("unknown character %q (use . 0-9 r g y R G Y)", c)
+	return Pixel{}, false, fmt.Errorf("unknown character %q (use . 0-9 r g y b R G Y B)", c)
 }
 
 // mustParseImage is for the built-in assets: a broken asset is a bug, so it

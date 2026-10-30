@@ -22,6 +22,9 @@ const (
 	EventTierUp                             // the difficulty tier went up
 	EventPickupSpawned                      // an ammo box appeared
 	EventPickupTaken                        // the player took an ammo box
+	EventMedkitTaken                        // the player took a medkit (M10)
+	EventArmorTaken                         // the player took armor (M10)
+	EventArmorHit                           // armor took part of a hit (M10)
 )
 
 // HasEvent reports whether e happened in the last Update.

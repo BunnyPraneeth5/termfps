@@ -11,7 +11,8 @@ import (
 // enemy ones.
 const (
 	PlayerMaxHP  = 100
-	BulletDamage = 25 // per hit, enemies and players alike
+	MaxArmor     = 100 // armor cap (M10)
+	BulletDamage = 25  // per hit, enemies and players alike
 
 	// EnemyRadius is every enemy's collision half-size with walls.
 	EnemyRadius = 0.25
@@ -203,11 +204,17 @@ func chase(s *State, e *Enemy, step float64) {
 }
 
 // hurtPlayer takes HP from the player (never below 0) and flashes the
-// screen edges.
+// screen edges. Armor (M10) takes half of the hit, rounded up, while it
+// lasts.
 func hurtPlayer(s *State, damage int) {
 	p := &s.Player
 	if p.HP == 0 || damage <= 0 {
 		return
+	}
+	if absorbed := min((damage+1)/2, p.Armor); absorbed > 0 {
+		p.Armor -= absorbed
+		damage -= absorbed
+		s.Events = append(s.Events, EventArmorHit)
 	}
 	p.HP = max(p.HP-damage, 0)
 	p.hurt = hurtFlashTime

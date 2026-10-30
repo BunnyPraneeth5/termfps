@@ -69,3 +69,47 @@ func TestPickupOutOfReach(t *testing.T) {
 		t.Error("box 1.5 cells away was taken")
 	}
 }
+
+// A medkit heals up to full; at full HP it stays on the floor (M10).
+func TestTakeMedkit(t *testing.T) {
+	s := stateFrom(t, "#####\n#P..#\n#####\n")
+	s.Player.HP = 80
+	s.Pickups = []Pickup{{X: s.Player.X, Y: s.Player.Y, Kind: Medkit, Amount: MedkitHeal}}
+	Update(s, Input{}, frameDT)
+	if s.Player.HP != PlayerMaxHP || len(s.Pickups) != 0 || count(s, EventMedkitTaken) != 1 {
+		t.Fatalf("HP %d, %d pickups after a medkit at 80 HP; want %d and 0", s.Player.HP, len(s.Pickups), PlayerMaxHP)
+	}
+	s.Pickups = []Pickup{{X: s.Player.X, Y: s.Player.Y, Kind: Medkit, Amount: MedkitHeal}}
+	Update(s, Input{}, frameDT)
+	if len(s.Pickups) != 1 {
+		t.Error("medkit taken at full HP; it should stay for later")
+	}
+}
+
+// Armor adds up to MaxArmor; at full armor it stays on the floor (M10).
+func TestTakeArmor(t *testing.T) {
+	s := stateFrom(t, "#####\n#P..#\n#####\n")
+	s.Player.Armor = 70
+	s.Pickups = []Pickup{{X: s.Player.X, Y: s.Player.Y, Kind: ArmorVest, Amount: ArmorPickup}}
+	Update(s, Input{}, frameDT)
+	if s.Player.Armor != MaxArmor || len(s.Pickups) != 0 || count(s, EventArmorTaken) != 1 {
+		t.Fatalf("armor %d, %d pickups; want %d and 0", s.Player.Armor, len(s.Pickups), MaxArmor)
+	}
+	s.Pickups = []Pickup{{X: s.Player.X, Y: s.Player.Y, Kind: ArmorVest, Amount: ArmorPickup}}
+	Update(s, Input{}, frameDT)
+	if len(s.Pickups) != 1 {
+		t.Error("armor taken at full armor; it should stay for later")
+	}
+}
+
+// Over many pickups, all three kinds show up, ammo most often.
+func TestPickupMix(t *testing.T) {
+	s := survivalState(t)
+	var n [3]int
+	for range 1000 {
+		n[newPickup(s, 1.5, 1.5).Kind]++
+	}
+	if n[AmmoBox] < n[Medkit] || n[Medkit] == 0 || n[ArmorVest] == 0 {
+		t.Errorf("pickup mix ammo/medkit/armor = %v, want all three, ammo most", n)
+	}
+}

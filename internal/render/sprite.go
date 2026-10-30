@@ -15,6 +15,8 @@ var (
 	ZombieImage  = mustParseImage("zombie", assets.Zombie)
 	ShooterImage = mustParseImage("shooter", assets.Shooter)
 	AmmoImage    = mustParseImage("ammo", assets.Ammo)
+	medkitImage  = mustParseImage("medkit", assets.Medkit)
+	armorImage   = mustParseImage("armor", assets.ArmorVest)
 
 	barrelImage = mustParseImage("barrel", assets.Barrel)
 	crateImage  = mustParseImage("crate", assets.Crate)
@@ -158,4 +160,21 @@ func drawSprite(f *Frame, p game.Player, s Sprite) {
 			f.Pix[y*f.W+x] = px
 		}
 	}
+}
+
+// PickupSprite returns the sprite for a pickup lying at (x, y): an ammo
+// box, a medkit or armor (M10).
+func PickupSprite(pk game.Pickup) Sprite {
+	s := Sprite{X: pk.X, Y: pk.Y}
+	switch pk.Kind {
+	case game.AmmoBox:
+		s.Image, s.Height = AmmoImage, 0.3
+	case game.Medkit:
+		s.Image, s.Height = medkitImage, 0.3
+	case game.ArmorVest:
+		s.Image, s.Height = armorImage, 0.35
+	default:
+		panic(fmt.Sprintf("render: no sprite for pickup kind %d", pk.Kind))
+	}
+	return s
 }

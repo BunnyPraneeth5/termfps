@@ -62,23 +62,25 @@ func Update(s *State, in Input, dt float64) {
 	updatePickups(s, dt)
 }
 
-// Health regeneration (2026-10-21 balancing, D30).
+// Health regeneration (2026-10-21 balancing, D30; capped at RegenMaxHP in
+// M10, so above that only medkits heal).
 const (
 	RegenDelay  = 4.0 // seconds without being hit before healing starts
 	RegenPerSec = 5.0 // HP per second while healing
+	RegenMaxHP  = 75  // regeneration stops here
 )
 
 // regenerate heals the player slowly once they haven't been hit for
-// RegenDelay seconds, up to PlayerMaxHP.
+// RegenDelay seconds, up to RegenMaxHP.
 func regenerate(p *Player, dt float64) {
 	p.sinceHurt += dt
-	if p.sinceHurt < RegenDelay || p.HP >= PlayerMaxHP {
+	if p.sinceHurt < RegenDelay || p.HP >= RegenMaxHP {
 		p.regen = 0
 		return
 	}
 	p.regen += RegenPerSec * dt
 	whole := int(p.regen) // move only whole HP into HP; keep the fraction
-	p.HP = min(p.HP+whole, PlayerMaxHP)
+	p.HP = min(p.HP+whole, RegenMaxHP)
 	p.regen -= float64(whole)
 }
 

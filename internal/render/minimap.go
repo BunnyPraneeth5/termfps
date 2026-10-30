@@ -17,6 +17,8 @@ var (
 	minimapUnseen = term.Style{Bg: grayColor(0)} // not seen yet (M8)
 	minimapPlayer = term.Style{Bg: grayColor(25), Fg: grayColor(255), Bold: true}
 	minimapAmmo   = term.Style{Bg: grayColor(25), Fg: rgbColor(230, TintYellow)}
+	minimapMedkit = term.Style{Bg: grayColor(25), Fg: rgbColor(230, TintRed)}  // M10
+	minimapArmor  = term.Style{Bg: grayColor(25), Fg: rgbColor(230, TintBlue)} // M10
 	// The border (M1) is a light line on black, so the minimap stands apart
 	// from the 3D view behind it.
 	minimapBorder = term.Style{Bg: grayColor(0), Fg: grayColor(170)}
@@ -92,7 +94,7 @@ func DrawMinimap(s term.Screen, st *game.State, fog bool) bool {
 			}
 		}
 	}
-	for _, pk := range st.Pickups { // ammo boxes: a yellow dot
+	for _, pk := range st.Pickups { // a dot: yellow ammo, red medkit, blue armor
 		vx, vy := int(pk.X)-ox, int(pk.Y)-oy
 		if vx < 0 || vy < 0 || vx >= viewW || vy >= viewH {
 			continue // outside the window
@@ -103,7 +105,14 @@ func DrawMinimap(s term.Screen, st *game.State, fog bool) bool {
 		if fog && !seen(st, int(pk.X), int(pk.Y)) {
 			continue // not found yet
 		}
-		s.Put(x0+vx*minimapCellWidth, y0+vy, "●", minimapAmmo)
+		style := minimapAmmo
+		switch pk.Kind {
+		case game.Medkit:
+			style = minimapMedkit
+		case game.ArmorVest:
+			style = minimapArmor
+		}
+		s.Put(x0+vx*minimapCellWidth, y0+vy, "●", style)
 	}
 	return true
 }

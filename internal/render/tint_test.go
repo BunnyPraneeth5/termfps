@@ -17,6 +17,7 @@ func TestRGBColor(t *testing.T) {
 		{TintRed, 200, 50, 50},
 		{TintGreen, 50, 200, 50},
 		{TintYellow, 200, 200, 50},
+		{TintBlue, 50, 100, 200},
 	}
 	for _, c := range cases {
 		r, g, b, _ := rgbColor(200, c.tint).RGB()

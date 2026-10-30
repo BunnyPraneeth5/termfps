@@ -71,3 +71,11 @@ var Body []byte
 //
 //go:embed door.txt
 var Door []byte
+
+// Medkit and ArmorVest are the health and armor pickups (M10).
+//
+//go:embed medkit.txt
+var Medkit []byte
+
+//go:embed armor.txt
+var ArmorVest []byte

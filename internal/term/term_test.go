@@ -62,6 +62,7 @@ func TestTcellStyle(t *testing.T) {
 		{Style{Fg: ColorRed}, tcell.StyleDefault.Foreground(tcell.ColorRed)},
 		{Style{Fg: ColorGreen}, tcell.StyleDefault.Foreground(tcell.ColorGreen)},
 		{Style{Fg: ColorYellow}, tcell.StyleDefault.Foreground(tcell.ColorYellow)},
+		{Style{Fg: ColorBlue}, tcell.StyleDefault.Foreground(tcell.ColorBlue)},
 		{Style{Bold: true}, tcell.StyleDefault.Bold(true)},
 		{Style{Reverse: true, Dim: true}, tcell.StyleDefault.Reverse(true).Dim(true)},
 	}

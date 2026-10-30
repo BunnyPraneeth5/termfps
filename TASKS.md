@@ -376,7 +376,7 @@ Decided with the user on 2026-10-30 (D49). Order and batches: **batch 1** M10, M
 | 4 | 60 kills or 9:00 | exploder | zombies come from several sides |
 | 5+ | every 20 kills or 3:00 | all types | faster spawns, tougher enemies (as now) |
 
-### [ ] M10: Medkits and armor (batch 1)
+### [~] M10: Medkits and armor (batch 1)
 - Regeneration only up to 75 HP (same delay and speed as now); above that only medkits heal.
 - Medkit pickups heal (amount tuned in M18); armor pickups give 50 armor, up to 100. Armor takes half of each hit until it runs out. The HUD shows armor.
 - Both spawn like ammo boxes; their own sound when picked up.

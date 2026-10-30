@@ -158,8 +158,8 @@ func TestHUDAngleWraps(t *testing.T) {
 func TestHUDHealthFirst(t *testing.T) {
 	h := sampleHUD()
 	h.Player.HP = 73
-	if line := hudLine(t, 80, h); !strings.HasPrefix(line, "HP  73 | AMMO") {
-		t.Errorf("HUD %q, want it to start with HP  73 | AMMO", line)
+	if line := hudLine(t, 80, h); !strings.HasPrefix(line, "HP  73 ARMOR 0 | AMMO") {
+		t.Errorf("HUD %q, want it to start with HP  73 ARMOR 0 | AMMO", line)
 	}
 }
 
@@ -185,5 +185,13 @@ func TestDrawMessage(t *testing.T) {
 	}
 	if found != 2 {
 		t.Errorf("found %d of 2 message lines", found)
+	}
+}
+
+func TestHUDArmor(t *testing.T) {
+	h := sampleHUD()
+	h.Player.HP, h.Player.Armor = 64, 50
+	if line := hudLine(t, 80, h); !strings.HasPrefix(line, "HP  64 ARMOR 50 |") {
+		t.Errorf("HUD %q, want it to start with HP  64 ARMOR 50", line)
 	}
 }

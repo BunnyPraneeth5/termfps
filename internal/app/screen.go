@@ -175,8 +175,8 @@ func (a *App) drawScene() {
 	for _, pr := range st.Map.Props { // barrels, crates, lamps, ... (M2)
 		a.sprites = append(a.sprites, render.PropSprite(pr.Kind, pr.X, pr.Y))
 	}
-	for _, pk := range st.Pickups {
-		a.sprites = append(a.sprites, render.Sprite{X: pk.X, Y: pk.Y, Image: render.AmmoImage, Height: 0.3})
+	for _, pk := range st.Pickups { // ammo, medkits, armor (M10)
+		a.sprites = append(a.sprites, render.PickupSprite(pk))
 	}
 	render.DrawSprites(&a.frame, st.Player, a.sprites)
 	render.DrawWeapon(&a.frame, st.Player)

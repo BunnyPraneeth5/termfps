@@ -199,6 +199,8 @@ func tcellColor(c Color) tcell.Color {
 		return tcell.ColorGreen
 	case ColorYellow:
 		return tcell.ColorYellow
+	case ColorBlue:
+		return tcell.ColorBlue
 	}
 	return tcell.ColorDefault
 }
