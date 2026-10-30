@@ -262,3 +262,10 @@ Template:
 - Tests: build, vet, gofmt clean after every task. Smart App Control blocked different test binaries at different times (not worked around). The final run passed every package except game, which was blocked; its last run that got through passed everything except a sprint test I then corrected (only that rewrite hasn't run). The HUD width problem from M10/M11 was caught by the render tests once they ran, and fixed in M12.
 - Not done: on-screen review of batch 1 (user); `go test ./internal/game` on the user's machine; not pushed.
 - Next: the user's review, then batch 2 (M13, M15, M17, M18).
+
+## 2026-10-31 (batch 1 review)
+- The user played batch 1 ("everything you built here is really working well") and shared the Take 5 recording (8:14, one run to tier 3 at 5:26). M10, M11, M12, M14, M16 marked done.
+- Seen in the recording: armor and medkits (HP held at 75 by the regeneration cap), shotgun and rifle in hand and as pickups, a runner, red barrels, acid on the Subway and Tunnel maps, hit markers, the hurt border with the hit direction arc (in front, behind, left), 60 FPS at normal zoom (46.8 zoomed out).
+- Not seen in the sampled frames: a tank, an exploder, an explosion (the run ended in early tier 3).
+- Possible polish, for the user to decide: acid is a flat, untextured green that up close looks like a raised slab; the shotgun in hand looks like two ears; the tier notice still says only "tougher and come faster", not which new enemy joins.
+- Not done: pushed; `go test ./internal/game` on the user's machine.
