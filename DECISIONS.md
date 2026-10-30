@@ -327,3 +327,10 @@ Format: what, why, trade-off, revisit when.
 - Why: D49 fixed what each feature is; these are the smallest choices that make them playable and testable.
 - Trade-off: many new numbers at once; balancing is M18's job.
 - Revisit when: the user's batch 1 review, and M18.
+
+## D51: In-game guide, 3D views, and a public test release (2026-10-31)
+- What: decided with the user after the batch 1 review. The old M18 (balancing and demo) becomes M19. New M18a: an in-game guide (title menu and pause menu) with pages for controls and HUD, enemies, weapons and ammo, pickups, hazards, tiers, maps, settings and tips; its numbers read from the game code. New M18b: a live 3D view for every entry (the camera circles the object in a small display room; maps get a top-down picture and a full turn from inside). New M20: a public test release (builds on GitHub Releases, a SmartScreen note, a version number in the game and `-version`, an issue template, Linux and macOS checked or "Windows first"). Batch 2 is M13, M15, M17, M18a, M18b; batch 3 is M19, M20.
+- Choices: locked maps show only their name and "locked" in the guide (the user wants the surprise). The guide is in the game, not a file in the repo (players never open the repo).
+- Why: the user wants testers to learn the game from inside it, and to see every object in 3D. Numbers from the code mean balancing can come after the guide without making it wrong. The release comes last so it ships the balanced game and the new demo.
+- Trade-off: objects are flat sprites that always face the camera, so the 3D views circle them in a room rather than showing their sides. A true turntable needs every object drawn from 8 angles; not planned.
+- Revisit when: the batch 2 review.

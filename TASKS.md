@@ -364,7 +364,7 @@ All the ideas from the 2026-10-25/26 discussion, added to the plan first (D40). 
 
 ## Gameplay
 
-Decided with the user on 2026-10-30 (D49). Order and batches: **batch 1** M10, M11, M12, M14, M16; **batch 2** M13, M15, M17, M18. The user reviews after each batch. Every new thing gets its own sound effect.
+Decided with the user on 2026-10-30 (D49; the guide and release added 2026-10-31, D51). Order and batches: **batch 1** M10, M11, M12, M14, M16; **batch 2** M13, M15, M17, M18a, M18b; **batch 3** M19, M20. The user reviews after each batch. Every new thing gets its own sound effect.
 
 **Tiers (changed for M12 and M13):** a tier lasts 20 kills or **3 minutes** (was 4), whichever comes first, so a player who only hides still moves up. New enemy types and smarter behavior arrive by tier:
 
@@ -378,7 +378,7 @@ Decided with the user on 2026-10-30 (D49). Order and batches: **batch 1** M10, M
 
 ### [x] M10: Medkits and armor (batch 1)
 - Regeneration only up to 75 HP (same delay and speed as now); above that only medkits heal.
-- Medkit pickups heal (amount tuned in M18); armor pickups give 50 armor, up to 100. Armor takes half of each hit until it runs out. The HUD shows armor.
+- Medkit pickups heal (amount tuned in M19); armor pickups give 50 armor, up to 100. Armor takes half of each hit until it runs out. The HUD shows armor.
 - Both spawn like ammo boxes; their own sound when picked up.
 
 ### [x] M11: More weapons (batch 1)
@@ -410,5 +410,24 @@ Decided with the user on 2026-10-30 (D49). Order and batches: **batch 1** M10, M
 ### [ ] M17: 3D sound (batch 2)
 - Louder when close, quieter far away, and panned left/right toward the source, so you hear where enemies are. Needs stereo playback (oto supports it).
 
-### [ ] M18: Balancing and a new demo (batch 2, always last)
-- Carried over from P1-18: playtest tiers 3+, the ammo cap, the new pickups, weapons, enemies, hazards and waves; record a new demo.
+### [ ] M18a: In-game guide (batch 2)
+- A **Guide** item in the title menu and the pause menu (so it can be read mid-run). A list of pages, moved through with the arrows or W/S, Enter, Esc; pages scroll so they fit from 80x24 up.
+- Pages: controls and HUD; enemies (picture, HP, speed, damage, the tier it arrives in, how to beat it); weapons and ammo (picture, damage, magazine, fire rate, when it appears, when to use it); pickups; hazards (red barrels, acid, explosions); tiers (what changes, 20 kills or 3 minutes); maps (name, size, hazards, a tip); settings; tips for surviving longer.
+- Numbers come straight from the game code (TierFor, the gun table, the enemy constants), not typed in, so balancing (M19) can't make the guide wrong.
+- Pictures are the game's own sprites. Locked maps show only their name and "locked" until unlocked (a surprise, the user's choice).
+- Acceptance: unit tests (every enemy kind, gun, pickup kind and map has a page; numbers match the code; locked maps hidden; fits 80x24; both menus open it); on screen (user).
+
+### [ ] M18b: Guide 3D views (batch 2)
+- Every guide entry gets a live 3D view drawn by the game's own renderer: enemies, gun pickups, ammo, medkit, armor, red barrel and acid each stand in a small lit display room, and the camera slowly circles them (360°). Weapons also show the gun in hand, firing now and then. Maps show a top-down picture and a view where the camera stands in the map and slowly turns all the way around.
+- The objects are flat pictures that always face the camera (like Doom), so circling shows the room turning around them, not their sides. Drawing every object from 8 angles for a true turntable is a separate, bigger idea (not planned).
+- Acceptance: unit tests (each entry has a view; the camera goes all the way around; locked maps get no view); on screen (user).
+
+### [ ] M19: Balancing and a new demo (batch 3)
+- Was M18. Carried over from P1-18: playtest tiers 3+, the ammo cap, the new pickups, weapons, enemies, hazards and waves; record a new demo.
+
+### [ ] M20: Public test release (batch 3, always last)
+- Downloadable builds (Windows and Linux; macOS if it can be tested) on a GitHub Releases page, built by CI.
+- The README says up front that Windows SmartScreen / Smart App Control may warn about an unsigned exe, and what to do.
+- A version number, shown in the game (title menu) and by `-version`.
+- A GitHub issue template for feedback: version, system, terminal, what happened.
+- Linux (sound needs ALSA or PulseAudio) and macOS tested, or the release says "Windows first".
