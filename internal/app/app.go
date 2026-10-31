@@ -231,15 +231,22 @@ func newRand() *rand.Rand {
 
 // present writes the Frame to the screen with the current render mode.
 func (a *App) present() {
+	a.presentFrame(&a.frame)
+}
+
+// presentFrame writes f to the screen with the current render mode (M18a:
+// also a guide picture, at its offset).
+func (a *App) presentFrame(f *render.Frame) {
+	f.MixedBackground, f.ColorThreshold = a.frame.MixedBackground, a.frame.ColorThreshold
 	switch a.state.Mode {
 	case game.ModeHalfBlock:
-		render.PresentHalfBlock(a.scr, &a.frame)
+		render.PresentHalfBlock(a.scr, f)
 	case game.ModeShade:
-		render.PresentShade(a.scr, &a.frame)
+		render.PresentShade(a.scr, f)
 	case game.ModeASCII:
-		render.PresentASCII(a.scr, &a.frame)
+		render.PresentASCII(a.scr, f)
 	case game.ModeMixed:
-		render.PresentMixed(a.scr, &a.frame)
+		render.PresentMixed(a.scr, f)
 	default:
 		panic(fmt.Sprintf("unknown render mode %d", a.state.Mode))
 	}

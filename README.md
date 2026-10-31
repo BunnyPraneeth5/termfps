@@ -75,11 +75,16 @@ mode). See `-keys` below for other systems.
 
 ## Menus
 
-- **Start:** Play, Select map, Settings, Quit. After Play (or picking a
+- **Start:** Play, Select map, Settings, Guide, Quit. After Play (or picking a
   map) you choose the mode: **Survival** (endless) or **Waves** (10 waves
   with 15-second breaks; clear them all to win). Bests are kept per mode.
 - **Pause** (`Esc` in the game; the game freezes, dimmed behind the menu):
-  Resume, Settings, Restart, Quit to menu.
+  Resume, Settings, Restart, Guide, Quit to menu.
+- **Guide** (from the start or pause menu): pages on the controls and HUD,
+  every enemy, weapon, pickup and hazard (with its picture), tiers, what
+  enemies learn, waves, health and stamina, every map (locked maps stay a
+  surprise), the settings, and tips. The numbers come straight from the
+  game, so they're always right. Left/Right turn the pages, Up/Down scroll.
 - **Settings** take effect right away: render mode, mixed background
   brightness (0-100%, default 20%), color threshold (off by default), render
   scale (auto draws the 3D view at most 160 columns wide in big windows;

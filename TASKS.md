@@ -411,7 +411,7 @@ Decided with the user on 2026-10-30 (D49; the guide and release added 2026-10-31
 - Louder when close, quieter far away, and panned left/right toward the source, so you hear where enemies are. Needs stereo playback (oto supports it).
 - Missing sounds found after the batch 1 review (2026-10-31): each enemy kind makes its own sound near the player (e.g. a runner screeches when it starts chasing you), not only when it arrives; zombie and runner hits get their own sound (only the tank's hit has one now); a death sound per enemy kind; the shotgun and rifle get their own reload sounds (now all three use the pistol's).
 
-### [ ] M18a: In-game guide (batch 2)
+### [~] M18a: In-game guide (batch 2)
 - A **Guide** item in the title menu and the pause menu (so it can be read mid-run). A list of pages, moved through with the arrows or W/S, Enter, Esc; pages scroll so they fit from 80x24 up.
 - Pages: controls and HUD; enemies (picture, HP, speed, damage, the tier it arrives in, how to beat it); weapons and ammo (picture, damage, magazine, fire rate, when it appears, when to use it); pickups; hazards (red barrels, acid, explosions); tiers (what changes, 20 kills or 3 minutes); maps (name, size, hazards, a tip); settings; tips for surviving longer.
 - Numbers come straight from the game code (TierFor, the gun table, the enemy constants), not typed in, so balancing (M19) can't make the guide wrong.

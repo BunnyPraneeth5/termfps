@@ -171,3 +171,17 @@ func ensureDistanceField(s *State) {
 		s.distCell = cell
 	}
 }
+
+// FirstTier is the first tier at which enemy kind k spawns (for the guide,
+// M18a), read from TierFor, so it follows any balancing.
+func FirstTier(k EnemyKind) int {
+	for tier := 1; tier <= 20; tier++ {
+		st := TierFor(tier)
+		share := map[EnemyKind]float64{KindZombie: 1, KindShooter: st.ShooterShare,
+			KindRunner: st.RunnerShare, KindTank: st.TankShare, KindExploder: st.ExploderShare}[k]
+		if share > 0 {
+			return tier
+		}
+	}
+	return 0 // never spawns
+}

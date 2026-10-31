@@ -134,3 +134,13 @@ func TestBlastFalloffAndWalls(t *testing.T) {
 		t.Error("blast reaches through a wall")
 	}
 }
+
+// FirstTier follows the tier table (D49): runners 2, tanks 3, exploders 4.
+func TestFirstTier(t *testing.T) {
+	want := map[EnemyKind]int{KindZombie: 1, KindShooter: 1, KindRunner: 2, KindTank: 3, KindExploder: 4}
+	for k, w := range want {
+		if got := FirstTier(k); got != w {
+			t.Errorf("FirstTier(%d) = %d, want %d", k, got, w)
+		}
+	}
+}

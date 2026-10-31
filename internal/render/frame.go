@@ -42,6 +42,10 @@ type Frame struct {
 	// shown as a 2x2 block, so neighboring cells share colors and the
 	// terminal gets fewer color codes. Size the Frame with ScaledFrameSize.
 	Scale int
+	// OffsetX and OffsetY put the Frame's top-left cell at that screen cell
+	// when presented (M18a: a picture in the guide). 0, 0 for the 3D view.
+	// Only for Scale 1.
+	OffsetX, OffsetY int
 
 	// Set by DrawFrame for the map being drawn (M4), and used by the
 	// sprites after it: the fog factor and the light grid.

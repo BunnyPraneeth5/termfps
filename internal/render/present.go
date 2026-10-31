@@ -12,16 +12,17 @@ import (
 type cellWriter struct {
 	s           term.Screen
 	scale, w, h int // h = view rows
+	ox, oy      int // the Frame's top-left screen cell (Frame.OffsetX, OffsetY)
 }
 
 func newCellWriter(s term.Screen, f *Frame) cellWriter {
 	w, h := s.Size()
-	return cellWriter{s: s, scale: max(f.Scale, 1), w: w, h: h - 1}
+	return cellWriter{s: s, scale: max(f.Scale, 1), w: w, h: h - 1, ox: f.OffsetX, oy: f.OffsetY}
 }
 
 func (c cellWriter) put(x, row int, str string, st term.Style) {
 	if c.scale == 1 {
-		c.s.Put(x, row, str, st)
+		c.s.Put(c.ox+x, c.oy+row, str, st)
 		return
 	}
 	for y := row * c.scale; y < (row+1)*c.scale && y < c.h; y++ {

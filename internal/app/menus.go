@@ -81,12 +81,14 @@ func (a *App) titleMenu() *menuScreen {
 		play = iota // iota numbers the items 0, 1, 2, ...
 		selectMap
 		settings
+		guide
 		quit
 	)
 	s := &menuScreen{text: []string{"Survive as long as you can."}, menu: ui.New("TERMFPS", nil, []ui.Item{
 		{Label: "Play"},
 		{Label: "Select map"},
 		{Label: "Settings"},
+		{Label: "Guide"},
 		{Label: "Quit"},
 	})}
 	s.act = func(a *App, r ui.Result) {
@@ -98,6 +100,8 @@ func (a *App) titleMenu() *menuScreen {
 			a.switchTo(a.modeMenu())
 		case selectMap:
 			a.switchTo(a.mapMenu())
+		case guide:
+			a.switchTo(a.guideMenu(s)) // M18a
 		case settings:
 			a.switchTo(a.settingsMenu(s))
 		case quit:
@@ -150,12 +154,14 @@ func (a *App) pauseMenu() *menuScreen {
 		resume = iota
 		settings
 		restart
+		guide
 		quitToMenu
 	)
 	s := &menuScreen{overGame: true, menu: ui.New("PAUSED", nil, []ui.Item{
 		{Label: "Resume"},
 		{Label: "Settings"},
 		{Label: "Restart"},
+		{Label: "Guide"},
 		{Label: "Quit to menu"},
 	})}
 	s.act = func(a *App, r ui.Result) {
@@ -170,6 +176,8 @@ func (a *App) pauseMenu() *menuScreen {
 			a.switchTo(a.settingsMenu(s))
 		case restart:
 			a.newRun()
+		case guide:
+			a.switchTo(a.guideMenu(s)) // M18a
 		case quitToMenu:
 			a.endRun()
 			a.switchTo(a.titleMenu())
