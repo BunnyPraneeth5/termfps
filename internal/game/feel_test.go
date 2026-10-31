@@ -115,3 +115,13 @@ func TestShake(t *testing.T) {
 		t.Error("a tank hit didn't shake the screen")
 	}
 }
+
+// A kill shows the kill marker even when the enemy wasn't last in the list.
+func TestKillMarkerNotLast(t *testing.T) {
+	s := stateFrom(t, "##########\n#P...Z..Z#\n##########\n")
+	s.Enemies[0].HP = 1 // the near one, first in the list
+	Update(s, Input{Fire: true}, frameDT)
+	if on, kill := s.Player.HitMarker(); !on || !kill || s.Kills != 1 {
+		t.Errorf("killed the first of two enemies: marker %v, kill %v, kills %d; want true, true, 1", on, kill, s.Kills)
+	}
+}

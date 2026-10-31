@@ -347,13 +347,16 @@ func damageEnemy(s *State, i, damage int) (killed bool) {
 	e.HP -= damage
 	e.flash = enemyFlashTime
 	s.Events = append(s.Events, EventEnemyHit)
-	if e.HP <= 0 {
-		if e.Kind == KindExploder {
-			addBlast(s, e.X, e.Y, e.damage(ExploderDamage), 0)
-		}
-		s.Enemies = slices.Delete(s.Enemies, i, i+1) // remove it, keeping the order
-		s.Kills++
-		s.Events = append(s.Events, EventEnemyKilled)
+	if e.HP > 0 {
+		return false
 	}
-	return e.HP <= 0
+	if e.Kind == KindExploder {
+		addBlast(s, e.X, e.Y, e.damage(ExploderDamage), 0)
+	}
+	// After Delete, e points at the next enemy (the slice shifted), so
+	// nothing below may read it.
+	s.Enemies = slices.Delete(s.Enemies, i, i+1) // remove it, keeping the order
+	s.Kills++
+	s.Events = append(s.Events, EventEnemyKilled)
+	return true
 }
