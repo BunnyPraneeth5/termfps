@@ -44,8 +44,8 @@ type Input struct {
 // result doesn't depend on the frame rate.
 func Update(s *State, in Input, dt float64) {
 	s.Events = s.Events[:0] // keep the backing array, drop last frame's events
-	if s.Player.Dead() {
-		return // nothing moves after death; the app shows Game over
+	if s.Player.Dead() || s.Won {
+		return // nothing moves after death or a waves win (M15); the app shows its menu
 	}
 	s.Time += dt
 	s.Player.hurt = max(s.Player.hurt-dt, 0)

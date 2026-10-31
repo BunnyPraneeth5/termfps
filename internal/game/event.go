@@ -39,6 +39,9 @@ const (
 	EventFootstep                           // the player took a step (M16)
 	EventOutOfBreath                        // sprinting used up the stamina (M16)
 	EventHuntStarted                        // no kill for CampTime: every enemy hunts the player (M13)
+	EventWaveStarted                        // the next wave began (M15)
+	EventWaveCleared                        // every enemy of the wave is dead; a break starts (M15)
+	EventWavesWon                           // the last wave is cleared: the player won (M15)
 )
 
 // HasEvent reports whether e happened in the last Update.

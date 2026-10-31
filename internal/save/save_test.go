@@ -20,6 +20,7 @@ func sample() Data {
 		Progress: Progress{
 			UnlockedMaps: 2,
 			Best:         map[string]Best{"The Arena": {Kills: 31, Time: 312.5, Tier: 3}},
+			Waves:        map[string]WavesBest{"The Arena": {Wave: 10, Wins: 2, WinTime: 401.5, Kills: 55}}, // M15
 			TotalKills:   57,
 		},
 	}

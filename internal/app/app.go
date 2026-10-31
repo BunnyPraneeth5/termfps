@@ -109,6 +109,7 @@ type App struct {
 	cfg      Config
 	maps     []*world.Map  // as loaded; each run plays on a fresh copy
 	mapIndex int           // the map Play starts
+	playMode game.PlayMode // survival or waves, as last chosen (M15)
 	progress save.Progress // unlocked maps, bests, total kills (D25, D26)
 	store    *save.Store   // where progress and settings are saved; nil = not saved
 	state    *game.State
@@ -152,6 +153,10 @@ type App struct {
 	// After the hunt starts (M13), a warning shows until huntUntil.
 	huntUntil time.Time
 
+	// A wave started or was cleared (M15): its notice shows until waveUntil.
+	waveUntil time.Time
+	waveText  string
+
 	// After a map unlocks, "New map unlocked" shows until unlockUntil.
 	unlockUntil time.Time
 }
@@ -171,7 +176,7 @@ func New(scr term.Screen, maps []*world.Map, cfg Config, now time.Time) *App {
 		scr:      scr,
 		cfg:      cfg,
 		maps:     maps,
-		progress: save.Progress{UnlockedMaps: 1, Best: map[string]save.Best{}},
+		progress: save.Progress{UnlockedMaps: 1, Best: map[string]save.Best{}, Waves: map[string]save.WavesBest{}},
 		frame: render.Frame{PixelAspect: cfg.PixelAspect, Textures: cfg.Textures,
 			MixedBackground: float64(cfg.MixedBackground) / 100, ColorThreshold: uint8(cfg.ColorThreshold)},
 		focused: true,
@@ -210,7 +215,10 @@ func (a *App) newRun() {
 	a.state.Mode = old.Mode
 	a.state.ShowMinimap = a.cfg.MinimapAtStart
 	a.state.Rand = newRand() // real games differ each time
-	a.keys.Reset()           // keeps what it learned about the terminal
+	if a.playMode == game.Waves {
+		a.state.StartWaves() // M15
+	}
+	a.keys.Reset() // keeps what it learned about the terminal
 	a.runActive = true
 	a.switchTo(&playingScreen{})
 }

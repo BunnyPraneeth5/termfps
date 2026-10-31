@@ -127,6 +127,12 @@ func (p *playingScreen) tick(a *App, now time.Time, dt float64) {
 	if st.HasEvent(game.EventTierUp) {
 		a.tierUntil = now.Add(tierNoticeFor)
 	}
+	switch { // waves (M15)
+	case st.HasEvent(game.EventWaveStarted):
+		a.waveUntil, a.waveText = now.Add(tierNoticeFor), fmt.Sprintf("WAVE %d of %d: %d enemies.", st.Wave, game.NumWaves, game.WaveSize(st.Wave))
+	case st.HasEvent(game.EventWaveCleared):
+		a.waveUntil, a.waveText = now.Add(tierNoticeFor), fmt.Sprintf("Wave %d cleared. The next one comes in %.0f seconds.", st.Wave, game.WaveBreak)
+	}
 	if st.HasEvent(game.EventHuntStarted) {
 		a.huntUntil = now.Add(tierNoticeFor)
 	}
@@ -140,6 +146,8 @@ func (p *playingScreen) tick(a *App, now time.Time, dt float64) {
 	switch {
 	case now.Before(a.unlockUntil):
 		notice = fmt.Sprintf("New map unlocked: %s (Select map in the main menu).", a.maps[a.progress.UnlockedMaps-1].Name)
+	case now.Before(a.waveUntil):
+		notice = a.waveText
 	case now.Before(a.huntUntil) && st.Hunting():
 		notice = "No kill for a minute: they all know where you are. Kill one to stop the hunt."
 	case now.Before(a.tierUntil):
@@ -165,6 +173,8 @@ func (p *playingScreen) tick(a *App, now time.Time, dt float64) {
 		Notice:        notice,
 		Kills:         st.Kills,
 		Tier:          st.Tier,
+		Wave:          wave(st),
+		Break:         st.BreakLeft,
 		Time:          st.Time,
 	})
 	t2 := time.Now()
@@ -174,6 +184,10 @@ func (p *playingScreen) tick(a *App, now time.Time, dt float64) {
 	if st.Player.Dead() {
 		a.endRun() // before the menu, so it shows the updated best
 		a.switchTo(a.gameOverMenu())
+	}
+	if st.Won { // M15
+		a.endRun()
+		a.switchTo(a.winMenu())
 	}
 }
 
@@ -223,4 +237,16 @@ func tierNotice(tier int) string {
 		return "TIER 4: exploders join. Zombies now come from your sides and behind."
 	}
 	return fmt.Sprintf("TIER %d: enemies are tougher and come faster.", tier)
+}
+
+// wave is the HUD's wave number: 0 in survival (it shows the tier
+// instead), else the current wave, or the next one during a break (M15).
+func wave(st *game.State) int {
+	switch {
+	case st.Play != game.Waves:
+		return 0
+	case st.InBreak():
+		return st.Wave + 1
+	}
+	return st.Wave
 }

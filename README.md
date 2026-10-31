@@ -75,7 +75,9 @@ mode). See `-keys` below for other systems.
 
 ## Menus
 
-- **Start:** Play, Select map, Settings, Quit.
+- **Start:** Play, Select map, Settings, Quit. After Play (or picking a
+  map) you choose the mode: **Survival** (endless) or **Waves** (10 waves
+  with 15-second breaks; clear them all to win). Bests are kept per mode.
 - **Pause** (`Esc` in the game; the game freezes, dimmed behind the menu):
   Resume, Settings, Restart, Quit to menu.
 - **Settings** take effect right away: render mode, mixed background
@@ -136,6 +138,11 @@ area around you and scrolls as you move.
 - Don't camp: after a minute without a kill, every enemy comes straight for
   you, faster, until you kill one. A horn and a notice warn you.
 - How long can you last?
+- **Waves mode:** wave 1 sends 4 enemies, each next wave 2 more (22 in wave
+  10). A wave ends when all its enemies are dead; then you get 15 seconds
+  to reload and pick things up. The tier rises every two waves, so every
+  enemy kind and trick shows up. The HUD shows `WAVE 3/10` (with a
+  countdown during a break) instead of the tier.
 - **Guns:** you start with the **pistol** (25 rounds, 3 shots per second).
   The **shotgun** (8 pellets in a spread: deadly up close, weak far away, 6
   shells) shows up on the map after 0:30, the **rifle** (accurate, 100

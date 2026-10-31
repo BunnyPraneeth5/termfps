@@ -74,28 +74,38 @@ func spawnKind(s *State, stats TierStats) EnemyKind {
 }
 
 // updateSurvival raises the tier when enough kills or time pass, and spawns
-// enemies on a timer.
+// enemies on a timer. A waves run (M15) has its own rules.
 func updateSurvival(s *State, dt float64) {
+	if s.Play == Waves {
+		updateWaves(s, dt)
+		return
+	}
 	if s.Kills-s.tierKills >= TierKills || s.Time-s.tierStart >= TierTime {
 		s.Tier++
 		s.tierKills, s.tierStart = s.Kills, s.Time
 		s.Events = append(s.Events, EventTierUp)
 	}
-	if !s.Spawning {
-		return
+	if s.Spawning {
+		spawnOne(s, dt)
 	}
+}
+
+// spawnOne counts the spawn timer down and, when it runs out, adds one
+// enemy for the current tier, if fewer than MaxAlive are alive and a
+// hidden spot is found. It reports whether an enemy was added.
+func spawnOne(s *State, dt float64) bool {
 	s.spawnTimer -= dt
 	if s.spawnTimer > 0 {
-		return
+		return false
 	}
 	stats := TierFor(s.Tier)
 	s.spawnTimer = stats.SpawnEvery
 	if len(s.Enemies) >= stats.MaxAlive {
-		return
+		return false
 	}
 	x, y, ok := spawnSpot(s)
 	if !ok {
-		return // no hidden, far-enough cell found this time; try again next timer
+		return false // no hidden, far-enough cell found this time; try again next timer
 	}
 	e := newEnemy(spawnKind(s, stats), x, y)
 	e.HP = int(math.Round(float64(e.HP) * stats.HPMul))
@@ -114,6 +124,7 @@ func updateSurvival(s *State, dt float64) {
 	case KindExploder:
 		s.Events = append(s.Events, EventExploderSpawned)
 	}
+	return true
 }
 
 // spawnSpot picks a random free cell the player can reach but can't see, at

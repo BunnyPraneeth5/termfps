@@ -42,6 +42,9 @@ const (
 	OutOfBreath   // M16: sprinting used up the stamina
 	HitTick       // M16: your shot hit an enemy (with the hit marker)
 	HuntHorn      // M13: no kill for a minute, the hunt begins
+	WaveStart     // M15: a wave begins
+	WaveClear     // M15: a wave is cleared
+	Victory       // M15: every wave cleared
 	NumEffects    // not an effect: how many there are
 )
 
@@ -212,6 +215,37 @@ func Generate(e Effect) []float64 {
 				f, dt = 82.0, t-0.7
 			}
 			return 0.5 * (saw(f*dt) + 0.5*math.Sin(2*math.Pi*f*2*dt)) * attack(dt, 0.15) * decay(dt, 3)
+		})
+	case WaveStart: // an alarm: two-tone, three times
+		s = synth(0.9, func(t float64) float64 {
+			f := 520.0
+			if math.Mod(t, 0.3) >= 0.15 {
+				f = 390
+			}
+			return 0.3 * square(f*t) * attack(t, 0.01) * decay(t, 1.5)
+		})
+	case WaveClear: // a short, bright falling-then-rising three-note cue
+		notes := [...]float64{660, 523, 784}
+		const step = 0.11
+		s = synth(step*float64(len(notes))+0.15, func(t float64) float64 {
+			i := min(int(t/step), len(notes)-1)
+			dt := t - float64(i)*step
+			return 0.35 * square(notes[i]*dt) * decay(dt, 7)
+		})
+	case Victory: // a rising fanfare ending on a long chord
+		notes := [...]float64{523, 659, 784, 1047}
+		const step = 0.14
+		s = synth(1.4, func(t float64) float64 {
+			if i := int(t / step); i < len(notes) {
+				dt := t - float64(i)*step
+				return 0.35 * square(notes[i]*dt) * decay(dt, 6)
+			}
+			dt := t - step*float64(len(notes))
+			v := 0.0
+			for _, f := range [...]float64{523, 659, 784} {
+				v += 0.15 * square(f*dt)
+			}
+			return v * decay(dt, 2.5)
 		})
 	default:
 		panic("audio: unknown effect")

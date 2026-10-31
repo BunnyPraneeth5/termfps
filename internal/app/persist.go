@@ -60,6 +60,9 @@ func (a *App) useSaved(s Saved) {
 	if a.progress.Best == nil {
 		a.progress.Best = map[string]save.Best{} // a nil map can't be written to
 	}
+	if a.progress.Waves == nil {
+		a.progress.Waves = map[string]save.WavesBest{} // save files from before M15
+	}
 	a.progress.UnlockedMaps = min(max(a.progress.UnlockedMaps, 1), a.builtinMaps())
 	a.switchTo(a.titleMenu()) // rebuilt, so it shows the load problem
 }
@@ -111,11 +114,24 @@ func (a *App) endRun() {
 	a.runActive = false
 	st := a.state
 	name := a.maps[a.mapIndex].Name
-	b := a.progress.Best[name] // a missing key gives the zero Best
-	b.Kills = max(b.Kills, st.Kills)
-	b.Time = max(b.Time, st.Time)
-	b.Tier = max(b.Tier, st.Tier)
-	a.progress.Best[name] = b
+	if st.Play == game.Waves { // waves bests are kept apart (M15)
+		w := a.progress.Waves[name]
+		w.Wave = max(w.Wave, st.Wave)
+		w.Kills = max(w.Kills, st.Kills)
+		if st.Won {
+			w.Wins++
+			if w.WinTime == 0 || st.Time < w.WinTime {
+				w.WinTime = st.Time
+			}
+		}
+		a.progress.Waves[name] = w
+	} else {
+		b := a.progress.Best[name] // a missing key gives the zero Best
+		b.Kills = max(b.Kills, st.Kills)
+		b.Time = max(b.Time, st.Time)
+		b.Tier = max(b.Tier, st.Tier)
+		a.progress.Best[name] = b
+	}
 	a.progress.TotalKills += st.Kills
 	a.persist()
 }

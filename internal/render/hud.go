@@ -19,7 +19,11 @@ type HUD struct {
 	MinimapHidden       bool          // minimap is on but didn't fit on screen
 	Mode                game.RenderMode
 	Kills, Tier         int
-	Time                float64 // seconds survived this run
+	// Wave is the waves-mode wave (M15), 0 in survival; Break the seconds
+	// left before it starts (0 while it runs).
+	Wave  int
+	Break float64
+	Time  float64 // seconds survived this run
 	// Notice is a temporary message shown just above the HUD row (empty =
 	// none). Too wide for the screen, it wraps at sentence ends.
 	Notice string
@@ -45,8 +49,8 @@ func DrawHUD(s term.Screen, h HUD) {
 
 	p := h.Player
 	deg := int(math.Round(p.Angle*180/math.Pi)) % 360
-	line := fmt.Sprintf("HP %3d ARMOR %d | %s | KILLS %d | TIER %d | %s",
-		p.HP, p.Armor, ammoText(*p.Weapon()), h.Kills, h.Tier, Clock(h.Time))
+	line := fmt.Sprintf("HP %3d ARMOR %d | %s | KILLS %d | %s | %s",
+		p.HP, p.Armor, ammoText(*p.Weapon()), h.Kills, stageText(h), Clock(h.Time))
 	if p.Stamina < 1 { // only while sprinting or catching breath (M16)
 		line += fmt.Sprintf(" | STAMINA %d%%", int(p.Stamina*100))
 	}
@@ -151,4 +155,16 @@ func dirIndex(angle float64) int {
 // ms converts a duration to milliseconds with fractions.
 func ms(d time.Duration) float64 {
 	return float64(d.Microseconds()) / 1000
+}
+
+// stageText is the HUD's difficulty part: the tier in survival, the wave
+// in a waves run (M15), with a countdown during the break before it.
+func stageText(h HUD) string {
+	switch {
+	case h.Wave == 0:
+		return fmt.Sprintf("TIER %d", h.Tier)
+	case h.Break > 0:
+		return fmt.Sprintf("WAVE %d/%d IN %.0f", h.Wave, game.NumWaves, math.Ceil(h.Break))
+	}
+	return fmt.Sprintf("WAVE %d/%d", h.Wave, game.NumWaves)
 }

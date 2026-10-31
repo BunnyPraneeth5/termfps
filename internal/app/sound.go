@@ -40,6 +40,9 @@ var eventSounds = map[game.Event]audio.Effect{
 	game.EventOutOfBreath:     audio.OutOfBreath,
 	game.EventEnemyHit:        audio.HitTick, // M16, with the hit marker
 	game.EventHuntStarted:     audio.HuntHorn,
+	game.EventWaveStarted:     audio.WaveStart,
+	game.EventWaveCleared:     audio.WaveClear,
+	game.EventWavesWon:        audio.Victory,
 }
 
 // soundReplaces: when an event here comes with the event it names in the
@@ -52,6 +55,8 @@ var soundReplaces = map[game.Event]game.Event{
 	game.EventRunnerSpawned:   game.EventEnemySpawned,
 	game.EventTankSpawned:     game.EventEnemySpawned,
 	game.EventExploderSpawned: game.EventEnemySpawned,
+	// A wave starting may raise the tier too: the alarm says it (M15).
+	game.EventWaveStarted: game.EventTierUp,
 	// Acid sizzles instead of the hurt buzz (M14).
 	game.EventAcidBurn: game.EventPlayerHurt,
 }

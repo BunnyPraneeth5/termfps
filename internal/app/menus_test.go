@@ -62,7 +62,7 @@ func TestTitlePlay(t *testing.T) {
 	if _, ok := a.current.(*menuScreen); !ok || a.quit {
 		t.Error("Esc on the title menu left it; want nothing to happen")
 	}
-	press(a, &now, enter)
+	press(a, &now, enter, enter) // Play, then Survival (M15)
 	if _, ok := a.current.(*playingScreen); !ok {
 		t.Errorf("Enter on Play: screen is %T, want the game", a.current)
 	}
@@ -184,7 +184,7 @@ func TestSettingsApplyRightAway(t *testing.T) {
 	if !screenHas(s, "TERMFPS") {
 		t.Error("Esc in settings didn't go back to the title menu")
 	}
-	press(a, &now, up, up, enter) // Play (from Settings: up twice)
+	press(a, &now, up, up, enter, enter) // Play (from Settings: up twice), Survival
 	if a.state.ShowMinimap {
 		t.Error("new run shows the minimap; setting says off")
 	}
@@ -286,16 +286,16 @@ func TestMapUnlockAndSelect(t *testing.T) {
 	if a.current.(*menuScreen).menu.Selected != 2 {
 		t.Errorf("selection = %d after Down, want 2 (Back; the locked map is skipped)", a.current.(*menuScreen).menu.Selected)
 	}
-	press(a, &now, up, enter) // First
+	press(a, &now, up, enter, enter) // First, Survival
 	a.state.Spawning = false
 	a.state.Time = unlockAfter("5:00") - 0.01
 	press(a, &now)
 	if a.progress.UnlockedMaps != 2 || !screenHas(s, "New map unlocked: Second") {
 		t.Fatalf("unlocked = %d after 5:00, want 2 with a notice", a.progress.UnlockedMaps)
 	}
-	press(a, &now, esc, up, enter) // Pause -> Quit to menu
-	press(a, &now, down, enter)    // Select map
-	press(a, &now, down, enter)    // Second
+	press(a, &now, esc, up, enter)     // Pause -> Quit to menu
+	press(a, &now, down, enter)        // Select map
+	press(a, &now, down, enter, enter) // Second, Survival
 	if a.mapIndex != 1 || a.state.Map.Name != "Second" {
 		t.Errorf("playing map %d %q, want 1 \"Second\"", a.mapIndex, a.state.Map.Name)
 	}

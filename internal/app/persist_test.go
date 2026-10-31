@@ -25,7 +25,7 @@ func TestDeathRecordsAndSaves(t *testing.T) {
 	a, s := newMenuApp(t)
 	store := withStore(t, a)
 	now := t0
-	press(a, &now, enter) // Play
+	press(a, &now, enter, enter) // Play, Survival
 	a.state.Kills, a.state.Time = 7, 95
 	a.state.Player.HP = 0
 	press(a, &now)
@@ -42,7 +42,7 @@ func TestDeathRecordsAndSaves(t *testing.T) {
 	}
 
 	// Try again, then a worse run: the bests stay, total kills add up.
-	press(a, &now, enter)
+	press(a, &now, enter) // Try again (same mode, no mode menu)
 	a.state.Kills, a.state.Time = 2, 10
 	a.state.Player.HP = 0
 	press(a, &now)
@@ -57,12 +57,12 @@ func TestAbandonedRunsCountOnce(t *testing.T) {
 	a, _ := newMenuApp(t)
 	store := withStore(t, a)
 	now := t0
-	press(a, &now, enter)
+	press(a, &now, enter, enter) // Play, Survival
 	a.state.Kills = 3
 	press(a, &now, esc, down, down, enter) // Restart: counts 3
 	a.state.Kills = 4
 	press(a, &now, esc, up, enter) // Quit to menu: counts 4
-	press(a, &now, enter)          // Play again
+	press(a, &now, enter, enter)   // Play again, Survival
 	a.state.Kills = 5
 	press(a, &now, key(term.KeyCtrlC, 0)) // counts 5
 	d, _ := save.Load(store)
@@ -97,7 +97,7 @@ func TestUnlockSavesAndLoads(t *testing.T) {
 	a.maps = append(a.maps, a.maps[0])
 	store := withStore(t, a)
 	now := t0
-	press(a, &now, enter)
+	press(a, &now, enter, enter) // Play, Survival
 	a.state.Spawning = false
 	a.state.Time = unlockAfter("5:00")
 	press(a, &now)
@@ -167,5 +167,41 @@ func TestWrap(t *testing.T) {
 	got := wrap("one two three four", 9)
 	if strings.Join(got, "|") != "one two|three|four" {
 		t.Errorf("wrap = %q", got)
+	}
+}
+
+// Waves (M15): Play -> Waves starts a waves run; winning shows the win
+// menu and saves a waves best apart from the survival best.
+func TestWavesRunWinSaves(t *testing.T) {
+	a, s := newMenuApp(t)
+	store := withStore(t, a)
+	now := t0
+	press(a, &now, enter, down, enter) // Play, Waves
+	if a.state.Play != game.Waves || !a.state.InBreak() {
+		t.Fatalf("after choosing Waves: mode %v, break %v; want a waves run in its first break", a.state.Play, a.state.InBreak())
+	}
+	press(a, &now)
+	if !screenHas(s, "WAVE 1/10 IN") {
+		t.Error("HUD doesn't count down to wave 1")
+	}
+	a.state.Wave, a.state.Kills, a.state.Time, a.state.Won = game.NumWaves, 40, 400, true
+	press(a, &now)
+	press(a, &now) // the menu draws on the next frame
+	if _, ok := a.current.(*menuScreen); !ok || !screenHas(s, "YOU WIN") || !screenHas(s, "won in 6:40") {
+		t.Fatalf("after winning: screen %T; want the win menu with the time", a.current)
+	}
+	d, problem := save.Load(store)
+	if problem != "" {
+		t.Fatalf("Load: %s", problem)
+	}
+	if w := d.Progress.Waves[""]; w.Wins != 1 || w.Wave != game.NumWaves || w.WinTime != 400 || w.Kills != 40 {
+		t.Errorf("saved waves best %+v, want 1 win at wave %d in 400 s with 40 kills", w, game.NumWaves)
+	}
+	if _, ok := d.Progress.Best[""]; ok {
+		t.Error("a waves run changed the survival best")
+	}
+	press(a, &now, enter) // Play again: waves again, no mode menu
+	if _, ok := a.current.(*playingScreen); !ok || a.state.Play != game.Waves {
+		t.Errorf("Play again: screen %T, mode %v; want a new waves run", a.current, a.state.Play)
 	}
 }

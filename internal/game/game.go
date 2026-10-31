@@ -110,6 +110,16 @@ type State struct {
 
 	acidTimer float64 // seconds until acid burns the player again (M14)
 
+	// Waves mode (M15, waves.go). Play is Survival unless StartWaves was
+	// called. Wave is the current wave (0 before the first), BreakLeft the
+	// seconds left of the break before the next one, Won true once the last
+	// wave is cleared.
+	Play      PlayMode
+	Wave      int
+	BreakLeft float64
+	Won       bool
+	waveLeft  int // enemies of this wave still to come
+
 	sinceKill float64 // seconds since the last kill: anti-camping (M13)
 	zombies   int     // zombies spawned this run, for their flanking roles (M13)
 

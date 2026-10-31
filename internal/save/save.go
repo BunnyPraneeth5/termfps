@@ -54,7 +54,18 @@ type Settings struct {
 type Progress struct {
 	UnlockedMaps int             `json:"unlocked_maps"` // how many maps are open, from the first
 	Best         map[string]Best `json:"best"`          // by map name
-	TotalKills   int             `json:"total_kills"`
+	// Waves are the waves-mode bests by map name (M15); nil in older files.
+	Waves      map[string]WavesBest `json:"waves,omitempty"`
+	TotalKills int                  `json:"total_kills"`
+}
+
+// WavesBest is the best waves-mode result on one map (M15). Each field is
+// its own best.
+type WavesBest struct {
+	Wave    int     `json:"wave"`     // furthest wave reached
+	Wins    int     `json:"wins"`     // runs that cleared every wave
+	WinTime float64 `json:"win_time"` // fastest win in seconds; 0 = no win yet
+	Kills   int     `json:"kills"`
 }
 
 // Best holds the best result on one map. Each field is its own best, so

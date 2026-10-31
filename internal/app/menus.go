@@ -3,11 +3,13 @@ package app
 import (
 	"fmt"
 	"slices"
+	"strings"
 	"time"
 
 	"github.com/BunnyPraneeth5/termfps/internal/game"
 	"github.com/BunnyPraneeth5/termfps/internal/input"
 	"github.com/BunnyPraneeth5/termfps/internal/render"
+	"github.com/BunnyPraneeth5/termfps/internal/save"
 	"github.com/BunnyPraneeth5/termfps/internal/term"
 	"github.com/BunnyPraneeth5/termfps/internal/ui"
 )
@@ -93,7 +95,7 @@ func (a *App) titleMenu() *menuScreen {
 		}
 		switch s.menu.Selected {
 		case play:
-			a.newRun()
+			a.switchTo(a.modeMenu())
 		case selectMap:
 			a.switchTo(a.mapMenu())
 		case settings:
@@ -114,6 +116,9 @@ func (a *App) mapMenu() *menuScreen {
 		if b, ok := a.progress.Best[m.Name]; ok { // ok is false if the map has no best yet
 			it.Label += fmt.Sprintf("   best %s, %d kills", render.Clock(b.Time), b.Kills)
 		}
+		if w, ok := a.progress.Waves[m.Name]; ok { // M15
+			it.Label += "   waves: " + wavesBestText(w)
+		}
 		if i >= a.builtinMaps() {
 			it.Label += "   (your map)" // M9
 		}
@@ -133,7 +138,7 @@ func (a *App) mapMenu() *menuScreen {
 			a.switchTo(a.titleMenu())
 		case r == ui.Chosen:
 			a.mapIndex = i
-			a.newRun()
+			a.switchTo(a.modeMenu())
 		}
 	}
 	return s
@@ -187,13 +192,7 @@ func (a *App) gameOverMenu() *menuScreen {
 		retry = iota
 		mainMenu
 	)
-	st := a.state
-	name := a.maps[a.mapIndex].Name
-	best := a.progress.Best[name] // endRun has already counted this run
-	s := &menuScreen{overGame: true, text: []string{
-		fmt.Sprintf("Kills: %d    Time: %s    Tier: %d", st.Kills, render.Clock(st.Time), st.Tier),
-		fmt.Sprintf("Best on %s: %d kills, %s, tier %d", name, best.Kills, render.Clock(best.Time), best.Tier),
-	}, menu: ui.New("YOU DIED", nil, []ui.Item{
+	s := &menuScreen{overGame: true, text: a.resultText(), menu: ui.New("YOU DIED", nil, []ui.Item{
 		{Label: "Try again"},
 		{Label: "Main menu"},
 	})}
@@ -371,4 +370,74 @@ func mapStrings[T any](vs []T, str func(T) string) []string {
 		out[i] = str(v)
 	}
 	return out
+}
+
+// resultText is a finished run's result and the best on its map, for the
+// game over and win menus. endRun has already counted the run.
+func (a *App) resultText() []string {
+	st := a.state
+	name := a.maps[a.mapIndex].Name
+	if st.Play == game.Waves { // M15
+		return []string{
+			fmt.Sprintf("Wave %d of %d    Kills: %d    Time: %s", st.Wave, game.NumWaves, st.Kills, render.Clock(st.Time)),
+			fmt.Sprintf("Waves best on %s: %s", name, wavesBestText(a.progress.Waves[name])),
+		}
+	}
+	best := a.progress.Best[name]
+	return []string{
+		fmt.Sprintf("Kills: %d    Time: %s    Tier: %d", st.Kills, render.Clock(st.Time), st.Tier),
+		fmt.Sprintf("Best on %s: %d kills, %s, tier %d", name, best.Kills, render.Clock(best.Time), best.Tier),
+	}
+}
+
+// wavesBestText describes a waves best: the fastest win, or the furthest
+// wave reached (M15).
+func wavesBestText(w save.WavesBest) string {
+	if w.Wins > 0 {
+		return fmt.Sprintf("won in %s", render.Clock(w.WinTime))
+	}
+	return fmt.Sprintf("wave %d of %d", w.Wave, game.NumWaves)
+}
+
+// modeMenu picks how to play before a run starts (M15): endless survival
+// or waves. It starts on the mode chosen last time.
+func (a *App) modeMenu() *menuScreen {
+	modes := []game.PlayMode{game.Survival, game.Waves}
+	s := &menuScreen{menu: ui.New("PLAY "+strings.ToUpper(a.maps[a.mapIndex].Name), nil, []ui.Item{
+		{Label: "Survival   endless: survive as long as you can"},
+		{Label: fmt.Sprintf("Waves      %d waves with breaks: clear them all to win", game.NumWaves)},
+		{Label: "Back"},
+	})}
+	s.menu.Selected = slices.Index(modes, a.playMode)
+	s.act = func(a *App, r ui.Result) {
+		switch {
+		case r == ui.Back || s.menu.Selected == len(modes):
+			a.switchTo(a.titleMenu())
+		case r == ui.Chosen:
+			a.playMode = modes[s.menu.Selected]
+			a.newRun()
+		}
+	}
+	return s
+}
+
+// winMenu shows a won waves run (M15) over the frozen last frame.
+func (a *App) winMenu() *menuScreen {
+	const (
+		again = iota
+		mainMenu
+	)
+	s := &menuScreen{overGame: true, text: a.resultText(), menu: ui.New("YOU WIN: ALL WAVES CLEARED", nil, []ui.Item{
+		{Label: "Play again"},
+		{Label: "Main menu"},
+	})}
+	s.act = func(a *App, r ui.Result) {
+		switch {
+		case r == ui.Back || s.menu.Selected == mainMenu:
+			a.switchTo(a.titleMenu())
+		case s.menu.Selected == again:
+			a.newRun()
+		}
+	}
+	return s
 }

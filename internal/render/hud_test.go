@@ -214,3 +214,17 @@ func TestHUDFacingWhenWide(t *testing.T) {
 		t.Errorf("HUD %q, want facing after the mode at 100 columns", line)
 	}
 }
+
+// Waves (M15): the HUD shows the wave instead of the tier, and counts down
+// a break.
+func TestHUDWaves(t *testing.T) {
+	h := sampleHUD()
+	h.Wave = 3
+	if line := hudLine(t, 80, h); !strings.Contains(line, "| WAVE 3/10 |") || strings.Contains(line, "TIER") {
+		t.Errorf("HUD %q, want WAVE 3/10 and no tier", line)
+	}
+	h.Break = 11.2
+	if line := hudLine(t, 80, h); !strings.Contains(line, "| WAVE 3/10 IN 12 |") {
+		t.Errorf("HUD %q, want WAVE 3/10 IN 12 during the break", line)
+	}
+}
