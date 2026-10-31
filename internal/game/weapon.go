@@ -198,6 +198,12 @@ func startReload(s *State) {
 	}
 	w.reloading = w.Kind.Stats().Reload
 	s.Events = append(s.Events, EventReloadStarted)
+	switch w.Kind { // their own reload sounds (M17)
+	case Shotgun:
+		s.Events = append(s.Events, EventShotgunReload)
+	case Rifle:
+		s.Events = append(s.Events, EventRifleReload)
+	}
 }
 
 // shoot fires one shot of a gun with stats st: one bullet along the view

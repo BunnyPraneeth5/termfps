@@ -42,6 +42,10 @@ const (
 	EventWaveStarted                        // the next wave began (M15)
 	EventWaveCleared                        // every enemy of the wave is dead; a break starts (M15)
 	EventWavesWon                           // the last wave is cleared: the player won (M15)
+	EventEnemyNoticed                       // an enemy saw the player up close for the first time (M17)
+	EventEnemyAttack                        // a melee enemy hit the player (M17; with its kind in Origins)
+	EventShotgunReload                      // the reload was the shotgun's (also EventReloadStarted, M17)
+	EventRifleReload                        // the reload was the rifle's (also EventReloadStarted, M17)
 )
 
 // HasEvent reports whether e happened in the last Update.

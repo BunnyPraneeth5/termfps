@@ -64,7 +64,7 @@ func updateBlasts(s *State, dt float64) {
 // ExplosionRadius that no wall shields, less the farther away they are.
 func explode(s *State, b blast) {
 	s.Booms = append(s.Booms, Boom{X: b.x, Y: b.y})
-	s.Events = append(s.Events, EventExplosion)
+	emitAt(s, EventExplosion, b.x, b.y, 0)
 	d := math.Hypot(s.Player.X-b.x, s.Player.Y-b.y)
 	blastShake(s, d) // M16
 	if d < ExplosionRadius && blastReaches(s.Map, b.x, b.y, s.Player.X, s.Player.Y) {

@@ -100,6 +100,7 @@ type Enemy struct {
 	routeAge       float64 // seconds until a flanking zombie works out its way again
 	flankX, flankY int     // its flank spot or cover cell
 	flanking       bool    // a flank spot was found
+	noticed        bool    // it has seen the player up close and made its sound (M17)
 
 	// Tier scaling (P1-08), set when it spawns; 1 for map enemies.
 	damageMul, speedMul float64
@@ -178,6 +179,7 @@ func updateEnemies(s *State, dt float64) {
 		e.attackCD = max(e.attackCD-dt, 0)
 		e.alert = max(e.alert-dt, 0)
 		e.hide = max(e.hide-dt, 0)
+		notice(s, e)
 		switch e.Kind {
 		case KindZombie, KindRunner, KindTank:
 			updateMelee(s, e, meleeKinds[e.Kind], dt)
@@ -208,6 +210,7 @@ func updateMelee(s *State, e *Enemy, m melee, dt float64) {
 		base := m.damageMin + s.Rand.IntN(m.damageMax-m.damageMin+1) // IntN(n): 0..n-1
 		hurtPlayerFrom(s, e.damage(base), e.X, e.Y)
 		e.attackCD = m.interval
+		emitAt(s, EventEnemyAttack, e.X, e.Y, e.Kind) // its own hit sound (M17)
 		if e.Kind == KindTank {
 			s.Events = append(s.Events, EventTankHit)
 			shake(s, tankShake) // M16
@@ -227,7 +230,7 @@ func updateExploder(s *State, e *Enemy, dt float64) {
 		}
 	} else if math.Hypot(s.Player.X-e.X, s.Player.Y-e.Y) <= ExploderFuseRange {
 		e.fuse = ExploderFuse
-		s.Events = append(s.Events, EventExploderArmed)
+		emitAt(s, EventExploderArmed, e.X, e.Y, e.Kind)
 	}
 	chase(s, e, speedFor(s, e, ExploderSpeed)*dt)
 }
@@ -260,7 +263,7 @@ func updateShooter(s *State, e *Enemy, dt float64) {
 	}
 	if e.attackCD == 0 {
 		e.attackCD = ShooterInterval
-		s.Events = append(s.Events, EventEnemyShot)
+		emitAt(s, EventEnemyShot, e.X, e.Y, e.Kind)
 		if s.Rand.Float64() < ShooterHitChance(dist) {
 			hurtPlayerFrom(s, e.damage(ShooterDamage), e.X, e.Y)
 		}
@@ -367,18 +370,30 @@ func damageEnemy(s *State, i, damage int) (killed bool) {
 	}
 	e.HP -= damage
 	e.flash = enemyFlashTime
-	s.Events = append(s.Events, EventEnemyHit)
+	emitAt(s, EventEnemyHit, e.X, e.Y, e.Kind)
 	if e.HP > 0 {
 		return false
 	}
 	if e.Kind == KindExploder {
 		addBlast(s, e.X, e.Y, e.damage(ExploderDamage), 0)
 	}
+	emitAt(s, EventEnemyKilled, e.X, e.Y, e.Kind) // before Delete moves e
 	// After Delete, e points at the next enemy (the slice shifted), so
 	// nothing below may read it.
 	s.Enemies = slices.Delete(s.Enemies, i, i+1) // remove it, keeping the order
 	s.Kills++
 	s.sinceKill = 0 // anti-camping starts over (M13)
-	s.Events = append(s.Events, EventEnemyKilled)
 	return true
+}
+
+// notice gives e its "found you" sound (M17) the first time it sees the
+// player within NoticeRange.
+func notice(s *State, e *Enemy) {
+	if e.noticed || math.Hypot(s.Player.X-e.X, s.Player.Y-e.Y) > NoticeRange {
+		return
+	}
+	if world.LineOfSight(s.Map, e.X, e.Y, s.Player.X, s.Player.Y) {
+		e.noticed = true
+		emitAt(s, EventEnemyNoticed, e.X, e.Y, e.Kind)
+	}
 }

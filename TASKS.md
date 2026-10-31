@@ -407,7 +407,7 @@ Decided with the user on 2026-10-30 (D49; the guide and release added 2026-10-31
 - Sprint while F is held, with stamina (drains while sprinting, refills when not); the HUD shows it.
 - A marker showing which way a hit came from; a hit marker on the crosshair when you hit; screen shake on big hits (explosions, tank hits); footstep sounds while walking.
 
-### [ ] M17: 3D sound (batch 2)
+### [~] M17: 3D sound (batch 2)
 - Louder when close, quieter far away, and panned left/right toward the source, so you hear where enemies are. Needs stereo playback (oto supports it).
 - Missing sounds found after the batch 1 review (2026-10-31): each enemy kind makes its own sound near the player (e.g. a runner screeches when it starts chasing you), not only when it arrives; zombie and runner hits get their own sound (only the tank's hit has one now); a death sound per enemy kind; the shotgun and rifle get their own reload sounds (now all three use the pistol's).
 

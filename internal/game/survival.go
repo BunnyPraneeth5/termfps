@@ -115,14 +115,14 @@ func spawnOne(s *State, dt float64) bool {
 		s.zombies++
 	}
 	s.Enemies = append(s.Enemies, e)
-	s.Events = append(s.Events, EventEnemySpawned)
+	emitAt(s, EventEnemySpawned, x, y, e.Kind)
 	switch e.Kind {
 	case KindRunner:
-		s.Events = append(s.Events, EventRunnerSpawned)
+		emitAt(s, EventRunnerSpawned, x, y, e.Kind)
 	case KindTank:
-		s.Events = append(s.Events, EventTankSpawned)
+		emitAt(s, EventTankSpawned, x, y, e.Kind)
 	case KindExploder:
-		s.Events = append(s.Events, EventExploderSpawned)
+		emitAt(s, EventExploderSpawned, x, y, e.Kind)
 	}
 	return true
 }

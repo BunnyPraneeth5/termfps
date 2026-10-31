@@ -45,6 +45,15 @@ const (
 	WaveStart     // M15: a wave begins
 	WaveClear     // M15: a wave is cleared
 	Victory       // M15: every wave cleared
+	ShooterCall   // M17: a shooter saw you
+	ZombieBite    // M17: a zombie hit you
+	RunnerSlash   // M17: a runner hit you
+	ZombieDie     // M17
+	ShooterDie    // M17
+	RunnerDie     // M17
+	TankDie       // M17
+	ShotgunReload // M17: shells going in, then a pump
+	RifleReload   // M17: a bolt pulled back and pushed home
 	NumEffects    // not an effect: how many there are
 )
 
@@ -247,6 +256,63 @@ func Generate(e Effect) []float64 {
 			}
 			return v * decay(dt, 2.5)
 		})
+	case ShooterCall: // a short, harsh two-note bark
+		s = synth(0.35, func(t float64) float64 {
+			f, dt := 300.0, t
+			if t >= 0.15 {
+				f, dt = 420, t-0.15
+			}
+			return 0.45 * saw(f*t) * attack(dt, 0.01) * decay(dt, 14)
+		})
+	case ZombieBite: // a wet crunch: noise with a low thud
+		s = synth(0.22, func(t float64) float64 {
+			return 0.6*noise()*decay(t, 22) + 0.5*math.Sin(2*math.Pi*sweep(t, 0.22, 160, 70))*decay(t, 14)
+		})
+	case RunnerSlash: // a fast swish: rising noise, cut short
+		high := 0.0
+		s = synth(0.18, func(t float64) float64 {
+			n := noise()
+			high, n = n, n-high // a simple high-pass: only the hiss
+			return 0.6 * n * attack(t, 0.04) * decay(t, 25)
+		})
+	case ZombieDie: // a groan that sinks and fades
+		s = synth(0.8, func(t float64) float64 {
+			return 0.5 * saw(sweep(t, 0.8, 110, 45)) * attack(t, 0.03) * decay(t, 4)
+		})
+	case ShooterDie: // a sharp cry falling away
+		s = synth(0.5, func(t float64) float64 {
+			return 0.45 * square(sweep(t, 0.5, 700, 180)) * attack(t, 0.01) * decay(t, 6)
+		})
+	case RunnerDie: // a high shriek cut off
+		s = synth(0.35, func(t float64) float64 {
+			return 0.4 * saw(sweep(t, 0.35, 1300, 600)) * attack(t, 0.01) * decay(t, 10)
+		})
+	case TankDie: // a long, very low collapse with rumble
+		low := 0.0
+		s = synth(1.3, func(t float64) float64 {
+			low += (noise() - low) * 0.04
+			return 0.6*saw(sweep(t, 1.3, 70, 25))*attack(t, 0.05)*decay(t, 2.5) + 2*low*decay(t, 3)
+		})
+	case ShotgunReload: // two shells in (clicks), then a pump (two clacks)
+		s = synth(1.3, func(t float64) float64 {
+			v := 0.0
+			for _, c := range [...]struct{ at, freq float64 }{{0, 2600}, {0.35, 2600}, {0.85, 900}, {1.05, 1100}} {
+				if dt := t - c.at; dt >= 0 {
+					v += (0.5*noise() + 0.5*square(c.freq*dt)) * decay(dt, 60)
+				}
+			}
+			return v
+		})
+	case RifleReload: // bolt up and back, then forward and down
+		s = synth(1.2, func(t float64) float64 {
+			v := 0.0
+			for _, c := range [...]struct{ at, freq float64 }{{0, 1800}, {0.2, 1300}, {0.8, 1500}, {1.0, 2200}} {
+				if dt := t - c.at; dt >= 0 {
+					v += (0.4*noise() + 0.6*square(c.freq*dt)) * decay(dt, 70)
+				}
+			}
+			return v
+		})
 	default:
 		panic("audio: unknown effect")
 	}
@@ -310,10 +376,16 @@ func normalize(s []float64) []float64 {
 func PCM(s []float64) []byte {
 	out := make([]byte, 2*len(s))
 	for i, v := range s {
-		// Clamp before converting; then the low byte goes first (little-endian).
-		n := int16(math.Round(max(-1, min(1, v)) * math.MaxInt16))
-		out[2*i] = byte(n)
-		out[2*i+1] = byte(n >> 8)
+		put16(out[2*i:], v)
 	}
 	return out
+}
+
+// put16 writes sample v (-1 to 1) into b[0:2] as a 16-bit little-endian
+// number.
+func put16(b []byte, v float64) {
+	// Clamp before converting; then the low byte goes first (little-endian).
+	n := int16(math.Round(max(-1, min(1, v)) * math.MaxInt16))
+	b[0] = byte(n)
+	b[1] = byte(n >> 8)
 }

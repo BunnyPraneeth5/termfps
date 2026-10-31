@@ -78,6 +78,9 @@ type State struct {
 	// Events lists what happened in the last Update. Update empties it first,
 	// reusing the slice so there is no allocation per frame.
 	Events []Event
+	// Origins says where the events that have a place happened (M17).
+	// Update empties it too.
+	Origins []Origin
 
 	Enemies []Enemy
 	Kills   int     // enemies killed this run
