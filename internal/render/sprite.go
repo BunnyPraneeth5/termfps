@@ -71,6 +71,7 @@ type Sprite struct {
 	Height float64 // height in map cells (1 = as tall as a wall)
 	Flash  bool    // draw every opaque pixel white (just got shot)
 	Glow   bool    // gives its own light: no fog or map darkness (explosions, M12)
+	Shadow bool    // drawn as a dark silhouette: not met or found yet (M18c, the guide)
 
 	dist float64 // distance from the camera, for sorting (set by DrawSprites)
 }
@@ -169,9 +170,12 @@ func drawSprite(f *Frame, p game.Player, s Sprite) {
 				continue
 			}
 			px := s.Image.Pix[i]
-			if s.Flash {
+			switch {
+			case s.Shadow:
+				px = Pixel{Gray: 6}
+			case s.Flash:
 				px = Pixel{Gray: 255}
-			} else {
+			default:
 				px.Gray = toGray(float64(px.Gray) * fog)
 			}
 			f.Pix[y*f.W+x] = px

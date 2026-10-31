@@ -21,14 +21,15 @@ func section(t *testing.T, a *App, name string) guideSection {
 	return guideSection{}
 }
 
-// pageText is all of a page's text in one string.
-func pageText(e guideEntry) string {
+// textOf is all of a page's text in one string.
+func textOf(e guideEntry) string {
 	return strings.Join(e.lines, "\n")
 }
 
 // The title menu opens the guide; Esc comes back to the title.
 func TestGuideFromTitle(t *testing.T) {
 	a, s := newMenuApp(t)
+	meetAll(a)
 	now := t0
 	press(a, &now, down, down, down, enter) // Guide
 	press(a, &now)
@@ -91,18 +92,19 @@ func TestGuideCoversEverything(t *testing.T) {
 // The pages' numbers come from the game code.
 func TestGuideNumbersFromCode(t *testing.T) {
 	a, _ := newMenuApp(t)
+	meetAll(a)
 	enemies := section(t, a, "Enemies").entries
 	checks := []struct {
 		page, want string
 	}{
-		{pageText(enemies[0]), fmt.Sprintf("HP %d.", game.ZombieHP)},
-		{pageText(enemies[3]), fmt.Sprintf("HP %d.", game.TankHP)},
-		{pageText(enemies[2]), fmt.Sprintf("Comes from tier %d", game.FirstTier(game.KindRunner))},
-		{pageText(section(t, a, "Weapons").entries[1]), fmt.Sprintf("%d rounds in the gun", game.Shotgun.Stats().Mag)},
-		{pageText(section(t, a, "Pickups").entries[1]), fmt.Sprintf("+%d HP", game.MedkitHeal)},
-		{pageText(section(t, a, "Hazards").entries[0]), fmt.Sprintf("up to %d damage", game.BarrelDamage)},
-		{pageText(section(t, a, "Survival and waves").entries[0]), fmt.Sprintf("a new enemy every %s s", num(game.TierFor(2).SpawnEvery))},
-		{pageText(section(t, a, "Survival and waves").entries[2]), fmt.Sprintf("%d waves", game.NumWaves)},
+		{textOf(enemies[0]), fmt.Sprintf("HP %d.", game.ZombieHP)},
+		{textOf(enemies[3]), fmt.Sprintf("HP %d.", game.TankHP)},
+		{textOf(enemies[2]), fmt.Sprintf("Comes from tier %d", game.FirstTier(game.KindRunner))},
+		{textOf(section(t, a, "Weapons").entries[1]), fmt.Sprintf("%d rounds in the gun", game.Shotgun.Stats().Mag)},
+		{textOf(section(t, a, "Pickups").entries[1]), fmt.Sprintf("+%d HP", game.MedkitHeal)},
+		{textOf(section(t, a, "Hazards").entries[0]), fmt.Sprintf("up to %d damage", game.BarrelDamage)},
+		{textOf(section(t, a, "Survival and waves").entries[0]), fmt.Sprintf("a new enemy every %s s", num(game.TierFor(2).SpawnEvery))},
+		{textOf(section(t, a, "Survival and waves").entries[2]), fmt.Sprintf("%d waves", game.NumWaves)},
 	}
 	for _, c := range checks {
 		if !strings.Contains(c.page, c.want) {
@@ -116,16 +118,16 @@ func TestGuideLockedMap(t *testing.T) {
 	a, _ := newMenuApp(t)
 	a.maps = append(a.maps, a.maps[0])
 	maps := section(t, a, "Maps").entries
-	if strings.Contains(pageText(maps[0]), "Locked") {
+	if strings.Contains(textOf(maps[0]), "Locked") {
 		t.Error("the first (open) map shows as locked")
 	}
 	locked := maps[1]
-	if !strings.Contains(locked.name, "locked") || !strings.Contains(pageText(locked), "Locked") ||
-		strings.Contains(pageText(locked), "cells") || locked.view.kind != viewNone {
-		t.Errorf("locked map page %q: %q; want only that it's locked", locked.name, pageText(locked))
+	if !strings.Contains(locked.name, "locked") || !strings.Contains(textOf(locked), "Locked") ||
+		strings.Contains(textOf(locked), "cells") || locked.view.kind != viewNone {
+		t.Errorf("locked map page %q: %q; want only that it's locked", locked.name, textOf(locked))
 	}
 	a.cfg.UnlockRule = "open"
-	if strings.Contains(pageText(section(t, a, "Maps").entries[1]), "Locked") {
+	if strings.Contains(textOf(section(t, a, "Maps").entries[1]), "Locked") {
 		t.Error("with all maps open, the second map is still locked in the guide")
 	}
 }
@@ -134,9 +136,10 @@ func TestGuideLockedMap(t *testing.T) {
 // reaches its last line.
 func TestGuideFits80x24(t *testing.T) {
 	a, s := newMenuApp(t)
+	meetAll(a)
 	for _, sec := range a.guideSections() {
 		for i, e := range sec.entries {
-			g := &guidePage{back: a.current, section: sec, index: i}
+			g := &guidePage{back: a.current, section: sec, index: i, shown: -1}
 			g.tick(a, t0, 0)
 			if !screenHas(s, "GUIDE: ") || !screenHas(s, "Esc back") {
 				t.Fatalf("%s: title or key help missing at 80x24", e.name)
@@ -145,15 +148,21 @@ func TestGuideFits80x24(t *testing.T) {
 				g.key(a, term.Key{Code: term.KeyDown})
 			}
 			g.tick(a, t0, 0)
-			textX := 1 // as tick lays it out
-			if e.view.kind != viewNone {
-				textX = guidePicCols + 3
-			}
-			lines := g.lines(e, 80-textX-1)
-			last := lines[len(lines)-1]
+			words := strings.Fields(e.lines[len(e.lines)-1])
+			last := strings.Join(words[max(len(words)-2, 0):], " ") // the last two words: they wrap together
 			if !screenHas(s, last) {
-				t.Errorf("%s: scrolled to the end, but the last line %q isn't shown", e.name, last)
+				t.Errorf("%s: scrolled to the end, but the last words %q aren't shown", e.name, last)
 			}
 		}
+	}
+}
+
+// meetAll marks every enemy met and every gun found, so their pages show.
+func meetAll(a *App) {
+	for k := game.KindZombie; k <= game.KindExploder; k++ {
+		a.progress.Met = append(a.progress.Met, k.String())
+	}
+	for k := range game.NumGuns {
+		a.progress.Found = append(a.progress.Found, gunName(k))
 	}
 }

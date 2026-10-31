@@ -423,7 +423,7 @@ Decided with the user on 2026-10-30 (D49; the guide and release added 2026-10-31
 - The objects are flat pictures that always face the camera (like Doom), so circling shows the room turning around them, not their sides. Drawing every object from 8 angles for a true turntable is a separate, bigger idea (not planned).
 - Acceptance: unit tests (each entry has a view; the camera goes all the way around; locked maps get no view); on screen (user).
 
-### [ ] M18c: Guide polish (batch 2, after the user's test of M18a/M18b)
+### [~] M18c: Guide polish (batch 2, after the user's test of M18a/M18b)
 - Decided with the user on 2026-10-31 (D53).
 - **Panel:** guide pages sit in a centered panel that looks like the menus (light box, dark text), with the 3D view as a dark window inside it. The panel grows with the window up to 100 columns wide, then stops and stays centered; the 3D view grows with it.
 - **Explored maps:** the cells you've seen on each map are remembered across runs (save.json). A map page shows a big top-down picture (most of the panel width, the text under it): explored parts normal, unexplored parts dark, the map's outer border always drawn, and "Explored: n%". The 360° turn shows only after you've played that map once. Locked maps: the name and the full border, dark inside.

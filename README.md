@@ -80,14 +80,19 @@ mode). See `-keys` below for other systems.
   with 15-second breaks; clear them all to win). Bests are kept per mode.
 - **Pause** (`Esc` in the game; the game freezes, dimmed behind the menu):
   Resume, Settings, Restart, Guide, Quit to menu.
-- **Guide** (from the start or pause menu): pages on the controls and HUD,
-  every enemy, weapon, pickup and hazard, tiers, what enemies learn, waves,
-  health and stamina, every map (locked maps stay a surprise), the
-  settings, and tips. Each enemy, weapon, pickup and hazard is shown in 3D:
-  it stands in a small room while the camera circles it (weapons also fire
-  in your hand); each map shows a full turn from its start and a top-down
-  picture. The numbers come straight from the
-  game, so they're always right. Left/Right turn the pages, Up/Down scroll.
+- **Guide** (from the start or pause menu), in a centered panel that grows
+  with the window up to 100 columns: the controls as a keyboard and mouse
+  picture (keys colored by what they do; Up/Down step through them), the HUD
+  with each part pointed out, every enemy, weapon, pickup and hazard, tiers,
+  what enemies learn, waves, health and stamina, every map, the settings,
+  and tips. Enemies, weapons, pickups and hazards are shown in 3D: they stand
+  in a small room while the camera circles them (weapons also fire in your
+  hand). Enemies you haven't met and guns you haven't found are dark
+  "???" until you do. Each map shows a top-down picture of what you've
+  explored so far (over all runs; the rest stays dark, the outline always
+  shows) and how much, plus a full turn from its start once you've played
+  it. Locked maps show only their outline. The numbers come straight from
+  the game, so they're always right. Left/Right turn the pages.
 - **Settings** take effect right away: render mode, mixed background
   brightness (0-100%, default 20%), color threshold (off by default), render
   scale (auto draws the 3D view at most 160 columns wide in big windows;

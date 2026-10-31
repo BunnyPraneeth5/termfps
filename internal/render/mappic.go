@@ -5,8 +5,10 @@ import "github.com/BunnyPraneeth5/termfps/internal/world"
 // DrawMapPicture fills f with a top-down picture of m (M18b, the guide):
 // one square of pixels per map cell, as large as fits, centered. Walls are
 // light, floor dark, props mid gray, acid green, doors yellow, red blocks
-// and red barrels red, the start white.
-func DrawMapPicture(f *Frame, m *world.Map) {
+// and red barrels red, the start white. With seen (M18c), only the cells
+// seen show; the rest are dark, except the map's outer border, which
+// always shows. A nil seen shows every cell.
+func DrawMapPicture(f *Frame, m *world.Map, seen []bool) {
 	for i := range f.Pix {
 		f.Pix[i] = Pixel{Gray: pictureBackground}
 	}
@@ -22,14 +24,24 @@ func DrawMapPicture(f *Frame, m *world.Map) {
 	for y := 0; y < h; y++ {
 		for x := 0; x < w; x++ {
 			cx, cy := int(float64(x)/scale), int(float64(y)/scale)
+			border := cx == 0 || cy == 0 || cx == m.W-1 || cy == m.H-1
 			px := mapCellPixel(m.At(cx, cy))
-			if cx == sx && cy == sy {
+			switch {
+			case border:
+				px = Pixel{Gray: 150} // the outline always shows, even of a locked map
+			case seen != nil && !seen[cy*m.W+cx]:
+				px = Pixel{Gray: unexplored}
+			case cx == sx && cy == sy:
 				px = Pixel{Gray: 255}
 			}
 			f.Pix[(y0+y)*f.W+x0+x] = px
 		}
 	}
 }
+
+// unexplored is the gray of a map cell not seen yet (M18c): darker than the
+// floor, lighter than the background, so the map's shape still shows.
+const unexplored = 12
 
 // mapCellPixel is how one map cell looks in the map picture.
 func mapCellPixel(c world.Cell) Pixel {

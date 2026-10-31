@@ -397,3 +397,20 @@ func notice(s *State, e *Enemy) {
 		emitAt(s, EventEnemyNoticed, e.X, e.Y, e.Kind)
 	}
 }
+
+// String names the kind, e.g. for the save file (M18c: enemies met).
+func (k EnemyKind) String() string {
+	switch k {
+	case KindZombie:
+		return "zombie"
+	case KindShooter:
+		return "shooter"
+	case KindRunner:
+		return "runner"
+	case KindTank:
+		return "tank"
+	case KindExploder:
+		return "exploder"
+	}
+	return "unknown"
+}

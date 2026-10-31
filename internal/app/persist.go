@@ -63,6 +63,9 @@ func (a *App) useSaved(s Saved) {
 	if a.progress.Waves == nil {
 		a.progress.Waves = map[string]save.WavesBest{} // save files from before M15
 	}
+	if a.progress.Explored == nil {
+		a.progress.Explored = map[string]save.Explored{} // save files from before M18c
+	}
 	a.progress.UnlockedMaps = min(max(a.progress.UnlockedMaps, 1), a.builtinMaps())
 	a.switchTo(a.titleMenu()) // rebuilt, so it shows the load problem
 }
@@ -133,6 +136,7 @@ func (a *App) endRun() {
 		a.progress.Best[name] = b
 	}
 	a.progress.TotalKills += st.Kills
+	a.mergeExplored() // M18c
 	a.persist()
 }
 

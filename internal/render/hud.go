@@ -47,6 +47,23 @@ func DrawHUD(s term.Screen, h HUD) {
 		s.Put(x, y, " ", term.Style{})
 	}
 
+	term.PutStr(s, 0, y, HUDLine(h, w), term.Style{})
+
+	if h.Notice != "" {
+		lines := wrapSentences(h.Notice, w-2) // one space of padding each side
+		for i, l := range lines {
+			row := y - len(lines) + i
+			if row < 0 {
+				continue
+			}
+			term.PutStr(s, 0, row, " "+l+" ", noticeStyle)
+		}
+	}
+}
+
+// HUDLine is the HUD's text for a screen w columns wide: the first part,
+// then the extras that fit whole (the guide draws an example, M18c).
+func HUDLine(h HUD, w int) string {
 	p := h.Player
 	deg := int(math.Round(p.Angle*180/math.Pi)) % 360
 	line := fmt.Sprintf("HP %3d ARMOR %d | %s | KILLS %d | %s | %s",
@@ -73,18 +90,7 @@ func DrawHUD(s term.Screen, h HUD) {
 		}
 		line += e
 	}
-	term.PutStr(s, 0, y, line, term.Style{})
-
-	if h.Notice != "" {
-		lines := wrapSentences(h.Notice, w-2) // one space of padding each side
-		for i, l := range lines {
-			row := y - len(lines) + i
-			if row < 0 {
-				continue
-			}
-			term.PutStr(s, 0, row, " "+l+" ", noticeStyle)
-		}
-	}
+	return line
 }
 
 // noticeStyle is reversed (swapped colors) so it stands out in every

@@ -35,9 +35,29 @@ func TestDrawMapPicture(t *testing.T) {
 	}
 	f := &Frame{PixelAspect: 1}
 	f.Resize(12, 6) // 2 pixels per cell
-	DrawMapPicture(f, m)
+	DrawMapPicture(f, m, nil)
 	at := func(cx, cy int) Pixel { return f.Pix[(2*cy)*f.W+2*cx] }
 	if at(0, 0).Gray != 150 || at(2, 1).Gray != 35 || at(1, 1).Gray != 255 || at(4, 1).Tint != TintGreen {
 		t.Errorf("wall %+v, floor %+v, start %+v, acid %+v", at(0, 0), at(2, 1), at(1, 1), at(4, 1))
+	}
+}
+
+// Cells not seen are dark, but the outer border always shows (M18c).
+func TestDrawMapPictureExplored(t *testing.T) {
+	m, err := world.Parse([]byte("######\n#P..~#\n######\n"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	seen := make([]bool, m.W*m.H)
+	seen[1*m.W+2] = true // one floor cell
+	f := &Frame{PixelAspect: 1}
+	f.Resize(12, 6)
+	DrawMapPicture(f, m, seen)
+	at := func(cx, cy int) Pixel { return f.Pix[(2*cy)*f.W+2*cx] }
+	if at(0, 0).Gray != 150 || at(5, 2).Gray != 150 {
+		t.Error("the unseen outer border isn't drawn")
+	}
+	if at(2, 1).Gray != 35 || at(3, 1).Gray != unexplored || at(4, 1).Tint == TintGreen {
+		t.Errorf("seen floor %+v, unseen floor %+v, unseen acid %+v; want floor, dark, dark", at(2, 1), at(3, 1), at(4, 1))
 	}
 }

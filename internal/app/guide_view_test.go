@@ -6,12 +6,14 @@ import (
 
 	"github.com/BunnyPraneeth5/termfps/internal/game"
 	"github.com/BunnyPraneeth5/termfps/internal/render"
+	"github.com/BunnyPraneeth5/termfps/internal/save"
 )
 
 // Every enemy, weapon, pickup, hazard and open map has a 3D view; text
 // pages and locked maps don't (M18b).
 func TestGuideViews(t *testing.T) {
 	a, _ := newMenuApp(t)
+	meetAll(a)
 	a.maps = append(a.maps, a.maps[0]) // the second one is locked
 	for _, name := range []string{"Enemies", "Weapons", "Pickups", "Hazards"} {
 		for _, e := range section(t, a, name).entries {
@@ -20,9 +22,14 @@ func TestGuideViews(t *testing.T) {
 			}
 		}
 	}
+	if v := section(t, a, "Maps").entries[0].view.kind; v != viewNone {
+		t.Errorf("an open map never played has view %d, want none (the turn only after playing it, M18c)", v)
+	}
+	m := a.maps[0]
+	a.progress.Explored[m.Name] = save.Explored{W: m.W, H: m.H, Cells: save.PackCells(make([]bool, m.W*m.H))} // played once
 	maps := section(t, a, "Maps").entries
 	if maps[0].view.kind != viewMap || maps[1].view.kind != viewNone {
-		t.Errorf("map views: open %d, locked %d; want a map view and none", maps[0].view.kind, maps[1].view.kind)
+		t.Errorf("map views: played %d, locked %d; want a map view and none", maps[0].view.kind, maps[1].view.kind)
 	}
 	for _, name := range []string{"Controls and HUD", "Survival and waves", "Settings", "Tips"} {
 		for _, e := range section(t, a, name).entries {
@@ -60,7 +67,7 @@ func TestViewDrawsAndMoves(t *testing.T) {
 	v := spriteView(render.EnemySprite(game.Enemy{Kind: game.KindRunner}))
 	st := a.newPreview(v)
 	var f render.Frame
-	f.Resize(guidePicCols, 2*guidePicRows)
+	f.Resize(viewMinCols, 20)
 	a.drawView(&f, st, v, 0, 0)
 	blue, first := 0, append([]render.Pixel(nil), f.Pix...)
 	for _, p := range f.Pix {
@@ -89,7 +96,7 @@ func TestMapViewTurns(t *testing.T) {
 	v := guideView{kind: viewMap}
 	st := a.newPreview(v)
 	var f render.Frame
-	f.Resize(guidePicCols, 2*guidePicRows)
+	f.Resize(viewMinCols, 20)
 	a.drawView(&f, st, v, mapTurnPeriod/4, 0)
 	if p := st.Player; p.X != a.maps[0].SpawnX || math.Abs(p.Angle-math.Pi/2) > 1e-9 {
 		t.Errorf("a quarter turn in: camera at (%.1f, %.1f) facing %.2f, want the start facing pi/2", p.X, p.Y, p.Angle)
@@ -102,7 +109,7 @@ func TestGunViewFires(t *testing.T) {
 	v := guideView{kind: viewGun, gun: game.Rifle}
 	st := a.newPreview(v)
 	var f render.Frame
-	f.Resize(guidePicCols, 2*guidePicRows)
+	f.Resize(viewMinCols, 20)
 	shots := 0
 	const dt = 1.0 / 30
 	for i := 1; i <= int(2*gunFireEvery*30)+1; i++ {

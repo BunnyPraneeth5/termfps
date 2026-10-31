@@ -4,12 +4,9 @@ import (
 	"fmt"
 	"math"
 	"strings"
-	"time"
 
 	"github.com/BunnyPraneeth5/termfps/internal/game"
-	"github.com/BunnyPraneeth5/termfps/internal/input"
 	"github.com/BunnyPraneeth5/termfps/internal/render"
-	"github.com/BunnyPraneeth5/termfps/internal/term"
 	"github.com/BunnyPraneeth5/termfps/internal/ui"
 	"github.com/BunnyPraneeth5/termfps/internal/world"
 )
@@ -20,9 +17,11 @@ import (
 
 // guideEntry is one guide page.
 type guideEntry struct {
-	name  string
-	lines []string  // paragraphs; "" is an empty line
-	view  guideView // shown beside the text in 3D (M18b); viewNone = none
+	name   string
+	lines  []string  // paragraphs; "" is an empty line
+	view   guideView // shown in 3D (M18b); viewNone = none
+	kind   pageKind  // how the page is laid out (M18c)
+	mapIdx int       // pageMap: index into App.maps
 }
 
 // guideSection is a group of pages, one item in the guide menu.
@@ -36,8 +35,8 @@ type guideSection struct {
 func (a *App) guideSections() []guideSection {
 	return []guideSection{
 		{"Controls and HUD", []guideEntry{controlsPage(), hudPage()}},
-		{"Enemies", enemyPages()},
-		{"Weapons", gunPages()},
+		{"Enemies", a.enemyPages()},
+		{"Weapons", a.gunPages()},
 		{"Pickups", pickupPages()},
 		{"Hazards", hazardPages()},
 		{"Survival and waves", survivalPages()},
@@ -53,26 +52,15 @@ func num(v float64) string {
 }
 
 func controlsPage() guideEntry {
-	return guideEntry{name: "Controls", lines: []string{
-		"W / Up arrow: move forward. S / Down arrow: move back.",
-		"A / D: step left / right. Q / Left arrow, E / Right arrow: turn.",
-		fmt.Sprintf("F (hold): sprint, %sx speed, while you have stamina.", num(game.SprintMul)),
-		"Space or left click: shoot (hold to keep firing). R or right click: reload; an empty gun reloads by itself.",
-		"1, 2, 3 or the mouse wheel: switch between the pistol, shotgun and rifle once you've found them.",
-		"M: show or hide the minimap. V: switch the look: half-block, shade, ASCII, mixed.",
-		"Esc: pause (Resume, Settings, Restart, Guide, Quit to menu). Ctrl+C: quit at once, from anywhere.",
-		"There is no mouse-look: terminals can't capture the mouse.",
+	return guideEntry{name: "Controls", kind: pageKeys, lines: []string{
+		"In the pause menu: Resume, Settings, Restart, Guide, Quit to menu.",
+		"There is no mouse-look: terminals can't capture the mouse. On Windows you can move and turn at the same time (the async key mode).",
 	}}
 }
 
 func hudPage() guideEntry {
-	return guideEntry{name: "HUD", lines: []string{
-		"The bottom line, left to right:",
-		"HP and ARMOR: your health and armor.",
-		"The gun in hand and its ammo: rounds in the gun / spare rounds, and RELOADING while it reloads.",
-		"KILLS this run. TIER in survival, or WAVE n/10 in waves mode (with a countdown during a break).",
-		"The time survived, and STAMINA while it isn't full.",
-		"On a wide window also: FPS, the render mode, which way you face, frame timings, your position and the key mode.",
+	return guideEntry{name: "HUD", kind: pageHUD, lines: []string{
+		"The parts on the left always show; the ones on the right only when the window is wide enough. STAMINA shows while it isn't full; in waves mode WAVE 3/10 takes the tier's place.",
 		"Notices show just above it: a new tier, a wave, a new map, the hunt.",
 		"The red edge means you were hit; the red arc around the crosshair points to where the hit came from. Ticks around the crosshair mean your shot hit (red: a kill).",
 		"The minimap (top right): walls, doors, props, green acid, and dots for pickups: yellow ammo, red medkit, blue armor, white gun.",
@@ -100,10 +88,10 @@ func arrives(k game.EnemyKind) string {
 	return fmt.Sprintf("Comes from tier %d (in waves mode, from wave %d).", t, 2*t-1)
 }
 
-func enemyPages() []guideEntry {
+func (a *App) enemyPages() []guideEntry {
 	sprite := func(k game.EnemyKind) guideView { return spriteView(render.EnemySprite(game.Enemy{Kind: k})) }
 	walk := fmt.Sprintf("(you walk %s)", num(game.MoveSpeed))
-	return []guideEntry{
+	pages := []guideEntry{
 		{name: "Zombie", view: sprite(game.KindZombie), lines: []string{
 			"Green. Walks at you and hits up close.",
 			fmt.Sprintf("HP %d. Speed %s cells per second %s.", game.ZombieHP, num(game.ZombieSpeed), walk),
@@ -145,9 +133,22 @@ func enemyPages() []guideEntry {
 			"Tip: shoot it early, when it's next to other enemies and far from you.",
 		}},
 	}
+	for k := range pages {
+		kind := game.EnemyKind(k)
+		if a.met(kind) {
+			continue
+		}
+		// Not met yet (M18c): a dark silhouette until the player meets one.
+		shadow := render.EnemySprite(game.Enemy{Kind: kind})
+		shadow.Shadow = true
+		pages[k] = guideEntry{name: "???", view: spriteView(shadow), lines: []string{
+			"You haven't met this enemy yet.", arrives(kind),
+		}}
+	}
+	return pages
 }
 
-func gunPages() []guideEntry {
+func (a *App) gunPages() []guideEntry {
 	pages := make([]guideEntry, 0, game.NumGuns)
 	use := [game.NumGuns]string{
 		"Good all-round: quick shots, lots of ammo.",
@@ -172,6 +173,14 @@ func gunPages() []guideEntry {
 			fmt.Sprintf("Spare rounds: up to %d; an ammo box gives %d.", st.MaxReserve, st.BoxAmmo),
 			found,
 		}})
+		if !a.found(k) { // not found yet (M18c): a dark silhouette
+			shadow := render.PickupSprite(game.Pickup{Kind: game.GunPickup, Gun: k})
+			shadow.Shadow = true
+			pages[k] = guideEntry{name: "???", view: spriteView(shadow), lines: []string{
+				"You haven't found this gun yet.",
+				fmt.Sprintf("It shows up on the map after %s.", render.Clock(st.Arrives)),
+			}}
+		}
 	}
 	return pages
 }
@@ -277,7 +286,7 @@ func (a *App) mapPages() []guideEntry {
 			name = fmt.Sprintf("Map %d", i+1)
 		}
 		if a.mapLocked(i) {
-			pages = append(pages, guideEntry{name: name + " (locked)", lines: []string{
+			pages = append(pages, guideEntry{name: name + " (locked)", kind: pageMap, mapIdx: i, lines: []string{
 				fmt.Sprintf("Locked. Survive %s on %s to open it.", render.Clock(unlockAfter(a.cfg.UnlockRule)), a.maps[i-1].Name),
 			}})
 			continue
@@ -295,13 +304,20 @@ func (a *App) mapPages() []guideEntry {
 			fmt.Sprintf("%d x %d cells. %d doors, %d lamps, %d starting enemies.", m.W, m.H, len(m.Doors), len(m.Lamps), len(m.EnemyStarts)),
 			fmt.Sprintf("Red barrels: %d. Acid cells: %d.", barrels, acid),
 		}
+		view := guideView{kind: viewMap, mapIdx: i}
+		if seen, played := a.explored(i); played {
+			lines = append([]string{fmt.Sprintf("Explored: %d%%.", int(math.Round(100*exploredShare(m, seen))))}, lines...)
+		} else {
+			view = guideView{} // the 360° turn only after you've played it (M18c)
+			lines = append([]string{"Not played yet: everything's dark until you explore it."}, lines...)
+		}
 		if tip, ok := mapTips[m.Name]; ok {
 			lines = append(lines, "Tip: "+tip)
 		}
 		if i >= a.builtinMaps() {
 			lines = append(lines, "Your own map, from the maps folder or -map.")
 		}
-		pages = append(pages, guideEntry{name: name, lines: lines, view: guideView{kind: viewMap, mapIdx: i}})
+		pages = append(pages, guideEntry{name: name, lines: lines, view: view, kind: pageMap, mapIdx: i})
 	}
 	return pages
 }
@@ -373,116 +389,4 @@ func (a *App) guideSectionMenu(back *menuScreen, sec guideSection) *menuScreen {
 		}
 	}
 	return s
-}
-
-// Guide page layout: the 3D view box on the left (a map's top-down
-// picture under it), the text beside it.
-const (
-	guidePicCols = 22 // view box size in cells
-	guidePicRows = 10
-)
-
-// guidePage shows one page of a section: Left/Right go to the other pages,
-// Up/Down scroll, Esc goes back.
-type guidePage struct {
-	back    screen
-	section guideSection
-	index   int // the page shown
-	scroll  int // first text line shown
-
-	// The 3D view (M18b): its Frame, a map's top-down picture, the game
-	// state it draws, the page that state is for (-1 = none yet), and the
-	// seconds since that page opened.
-	view, mapPic render.Frame
-	preview      *game.State
-	shown        int
-	t            float64
-}
-
-func (g *guidePage) key(a *App, ev term.Key) {
-	if ev.Action == term.Release {
-		return
-	}
-	k, ok := input.MenuKeyFor(ev)
-	if !ok {
-		return
-	}
-	n := len(g.section.entries)
-	switch k {
-	case ui.KeyBack:
-		a.switchTo(g.back)
-	case ui.KeyLeft:
-		g.index, g.scroll = (g.index+n-1)%n, 0
-	case ui.KeyRight:
-		g.index, g.scroll = (g.index+1)%n, 0
-	case ui.KeyUp:
-		g.scroll = max(g.scroll-1, 0)
-	case ui.KeyDown:
-		g.scroll++ // tick keeps it within the text
-	}
-}
-
-func (g *guidePage) mouse(a *App, b mouseButton, down bool, x, y int) {
-	switch {
-	case b == mouseWheelUp:
-		g.scroll = max(g.scroll-1, 0)
-	case b == mouseWheelDown:
-		g.scroll++
-	}
-}
-
-// guideHint is the key help at the bottom of a guide page.
-const guideHint = "Left/Right other pages   Up/Down scroll   Esc back"
-
-func (g *guidePage) tick(a *App, now time.Time, dt float64) {
-	s := a.scr
-	s.Clear()
-	w, h := s.Size()
-	e := g.section.entries[g.index]
-
-	title := fmt.Sprintf(" GUIDE: %s: %s (%d/%d) ", strings.ToUpper(g.section.name), e.name, g.index+1, len(g.section.entries))
-	term.PutStr(s, 0, 0, title+strings.Repeat(" ", max(w-len([]rune(title)), 0)), term.Style{Reverse: true})
-	term.PutStr(s, 1, h-1, guideHint, term.Style{Dim: true})
-
-	textX := 1
-	if e.view.kind != viewNone {
-		if g.preview == nil || g.shown != g.index {
-			g.preview, g.shown, g.t = a.newPreview(e.view), g.index, 0
-		}
-		g.t += dt
-		g.view.Resize(guidePicCols, 2*guidePicRows)
-		g.view.OffsetX, g.view.OffsetY = 1, 2
-		a.drawView(&g.view, g.preview, e.view, g.t, dt)
-		a.presentFrame(&g.view)
-		if e.view.kind == viewMap && 3+2*guidePicRows <= h-1 { // room for the top-down picture under it (above the key help)
-			g.mapPic.PixelAspect = 1
-			g.mapPic.Resize(guidePicCols, 2*guidePicRows)
-			g.mapPic.OffsetX, g.mapPic.OffsetY = 1, 3+guidePicRows
-			render.DrawMapPicture(&g.mapPic, a.maps[e.view.mapIdx])
-			a.presentFrame(&g.mapPic)
-		}
-		textX = guidePicCols + 3
-	}
-	lines := g.lines(e, w-textX-1)
-	rows := h - 4 // the title, a blank row, the hint, and one spare
-	g.scroll = min(g.scroll, max(len(lines)-rows, 0))
-	for i := 0; i < rows && g.scroll+i < len(lines); i++ {
-		term.PutStr(s, textX, 2+i, lines[g.scroll+i], term.Style{})
-	}
-	if g.scroll+rows < len(lines) {
-		term.PutStr(s, w-8, h-1, "more...", term.Style{Dim: true})
-	}
-	s.Show()
-}
-
-// lines wraps a page's paragraphs to width, with a blank line between them.
-func (g *guidePage) lines(e guideEntry, width int) []string {
-	var out []string
-	for i, p := range e.lines {
-		if i > 0 {
-			out = append(out, "")
-		}
-		out = append(out, wrap(p, max(width, 10))...)
-	}
-	return out
 }

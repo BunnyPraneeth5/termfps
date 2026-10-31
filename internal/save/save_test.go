@@ -20,7 +20,10 @@ func sample() Data {
 		Progress: Progress{
 			UnlockedMaps: 2,
 			Best:         map[string]Best{"The Arena": {Kills: 31, Time: 312.5, Tier: 3}},
-			Waves:        map[string]WavesBest{"The Arena": {Wave: 10, Wins: 2, WinTime: 401.5, Kills: 55}}, // M15
+			Waves:        map[string]WavesBest{"The Arena": {Wave: 10, Wins: 2, WinTime: 401.5, Kills: 55}},                                            // M15
+			Explored:     map[string]Explored{"The Arena": {W: 4, H: 2, Cells: PackCells([]bool{true, true, false, true, false, false, true, false})}}, // M18c
+			Met:          []string{"zombie", "runner"},
+			Found:        []string{"shotgun"},
 			TotalKills:   57,
 		},
 	}

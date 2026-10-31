@@ -4,6 +4,7 @@
 package save
 
 import (
+	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -57,6 +58,50 @@ type Progress struct {
 	// Waves are the waves-mode bests by map name (M15); nil in older files.
 	Waves      map[string]WavesBest `json:"waves,omitempty"`
 	TotalKills int                  `json:"total_kills"`
+	// Explored is what the player has seen of each map, by name, over all
+	// runs (M18c); nil in older files.
+	Explored map[string]Explored `json:"explored,omitempty"`
+	// Met lists the enemy kinds the player has met and Found the guns they
+	// have found (M18c), by name (e.g. "runner", "rifle").
+	Met   []string `json:"met,omitempty"`
+	Found []string `json:"found,omitempty"`
+}
+
+// Explored is the cells seen on one map (M18c): W x H bits, row by row,
+// packed 8 to a byte, base64. W and H tell a changed map (a custom map
+// edited since) from the same one.
+type Explored struct {
+	W     int    `json:"w"`
+	H     int    `json:"h"`
+	Cells string `json:"cells"`
+}
+
+// PackCells turns seen flags into Explored.Cells.
+func PackCells(seen []bool) string {
+	b := make([]byte, (len(seen)+7)/8)
+	for i, s := range seen {
+		if s {
+			b[i/8] |= 1 << (i % 8)
+		}
+	}
+	return base64.StdEncoding.EncodeToString(b)
+}
+
+// UnpackCells turns Explored.Cells back into n seen flags. A damaged or
+// wrong-sized value is an error.
+func UnpackCells(cells string, n int) ([]bool, error) {
+	b, err := base64.StdEncoding.DecodeString(cells)
+	if err != nil {
+		return nil, fmt.Errorf("explored cells: %w", err)
+	}
+	if len(b) != (n+7)/8 {
+		return nil, fmt.Errorf("explored cells: %d bytes for %d cells", len(b), n)
+	}
+	seen := make([]bool, n)
+	for i := range seen {
+		seen[i] = b[i/8]&(1<<(i%8)) != 0
+	}
+	return seen, nil
 }
 
 // WavesBest is the best waves-mode result on one map (M15). Each field is

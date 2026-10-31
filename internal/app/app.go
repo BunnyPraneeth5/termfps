@@ -176,7 +176,7 @@ func New(scr term.Screen, maps []*world.Map, cfg Config, now time.Time) *App {
 		scr:      scr,
 		cfg:      cfg,
 		maps:     maps,
-		progress: save.Progress{UnlockedMaps: 1, Best: map[string]save.Best{}, Waves: map[string]save.WavesBest{}},
+		progress: save.Progress{UnlockedMaps: 1, Best: map[string]save.Best{}, Waves: map[string]save.WavesBest{}, Explored: map[string]save.Explored{}},
 		frame: render.Frame{PixelAspect: cfg.PixelAspect, Textures: cfg.Textures,
 			MixedBackground: float64(cfg.MixedBackground) / 100, ColorThreshold: uint8(cfg.ColorThreshold)},
 		focused: true,
