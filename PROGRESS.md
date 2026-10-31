@@ -269,3 +269,15 @@ Template:
 - Not seen in the sampled frames: a tank, an exploder, an explosion (the run ended in early tier 3).
 - Possible polish, for the user to decide: acid is a flat, untextured green that up close looks like a raised slab; the shotgun in hand looks like two ears; the tier notice still says only "tougher and come faster", not which new enemy joins.
 - Not done: pushed; `go test ./internal/game` on the user's machine.
+
+## 2026-10-31 (batch 2: M13, M15, M17, M18a, M18b)
+- The user started batch 2. Done, one commit each (details in D52):
+  - Fix `7eb5e95`: the M16 kill marker read the wrong enemy after removing the killed one.
+  - M13 `5097e58`: enemies learn by tier (hearing, cover, flanking), anti-camping hunt, tier notices that say what's new.
+  - M15 `3933991`: waves mode (10 waves, breaks, win screen), chosen after Play; waves bests saved apart.
+  - M17 `e000d9d`: stereo sound from where things happen; per-kind notice, hit and death sounds; own reloads. Fixed: every effect added in M10-M16 played at volume 0 (missing from the gain table), which is why the user didn't hear the new enemy and gun sounds.
+  - M18a `3a10ba9`: in-game guide from the title and pause menus, numbers from the code, locked maps hidden.
+  - M18b `b34652a`: 3D views in the guide (display room with a circling camera, guns firing in hand, maps turning with a top-down picture).
+- Tests: build, vet, gofmt clean; `go test ./...` passes for every package (Smart App Control didn't block anything this time).
+- Not done: on-screen review of batch 2 (user): enemy behavior by tier, waves, how 3D sound sounds, the guide's look; not pushed.
+- Next: the user's review, then batch 3 (M19 balancing and demo, M20 public test release).
