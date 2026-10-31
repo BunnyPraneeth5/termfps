@@ -130,6 +130,11 @@ area around you and scrolls as you move.
     blow up where they stand, hurting the enemies around them.
   - Explosions hurt everyone within 2.5 cells, less farther away; walls
     shield you, crates don't.
+- Enemies learn as the tiers go up: from tier 2 they hear your gunshots
+  (within 15 steps) and rush to you; from tier 3 shooters hide after they
+  shoot; from tier 4 zombies come from your sides and from behind.
+- Don't camp: after a minute without a kill, every enemy comes straight for
+  you, faster, until you kill one. A horn and a notice warn you.
 - How long can you last?
 - **Guns:** you start with the **pistol** (25 rounds, 3 shots per second).
   The **shotgun** (8 pellets in a spread: deadly up close, weak far away, 6

@@ -41,6 +41,7 @@ const (
 	Footstep      // M16
 	OutOfBreath   // M16: sprinting used up the stamina
 	HitTick       // M16: your shot hit an enemy (with the hit marker)
+	HuntHorn      // M13: no kill for a minute, the hunt begins
 	NumEffects    // not an effect: how many there are
 )
 
@@ -203,6 +204,14 @@ func Generate(e Effect) []float64 {
 	case HitTick: // a tiny, bright click
 		s = synth(0.05, func(t float64) float64 {
 			return 0.3 * math.Sin(2*math.Pi*2400*t) * decay(t, 90)
+		})
+	case HuntHorn: // two low, swelling horn notes, the second lower
+		s = synth(1.4, func(t float64) float64 {
+			f, dt := 110.0, t
+			if t >= 0.7 {
+				f, dt = 82.0, t-0.7
+			}
+			return 0.5 * (saw(f*dt) + 0.5*math.Sin(2*math.Pi*f*2*dt)) * attack(dt, 0.15) * decay(dt, 3)
 		})
 	default:
 		panic("audio: unknown effect")

@@ -149,6 +149,9 @@ type App struct {
 	// After a tier-up, "TIER n" shows above the HUD until tierUntil.
 	tierUntil time.Time
 
+	// After the hunt starts (M13), a warning shows until huntUntil.
+	huntUntil time.Time
+
 	// After a map unlocks, "New map unlocked" shows until unlockUntil.
 	unlockUntil time.Time
 }

@@ -85,3 +85,19 @@ func TestZombieStartsAndClone(t *testing.T) {
 		t.Error("changing the clone changed the original")
 	}
 }
+
+// DistanceFieldExcept goes around skipped cells (M13).
+func TestDistanceFieldExcept(t *testing.T) {
+	m, err := Parse([]byte("#######\n#P....#\n#.....#\n#######\n"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	skip := func(x, y int) bool { return x == 3 && y == 1 }
+	d := DistanceFieldExcept(m, 1, 1, nil, skip)
+	if d[1*m.W+3] != -1 || d[1*m.W+4] != 5 {
+		t.Errorf("skipped cell %d, cell past it %d; want -1 and 5 (around through row 2)", d[1*m.W+3], d[1*m.W+4])
+	}
+	if plain := DistanceField(m, 1, 1, nil); plain[1*m.W+4] != 3 {
+		t.Errorf("without skipping, cell (4, 1) = %d, want 3", plain[1*m.W+4])
+	}
+}

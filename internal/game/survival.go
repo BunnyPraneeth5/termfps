@@ -100,6 +100,10 @@ func updateSurvival(s *State, dt float64) {
 	e := newEnemy(spawnKind(s, stats), x, y)
 	e.HP = int(math.Round(float64(e.HP) * stats.HPMul))
 	e.damageMul, e.speedMul = stats.DamageMul, stats.SpeedMul
+	if e.Kind == KindZombie { // flanking roles in turn: straight, left, right, behind (M13)
+		e.role = s.zombies % 4
+		s.zombies++
+	}
 	s.Enemies = append(s.Enemies, e)
 	s.Events = append(s.Events, EventEnemySpawned)
 	switch e.Kind {

@@ -38,6 +38,7 @@ const (
 	EventAcidBurn                           // acid burned the player (M14)
 	EventFootstep                           // the player took a step (M16)
 	EventOutOfBreath                        // sprinting used up the stamina (M16)
+	EventHuntStarted                        // no kill for CampTime: every enemy hunts the player (M13)
 )
 
 // HasEvent reports whether e happened in the last Update.

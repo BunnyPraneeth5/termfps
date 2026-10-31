@@ -405,3 +405,13 @@ func TestRenderScaleModes(t *testing.T) {
 		}
 	}
 }
+
+// Tiers 2-4 say what's new (M12 enemies, M13 what enemies learn); later
+// tiers only that it got harder.
+func TestTierNoticeText(t *testing.T) {
+	for tier, want := range map[int]string{2: "runners", 3: "tanks", 4: "exploders", 5: "tougher"} {
+		if got := tierNotice(tier); !strings.Contains(got, want) || len([]rune(got)) > 78 {
+			t.Errorf("tierNotice(%d) = %q, want it to mention %q and fit 80 columns", tier, got, want)
+		}
+	}
+}

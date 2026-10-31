@@ -391,7 +391,7 @@ Decided with the user on 2026-10-30 (D49; the guide and release added 2026-10-31
 - Runner (fast, weak) from tier 2, tank (slow, tough, hits hard) from tier 3, exploder (runs at you, blows up near you or when shot) from tier 4; see the tier table.
 - Own sprites and sounds.
 
-### [ ] M13: Smarter enemies (batch 2)
+### [~] M13: Smarter enemies (batch 2)
 - Enemies start dumb (as now) and learn by tier (table above): tier 2 they hear gunshots and come to the sound; tier 3 shooters take cover behind props; tier 4 zombies come from several sides.
 - Anti-camping: after 60 seconds without a kill, every enemy hunts the player directly (heads straight for them), until the next kill.
 

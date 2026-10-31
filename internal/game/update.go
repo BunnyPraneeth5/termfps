@@ -63,7 +63,8 @@ func Update(s *State, in Input, dt float64) {
 	updateDoors(s, dt) // before moving, so a door that just opened lets you through
 	updateWeapon(s, in, dt)
 	movePlayer(s, in, dt)
-	markSeen(s) // after moving: what the player sees from where they are now
+	markSeen(s)         // after moving: what the player sees from where they are now
+	updateBrains(s, dt) // after the gun (a shot this frame is heard), before the enemies move (M13)
 	updateEnemies(s, dt)
 	updateBlasts(s, dt) // after shots and enemies, so a blast they set off goes off this frame
 	updateAcid(s, dt)

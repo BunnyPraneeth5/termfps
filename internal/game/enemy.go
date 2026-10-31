@@ -93,6 +93,14 @@ type Enemy struct {
 	sawLast  bool    // shooter: it saw the player last frame
 	fuse     float64 // exploder: seconds until it blows up; 0 = not lit (M12)
 
+	// Smarter enemies (M13, brain.go).
+	alert, hide    float64 // seconds left rushing (heard a shot); a shooter's seconds left in cover
+	role           int     // zombies: 0 comes straight, 1-3 flank (left, right, behind) from FlankTier
+	route          []int   // distance field to its flank spot or cover cell
+	routeAge       float64 // seconds until a flanking zombie works out its way again
+	flankX, flankY int     // its flank spot or cover cell
+	flanking       bool    // a flank spot was found
+
 	// Tier scaling (P1-08), set when it spawns; 1 for map enemies.
 	damageMul, speedMul float64
 }
@@ -168,6 +176,8 @@ func updateEnemies(s *State, dt float64) {
 		e := &s.Enemies[i] // pointer: change the enemy in the slice, not a copy
 		e.flash = max(e.flash-dt, 0)
 		e.attackCD = max(e.attackCD-dt, 0)
+		e.alert = max(e.alert-dt, 0)
+		e.hide = max(e.hide-dt, 0)
 		switch e.Kind {
 		case KindZombie, KindRunner, KindTank:
 			updateMelee(s, e, meleeKinds[e.Kind], dt)
@@ -191,7 +201,7 @@ func updateMelee(s *State, e *Enemy, m melee, dt float64) {
 	p := s.Player
 	if math.Hypot(p.X-e.X, p.Y-e.Y) > m.reach {
 		e.attackCD = max(e.attackCD, m.firstDelay) // fresh delay on (re)arrival
-		chase(s, e, m.speed*e.speedMul*dt)
+		moveMelee(s, e, speedFor(s, e, m.speed)*dt, dt)
 		return
 	}
 	if e.attackCD == 0 {
@@ -219,7 +229,7 @@ func updateExploder(s *State, e *Enemy, dt float64) {
 		e.fuse = ExploderFuse
 		s.Events = append(s.Events, EventExploderArmed)
 	}
-	chase(s, e, ExploderSpeed*e.speedMul*dt)
+	chase(s, e, speedFor(s, e, ExploderSpeed)*dt)
 }
 
 // updateShooter fires when it sees the player within range, backs off when
@@ -227,24 +237,35 @@ func updateExploder(s *State, e *Enemy, dt float64) {
 // walls when it can't see them).
 func updateShooter(s *State, e *Enemy, dt float64) {
 	p := s.Player
+	step := speedFor(s, e, ShooterSpeed) * dt
+	if e.hide > 0 && !s.Hunting() { // in cover (M13): go there and wait
+		e.sawLast = false
+		followField(s, e, e.route, step)
+		return
+	}
 	dist := math.Hypot(p.X-e.X, p.Y-e.Y)
 	sees := dist <= ShooterRange && world.LineOfSight(s.Map, e.X, e.Y, p.X, p.Y)
 	if sees && !e.sawLast {
 		e.attackCD = max(e.attackCD, ShooterFirstShotDelay) // a moment to aim
 	}
 	e.sawLast = sees
-	if !sees {
-		chase(s, e, ShooterSpeed*e.speedMul*dt)
+	switch {
+	case !sees:
+		chase(s, e, step)
 		return
-	}
-	if dist < ShooterMinRange {
-		retreat(s, e, ShooterSpeed*e.speedMul*dt)
+	case dist < ShooterMinRange:
+		retreat(s, e, step)
+	case s.Hunting(): // anti-camping (M13): it closes in while shooting
+		chase(s, e, step)
 	}
 	if e.attackCD == 0 {
 		e.attackCD = ShooterInterval
 		s.Events = append(s.Events, EventEnemyShot)
 		if s.Rand.Float64() < ShooterHitChance(dist) {
 			hurtPlayerFrom(s, e.damage(ShooterDamage), e.X, e.Y)
+		}
+		if s.Tier >= CoverTier && !s.Hunting() {
+			takeCover(s, e) // M13
 		}
 	}
 }
@@ -357,6 +378,7 @@ func damageEnemy(s *State, i, damage int) (killed bool) {
 	// nothing below may read it.
 	s.Enemies = slices.Delete(s.Enemies, i, i+1) // remove it, keeping the order
 	s.Kills++
+	s.sinceKill = 0 // anti-camping starts over (M13)
 	s.Events = append(s.Events, EventEnemyKilled)
 	return true
 }

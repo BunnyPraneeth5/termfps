@@ -8,6 +8,13 @@ package world
 // It's a breadth-first search: cells are visited in rings of equal
 // distance, using a slice as a first-in-first-out queue.
 func DistanceField(m *Map, fromX, fromY int, buf []int) []int {
+	return DistanceFieldExcept(m, fromX, fromY, buf, nil)
+}
+
+// DistanceFieldExcept is DistanceField that also treats the cells where skip
+// returns true as blocked (M13: a flanking zombie's way keeps clear of the
+// player). A nil skip skips nothing.
+func DistanceFieldExcept(m *Map, fromX, fromY int, buf []int, skip func(x, y int) bool) []int {
 	n := m.W * m.H
 	if cap(buf) >= n {
 		buf = buf[:n]
@@ -29,7 +36,7 @@ func DistanceField(m *Map, fromX, fromY int, buf []int) []int {
 		x, y := i%m.W, i/m.W
 		for _, d := range [4][2]int{{1, 0}, {-1, 0}, {0, 1}, {0, -1}} {
 			nx, ny := x+d[0], y+d[1]
-			if m.pathBlocked(nx, ny) {
+			if m.pathBlocked(nx, ny) || (skip != nil && skip(nx, ny)) {
 				continue // walls, blocking props (M2), not doors (M3); also covers outside the map
 			}
 			j := ny*m.W + nx

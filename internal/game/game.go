@@ -110,6 +110,9 @@ type State struct {
 
 	acidTimer float64 // seconds until acid burns the player again (M14)
 
+	sinceKill float64 // seconds since the last kill: anti-camping (M13)
+	zombies   int     // zombies spawned this run, for their flanking roles (M13)
+
 	// dist is the distance field from the player's cell (distCell), used by
 	// enemies to walk around walls. -1 = not computed yet.
 	dist     []int

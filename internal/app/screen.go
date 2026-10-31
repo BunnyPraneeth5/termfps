@@ -127,6 +127,9 @@ func (p *playingScreen) tick(a *App, now time.Time, dt float64) {
 	if st.HasEvent(game.EventTierUp) {
 		a.tierUntil = now.Add(tierNoticeFor)
 	}
+	if st.HasEvent(game.EventHuntStarted) {
+		a.huntUntil = now.Add(tierNoticeFor)
+	}
 	n := unlocks(a.progress.UnlockedMaps, a.mapIndex, st.Time, a.builtinMaps(), unlockAfter(a.cfg.UnlockRule))
 	if a.cfg.UnlockRule != "open" && n > a.progress.UnlockedMaps { // with all maps open there is nothing to announce
 		a.progress.UnlockedMaps = n
@@ -137,8 +140,10 @@ func (p *playingScreen) tick(a *App, now time.Time, dt float64) {
 	switch {
 	case now.Before(a.unlockUntil):
 		notice = fmt.Sprintf("New map unlocked: %s (Select map in the main menu).", a.maps[a.progress.UnlockedMaps-1].Name)
+	case now.Before(a.huntUntil) && st.Hunting():
+		notice = "No kill for a minute: they all know where you are. Kill one to stop the hunt."
 	case now.Before(a.tierUntil):
-		notice = fmt.Sprintf("TIER %d: enemies are tougher and come faster.", st.Tier)
+		notice = tierNotice(st.Tier)
 	case now.Before(a.cautionUntil) && st.Mode == game.ModeHalfBlock:
 		notice = caution // only while half-block is actually on screen
 	}
@@ -204,4 +209,18 @@ func (a *App) drawScene() {
 func isGunKey(ev term.Key) bool {
 	_, ok := input.GunKey(ev)
 	return ok
+}
+
+// tierNotice is the message for reaching tier: what's new (M12 enemies,
+// M13 what enemies learn), or just that it got harder.
+func tierNotice(tier int) string {
+	switch tier {
+	case game.HearTier:
+		return "TIER 2: runners join. Enemies now hear your gunshots and rush to you."
+	case game.CoverTier:
+		return "TIER 3: tanks join. Shooters now hide after they shoot."
+	case game.FlankTier:
+		return "TIER 4: exploders join. Zombies now come from your sides and behind."
+	}
+	return fmt.Sprintf("TIER %d: enemies are tougher and come faster.", tier)
 }
