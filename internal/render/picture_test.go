@@ -4,34 +4,8 @@ import (
 	"testing"
 
 	"github.com/BunnyPraneeth5/termfps/internal/term"
+	"github.com/BunnyPraneeth5/termfps/internal/world"
 )
-
-// DrawPicture fits the image, keeps its shape and centers it; with no image
-// only the background is left (M18a).
-func TestDrawPicture(t *testing.T) {
-	f := &Frame{PixelAspect: 1}
-	f.Resize(40, 20)
-	DrawPicture(f, ZombieImage) // 12x16: fits the height (20), so 15 wide
-	minX, maxX, minY, maxY := f.W, -1, f.H, -1
-	for i, p := range f.Pix {
-		if p.Gray != pictureBackground || p.Tint != TintNone {
-			x, y := i%f.W, i/f.W
-			minX, maxX, minY, maxY = min(minX, x), max(maxX, x), min(minY, y), max(maxY, y)
-		}
-	}
-	if maxY-minY+1 < f.H-2 || maxX-minX+1 > f.W/2 {
-		t.Errorf("picture spans x %d-%d, y %d-%d; want nearly full height, kept narrow", minX, maxX, minY, maxY)
-	}
-	if mid := (minX + maxX) / 2; mid < f.W/2-2 || mid > f.W/2+2 {
-		t.Errorf("picture centered at x %d, want about %d", mid, f.W/2)
-	}
-	DrawPicture(f, nil)
-	for _, p := range f.Pix {
-		if p.Gray != pictureBackground {
-			t.Fatal("DrawPicture(nil) left something besides the background")
-		}
-	}
-}
 
 // A Frame with an offset is presented at that screen cell.
 func TestPresentOffset(t *testing.T) {
@@ -50,5 +24,20 @@ func TestPresentOffset(t *testing.T) {
 	}
 	if str, _ := s.Get(0, 0); str != " " && str != "" {
 		t.Errorf("cell (0, 0) = %q, want untouched", str)
+	}
+}
+
+// The map picture: walls light, floor dark, the start white, acid green.
+func TestDrawMapPicture(t *testing.T) {
+	m, err := world.Parse([]byte("######\n#P..~#\n######\n"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	f := &Frame{PixelAspect: 1}
+	f.Resize(12, 6) // 2 pixels per cell
+	DrawMapPicture(f, m)
+	at := func(cx, cy int) Pixel { return f.Pix[(2*cy)*f.W+2*cx] }
+	if at(0, 0).Gray != 150 || at(2, 1).Gray != 35 || at(1, 1).Gray != 255 || at(4, 1).Tint != TintGreen {
+		t.Errorf("wall %+v, floor %+v, start %+v, acid %+v", at(0, 0), at(2, 1), at(1, 1), at(4, 1))
 	}
 }

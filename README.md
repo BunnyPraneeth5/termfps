@@ -81,9 +81,12 @@ mode). See `-keys` below for other systems.
 - **Pause** (`Esc` in the game; the game freezes, dimmed behind the menu):
   Resume, Settings, Restart, Guide, Quit to menu.
 - **Guide** (from the start or pause menu): pages on the controls and HUD,
-  every enemy, weapon, pickup and hazard (with its picture), tiers, what
-  enemies learn, waves, health and stamina, every map (locked maps stay a
-  surprise), the settings, and tips. The numbers come straight from the
+  every enemy, weapon, pickup and hazard, tiers, what enemies learn, waves,
+  health and stamina, every map (locked maps stay a surprise), the
+  settings, and tips. Each enemy, weapon, pickup and hazard is shown in 3D:
+  it stands in a small room while the camera circles it (weapons also fire
+  in your hand); each map shows a full turn from its start and a top-down
+  picture. The numbers come straight from the
   game, so they're always right. Left/Right turn the pages, Up/Down scroll.
 - **Settings** take effect right away: render mode, mixed background
   brightness (0-100%, default 20%), color threshold (off by default), render

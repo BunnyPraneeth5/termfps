@@ -121,7 +121,7 @@ func TestGuideLockedMap(t *testing.T) {
 	}
 	locked := maps[1]
 	if !strings.Contains(locked.name, "locked") || !strings.Contains(pageText(locked), "Locked") ||
-		strings.Contains(pageText(locked), "cells") || locked.pic != nil {
+		strings.Contains(pageText(locked), "cells") || locked.view.kind != viewNone {
 		t.Errorf("locked map page %q: %q; want only that it's locked", locked.name, pageText(locked))
 	}
 	a.cfg.UnlockRule = "open"
@@ -146,7 +146,7 @@ func TestGuideFits80x24(t *testing.T) {
 			}
 			g.tick(a, t0, 0)
 			textX := 1 // as tick lays it out
-			if e.pic != nil {
+			if e.view.kind != viewNone {
 				textX = guidePicCols + 3
 			}
 			lines := g.lines(e, 80-textX-1)

@@ -21,8 +21,8 @@ import (
 // guideEntry is one guide page.
 type guideEntry struct {
 	name  string
-	lines []string      // paragraphs; "" is an empty line
-	pic   *render.Image // shown beside the text; nil = none
+	lines []string  // paragraphs; "" is an empty line
+	view  guideView // shown beside the text in 3D (M18b); viewNone = none
 }
 
 // guideSection is a group of pages, one item in the guide menu.
@@ -101,10 +101,10 @@ func arrives(k game.EnemyKind) string {
 }
 
 func enemyPages() []guideEntry {
-	sprite := func(k game.EnemyKind) *render.Image { return render.EnemySprite(game.Enemy{Kind: k}).Image }
+	sprite := func(k game.EnemyKind) guideView { return spriteView(render.EnemySprite(game.Enemy{Kind: k})) }
 	walk := fmt.Sprintf("(you walk %s)", num(game.MoveSpeed))
 	return []guideEntry{
-		{name: "Zombie", pic: sprite(game.KindZombie), lines: []string{
+		{name: "Zombie", view: sprite(game.KindZombie), lines: []string{
 			"Green. Walks at you and hits up close.",
 			fmt.Sprintf("HP %d. Speed %s cells per second %s.", game.ZombieHP, num(game.ZombieSpeed), walk),
 			fmt.Sprintf("Hits for %d-%d every %s s.", game.ZombieMeleeDamageMin, game.ZombieMeleeDamageMax, num(game.ZombieMeleeInterval)),
@@ -112,7 +112,7 @@ func enemyPages() []guideEntry {
 			fmt.Sprintf("From tier %d zombies split up and come from your sides and from behind.", game.FlankTier),
 			"Tip: back away while you shoot; it can't catch you walking backwards.",
 		}},
-		{name: "Shooter", pic: sprite(game.KindShooter), lines: []string{
+		{name: "Shooter", view: sprite(game.KindShooter), lines: []string{
 			"Red. Keeps its distance and shoots when it can see you.",
 			fmt.Sprintf("HP %d. Speed %s cells per second. Shoots from %s cells or closer, every %s s, %d damage; backs off if you get closer than %s cells.",
 				game.ShooterHP, num(game.ShooterSpeed), num(game.ShooterRange), num(game.ShooterInterval), game.ShooterDamage, num(game.ShooterMinRange)),
@@ -122,21 +122,21 @@ func enemyPages() []guideEntry {
 			fmt.Sprintf("From tier %d it hides after each shot, then comes out again.", game.CoverTier),
 			"Tip: break its line of sight; it can't hit what it can't see.",
 		}},
-		{name: "Runner", pic: sprite(game.KindRunner), lines: []string{
+		{name: "Runner", view: sprite(game.KindRunner), lines: []string{
 			"Blue. Fast and weak.",
 			fmt.Sprintf("HP %d. Speed %s cells per second %s.", game.RunnerHP, num(game.RunnerSpeed), walk),
 			fmt.Sprintf("Hits for %d-%d every %s s.", game.RunnerMeleeDamageMin, game.RunnerMeleeDamageMax, num(game.RunnerMeleeInterval)),
 			shotsToKill(game.RunnerHP), arrives(game.KindRunner),
 			fmt.Sprintf("Tip: you can't outwalk it; sprint (F, %sx) or stand and shoot.", num(game.SprintMul)),
 		}},
-		{name: "Tank", pic: sprite(game.KindTank), lines: []string{
+		{name: "Tank", view: sprite(game.KindTank), lines: []string{
 			"Big and gray. Slow, very tough, hits hard and shakes the screen.",
 			fmt.Sprintf("HP %d. Speed %s cells per second %s.", game.TankHP, num(game.TankSpeed), walk),
 			fmt.Sprintf("Hits for %d-%d every %s s.", game.TankMeleeDamageMin, game.TankMeleeDamageMax, num(game.TankMeleeInterval)),
 			shotsToKill(game.TankHP), arrives(game.KindTank),
 			"Tip: keep your distance and use the rifle; lure it next to a red barrel.",
 		}},
-		{name: "Exploder", pic: sprite(game.KindExploder), lines: []string{
+		{name: "Exploder", view: sprite(game.KindExploder), lines: []string{
 			"Yellow. Runs at you and blows up.",
 			fmt.Sprintf("HP %d. Speed %s cells per second. Within %s cells it lights a %s s fuse (it blinks and beeps), then explodes for up to %d damage.",
 				game.ExploderHP, num(game.ExploderSpeed), num(game.ExploderFuseRange), num(game.ExploderFuse), game.ExploderDamage),
@@ -165,7 +165,7 @@ func gunPages() []guideEntry {
 		if st.Pellets > 1 {
 			dmg = fmt.Sprintf("%d pellets of %d damage (%d if all hit)", st.Pellets, st.Damage, st.Pellets*st.Damage)
 		}
-		pages = append(pages, guideEntry{name: st.Name[:1] + strings.ToLower(st.Name[1:]), pic: render.GunImage(k), lines: []string{
+		pages = append(pages, guideEntry{name: st.Name[:1] + strings.ToLower(st.Name[1:]), view: guideView{kind: viewGun, gun: k}, lines: []string{
 			fmt.Sprintf("Key %d. %s", int(k)+1, use[k]),
 			fmt.Sprintf("%s a shot, %s shots per second, %d rounds in the gun, %s s to reload.",
 				dmg, num(1/st.Interval), st.Mag, num(st.Reload)),
@@ -185,20 +185,20 @@ func pickupPages() []guideEntry {
 		ammo = append(ammo, fmt.Sprintf("%s +%d (up to %d)", strings.ToLower(st.Name), st.BoxAmmo, st.MaxReserve))
 	}
 	return []guideEntry{
-		{name: "Ammo", pic: render.PickupSprite(game.Pickup{Kind: game.AmmoBox}).Image, lines: []string{
+		{name: "Ammo", view: spriteView(render.PickupSprite(game.Pickup{Kind: game.AmmoBox})), lines: []string{
 			"Each ammo box is for one of the guns you have: " + strings.Join(ammo, ", ") + ".", spawn,
 		}},
-		{name: "Medkit", pic: render.PickupSprite(game.Pickup{Kind: game.Medkit}).Image, lines: []string{
+		{name: "Medkit", view: spriteView(render.PickupSprite(game.Pickup{Kind: game.Medkit})), lines: []string{
 			fmt.Sprintf("White with a red cross: +%d HP, up to %d.", game.MedkitHeal, game.PlayerMaxHP),
 			fmt.Sprintf("You also heal %s HP per second after %s s without being hit, but only up to %d: above that only medkits heal.",
 				num(game.RegenPerSec), num(game.RegenDelay), game.RegenMaxHP),
 			spawn,
 		}},
-		{name: "Armor", pic: render.PickupSprite(game.Pickup{Kind: game.ArmorVest}).Image, lines: []string{
+		{name: "Armor", view: spriteView(render.PickupSprite(game.Pickup{Kind: game.ArmorVest})), lines: []string{
 			fmt.Sprintf("Blue vest: +%d armor, up to %d.", game.ArmorPickup, game.MaxArmor),
 			"Armor takes half of every hit (rounded up) until it runs out.", spawn,
 		}},
-		{name: "Guns on the map", pic: render.PickupSprite(game.Pickup{Kind: game.GunPickup, Gun: game.Shotgun}).Image, lines: []string{
+		{name: "Guns on the map", view: spriteView(render.PickupSprite(game.Pickup{Kind: game.GunPickup, Gun: game.Shotgun})), lines: []string{
 			fmt.Sprintf("The shotgun appears after %s and the rifle after %s, one at a time, as a white dot on the minimap. Taking one puts it in your hands.",
 				render.Clock(game.Shotgun.Stats().Arrives), render.Clock(game.Rifle.Stats().Arrives)),
 		}},
@@ -207,16 +207,16 @@ func pickupPages() []guideEntry {
 
 func hazardPages() []guideEntry {
 	return []guideEntry{
-		{name: "Red barrels", pic: render.PropSprite(world.ExplosiveBarrel, 0, 0).Image, lines: []string{
+		{name: "Red barrels", view: spriteView(render.PropSprite(world.ExplosiveBarrel, 0, 0)), lines: []string{
 			fmt.Sprintf("Shoot one and it explodes for up to %d damage. Other red barrels in reach go off a moment later.", game.BarrelDamage),
 			"Gray barrels, crates and pillars are plain cover: they stop bullets.",
 			"Tip: wait until enemies crowd around a red barrel, and stay back yourself.",
 		}},
-		{name: "Acid", lines: []string{
+		{name: "Acid", view: guideView{kind: viewAcid}, lines: []string{
 			fmt.Sprintf("Green floor. It burns %d HP every %s s while you stand in it; enemies don't mind it.", game.AcidDamage, num(game.AcidInterval)),
 			"Nothing spawns on it. It shows green on the minimap too.",
 		}},
-		{name: "Explosions", pic: render.BoomSprite(game.Boom{}).Image, lines: []string{
+		{name: "Explosions", view: boomView(), lines: []string{
 			fmt.Sprintf("An explosion does full damage within %s cell, less farther out, nothing past %s cells.", num(game.ExplosionCore), num(game.ExplosionRadius)),
 			"It hurts you and every enemy in reach. Walls and closed doors shield; crates don't.",
 			"Explosions shake the screen.",
@@ -301,7 +301,7 @@ func (a *App) mapPages() []guideEntry {
 		if i >= a.builtinMaps() {
 			lines = append(lines, "Your own map, from the maps folder or -map.")
 		}
-		pages = append(pages, guideEntry{name: name, lines: lines})
+		pages = append(pages, guideEntry{name: name, lines: lines, view: guideView{kind: viewMap, mapIdx: i}})
 	}
 	return pages
 }
@@ -347,7 +347,7 @@ func (a *App) guideMenu(back *menuScreen) *menuScreen {
 		case r == ui.Back || i == len(sections):
 			a.switchTo(back)
 		case r == ui.Chosen && len(sections[i].entries) == 1:
-			a.switchTo(&guidePage{back: s, section: sections[i]})
+			a.switchTo(&guidePage{back: s, section: sections[i], shown: -1})
 		case r == ui.Chosen:
 			a.switchTo(a.guideSectionMenu(s, sections[i]))
 		}
@@ -369,15 +369,16 @@ func (a *App) guideSectionMenu(back *menuScreen, sec guideSection) *menuScreen {
 		case r == ui.Back || i == len(sec.entries):
 			a.switchTo(back)
 		case r == ui.Chosen:
-			a.switchTo(&guidePage{back: s, section: sec, index: i})
+			a.switchTo(&guidePage{back: s, section: sec, index: i, shown: -1})
 		}
 	}
 	return s
 }
 
-// Guide page layout: the picture box on the left, the text beside it.
+// Guide page layout: the 3D view box on the left (a map's top-down
+// picture under it), the text beside it.
 const (
-	guidePicCols = 22 // picture box size in cells
+	guidePicCols = 22 // view box size in cells
 	guidePicRows = 10
 )
 
@@ -388,7 +389,14 @@ type guidePage struct {
 	section guideSection
 	index   int // the page shown
 	scroll  int // first text line shown
-	pic     render.Frame
+
+	// The 3D view (M18b): its Frame, a map's top-down picture, the game
+	// state it draws, the page that state is for (-1 = none yet), and the
+	// seconds since that page opened.
+	view, mapPic render.Frame
+	preview      *game.State
+	shown        int
+	t            float64
 }
 
 func (g *guidePage) key(a *App, ev term.Key) {
@@ -437,12 +445,22 @@ func (g *guidePage) tick(a *App, now time.Time, dt float64) {
 	term.PutStr(s, 1, h-1, guideHint, term.Style{Dim: true})
 
 	textX := 1
-	if e.pic != nil {
-		g.pic.PixelAspect = render.DefaultPixelAspect
-		g.pic.Resize(guidePicCols, 2*guidePicRows)
-		g.pic.OffsetX, g.pic.OffsetY = 1, 2
-		render.DrawPicture(&g.pic, e.pic)
-		a.presentFrame(&g.pic)
+	if e.view.kind != viewNone {
+		if g.preview == nil || g.shown != g.index {
+			g.preview, g.shown, g.t = a.newPreview(e.view), g.index, 0
+		}
+		g.t += dt
+		g.view.Resize(guidePicCols, 2*guidePicRows)
+		g.view.OffsetX, g.view.OffsetY = 1, 2
+		a.drawView(&g.view, g.preview, e.view, g.t, dt)
+		a.presentFrame(&g.view)
+		if e.view.kind == viewMap && 3+2*guidePicRows <= h-1 { // room for the top-down picture under it (above the key help)
+			g.mapPic.PixelAspect = 1
+			g.mapPic.Resize(guidePicCols, 2*guidePicRows)
+			g.mapPic.OffsetX, g.mapPic.OffsetY = 1, 3+guidePicRows
+			render.DrawMapPicture(&g.mapPic, a.maps[e.view.mapIdx])
+			a.presentFrame(&g.mapPic)
+		}
 		textX = guidePicCols + 3
 	}
 	lines := g.lines(e, w-textX-1)

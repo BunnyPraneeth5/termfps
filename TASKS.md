@@ -418,7 +418,7 @@ Decided with the user on 2026-10-30 (D49; the guide and release added 2026-10-31
 - Pictures are the game's own sprites. Locked maps show only their name and "locked" until unlocked (a surprise, the user's choice).
 - Acceptance: unit tests (every enemy kind, gun, pickup kind and map has a page; numbers match the code; locked maps hidden; fits 80x24; both menus open it); on screen (user).
 
-### [ ] M18b: Guide 3D views (batch 2)
+### [~] M18b: Guide 3D views (batch 2)
 - Every guide entry gets a live 3D view drawn by the game's own renderer: enemies, gun pickups, ammo, medkit, armor, red barrel and acid each stand in a small lit display room, and the camera slowly circles them (360°). Weapons also show the gun in hand, firing now and then. Maps show a top-down picture and a view where the camera stands in the map and slowly turns all the way around.
 - The objects are flat pictures that always face the camera (like Doom), so circling shows the room turning around them, not their sides. Drawing every object from 8 angles for a true turntable is a separate, bigger idea (not planned).
 - Acceptance: unit tests (each entry has a view; the camera goes all the way around; locked maps get no view); on screen (user).
