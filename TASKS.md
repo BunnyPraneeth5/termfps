@@ -364,7 +364,7 @@ All the ideas from the 2026-10-25/26 discussion, added to the plan first (D40). 
 
 ## Gameplay
 
-Decided with the user on 2026-10-30 (D49; the guide and release added 2026-10-31, D51). Order and batches: **batch 1** M10, M11, M12, M14, M16; **batch 2** M13, M15, M17, M18a, M18b; **batch 3** M19, M20. The user reviews after each batch. Every new thing gets its own sound effect.
+Decided with the user on 2026-10-30 (D49; the guide and release added 2026-10-31, D51). Order and batches: **batch 1** M10, M11, M12, M14, M16; **batch 2** M13, M15, M17, M18a, M18b, M18c (D53); **batch 3** M19, M20. The user reviews after each batch. Every new thing gets its own sound effect.
 
 **Tiers (changed for M12 and M13):** a tier lasts 20 kills or **3 minutes** (was 4), whichever comes first, so a player who only hides still moves up. New enemy types and smarter behavior arrive by tier:
 
@@ -422,6 +422,15 @@ Decided with the user on 2026-10-30 (D49; the guide and release added 2026-10-31
 - Every guide entry gets a live 3D view drawn by the game's own renderer: enemies, gun pickups, ammo, medkit, armor, red barrel and acid each stand in a small lit display room, and the camera slowly circles them (360°). Weapons also show the gun in hand, firing now and then. Maps show a top-down picture and a view where the camera stands in the map and slowly turns all the way around.
 - The objects are flat pictures that always face the camera (like Doom), so circling shows the room turning around them, not their sides. Drawing every object from 8 angles for a true turntable is a separate, bigger idea (not planned).
 - Acceptance: unit tests (each entry has a view; the camera goes all the way around; locked maps get no view); on screen (user).
+
+### [ ] M18c: Guide polish (batch 2, after the user's test of M18a/M18b)
+- Decided with the user on 2026-10-31 (D53).
+- **Panel:** guide pages sit in a centered panel that looks like the menus (light box, dark text), with the 3D view as a dark window inside it. The panel grows with the window up to 100 columns wide, then stops and stays centered; the 3D view grows with it.
+- **Explored maps:** the cells you've seen on each map are remembered across runs (save.json). A map page shows a big top-down picture (most of the panel width, the text under it): explored parts normal, unexplored parts dark, the map's outer border always drawn, and "Explored: n%". The 360° turn shows only after you've played that map once. Locked maps: the name and the full border, dark inside.
+- **Controls:** a keyboard picture with a small mouse (left, wheel, right). Keys the game uses are colored by group (movement, combat, view, other), the rest dim, with a legend underneath. Up/Down step through the used keys one by one; the selected key lights up and a line says what it does (Left/Right still turn the guide pages).
+- **HUD:** a drawn example of the bottom line with each part pointed out and named.
+- **Not met yet:** enemies you haven't met and guns you haven't found show as a dark silhouette and "???" until you meet or find them (remembered across runs).
+- Acceptance: unit tests (panel size and centering up to 100 columns; explored cells saved, merged and drawn, border always drawn; turn only after played; locked maps; every used key has a description and a group; HUD parts labeled; silhouettes until met or found); on screen (user).
 
 ### [ ] M19: Balancing and a new demo (batch 3)
 - Was M18. Carried over from P1-18: playtest tiers 3+, the ammo cap, the new pickups, weapons, enemies, hazards and waves; record a new demo.

@@ -346,3 +346,9 @@ Format: what, why, trade-off, revisit when.
 - Why: D49 and D51 fixed what each feature is; these are the smallest choices that make them playable and testable.
 - Trade-off: many new numbers again; balancing is M19's job. The guide's 3D view box is small (22x10 cells) to leave room for the text at 80x24.
 - Revisit when: the user's batch 2 review, and M19.
+
+## D53: Guide polish, M18c (2026-10-31)
+- What: decided with the user after testing M18a/M18b; details in TASKS.md M18c. A centered panel like the menus (light box, the 3D view as a dark window), growing up to 100 columns; explored map cells saved across runs, shown on a big top-down picture (unexplored dark, outer border always drawn, "Explored: n%"); the map's 360° turn only after it's been played; locked maps as name plus border; controls as a keyboard and mouse picture, keys colored by group with a legend, Up/Down stepping through them with a description; the HUD as a labeled example line; unmet enemies and unfound guns as dark silhouettes with "???".
+- Why: the user wants the guide to look like part of the menus, to reward exploring, and to keep surprises; a picture of the keys is quicker to read than a list.
+- Choices made in discussion: panel style A (light, like the menus) over a dark one, since the dark 3D view then stands out; option C for the keyboard (legend plus stepping) over stepping alone; map pages give the picture the width and put the text under it, since big maps lose detail in a small box. Up/Down (not Left/Right) step through keys, because Left/Right already turn the pages.
+- Revisit when: the user's on-screen review of M18c.
