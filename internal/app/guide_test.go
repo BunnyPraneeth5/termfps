@@ -147,6 +147,9 @@ func TestGuideFits80x24(t *testing.T) {
 			for range 40 {
 				g.key(a, term.Key{Code: term.KeyDown})
 			}
+			if e.kind == pageKeys {
+				continue // the boxed keyboard fills the page at 80x24; its notes show on taller windows (TestKeysNotesWhenTall)
+			}
 			g.tick(a, t0, 0)
 			words := strings.Fields(e.lines[len(e.lines)-1])
 			last := strings.Join(words[max(len(words)-2, 0):], " ") // the last two words: they wrap together
@@ -164,5 +167,17 @@ func meetAll(a *App) {
 	}
 	for k := range game.NumGuns {
 		a.progress.Found = append(a.progress.Found, gunName(k))
+	}
+}
+
+// On a taller window the controls page also shows its notes under the
+// keyboard.
+func TestKeysNotesWhenTall(t *testing.T) {
+	a, s := newMenuApp(t)
+	s.SetSize(80, 40)
+	g := &guidePage{back: a.current, section: section(t, a, "Controls and HUD"), shown: -1}
+	g.tick(a, t0, 0)
+	if !screenHas(s, "mouse-look") {
+		t.Error("the controls page at 80x40 doesn't show its notes")
 	}
 }
