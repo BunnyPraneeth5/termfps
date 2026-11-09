@@ -150,3 +150,25 @@ func TestMapPage(t *testing.T) {
 		t.Error("the locked map page doesn't say it's locked, or turns round inside it")
 	}
 }
+
+// Every keyboard row is keyboardWidth wide, so the boxed keyboard fits the
+// panel at 80 columns; the up arrow sits right above the down arrow.
+func TestKeyboardRows(t *testing.T) {
+	col := map[string]int{}
+	for r, row := range keyboardRows {
+		x := 0
+		for _, k := range row {
+			col[k.cap] = x
+			x += k.w
+		}
+		if x != keyboardWidth {
+			t.Errorf("keyboard row %d is %d wide, want %d", r, x, keyboardWidth)
+		}
+	}
+	if col["↑"] != col["↓"] {
+		t.Errorf("up arrow at column %d, down arrow at %d; want one above the other", col["↑"], col["↓"])
+	}
+	if a := guidePanel(80, 24); a.w-4 < keyboardWidth {
+		t.Errorf("panel content at 80x24 is %d wide, the keyboard needs %d", a.w-4, keyboardWidth)
+	}
+}

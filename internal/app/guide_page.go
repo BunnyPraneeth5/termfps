@@ -175,6 +175,9 @@ func (g *guidePage) drawView(a *App, v guideView, r rect, dt float64) {
 // drawText writes paragraphs into box r on the panel, wrapped, from the
 // scroll position; when they don't all fit, the last row says so.
 func (g *guidePage) drawText(a *App, paragraphs []string, r rect) {
+	if r.h <= 0 || r.w <= 0 {
+		return // no room left on this page (the keyboard fills it at 80x24)
+	}
 	lines := wrapParagraphs(paragraphs, r.w)
 	rows := r.h
 	if len(lines) > rows {
@@ -259,108 +262,29 @@ type guideKey struct {
 // Up/Down steps through them. The mouse ones have caps "LMB", "RMB" and
 // "Wheel" (drawn as L, R and the wheel).
 var guideKeys = []guideKey{
-	{"W", groupMove, "W (or the Up arrow): move forward."},
-	{"S", groupMove, "S (or the Down arrow): move back."},
-	{"A", groupMove, "A: step left."},
-	{"D", groupMove, "D: step right."},
-	{"Q", groupMove, "Q (or the Left arrow): turn left."},
-	{"E", groupMove, "E (or the Right arrow): turn right."},
+	{"w", groupMove, "W (or the Up arrow): move forward."},
+	{"s", groupMove, "S (or the Down arrow): move back."},
+	{"a", groupMove, "A: step left."},
+	{"d", groupMove, "D: step right."},
+	{"q", groupMove, "Q (or the Left arrow): turn left."},
+	{"e", groupMove, "E (or the Right arrow): turn right."},
 	{"↑", groupMove, "Up arrow: move forward, like W."},
 	{"↓", groupMove, "Down arrow: move back, like S."},
 	{"←", groupMove, "Left arrow: turn left, like Q."},
 	{"→", groupMove, "Right arrow: turn right, like E."},
 	{"Space", groupFight, "Space: shoot. Hold it to keep firing."},
-	{"R", groupFight, "R: reload. An empty gun reloads by itself."},
+	{"r", groupFight, "R: reload. An empty gun reloads by itself."},
 	{"1", groupFight, "1: the pistol."},
 	{"2", groupFight, "2: the shotgun, once you've found it."},
 	{"3", groupFight, "3: the rifle, once you've found it."},
 	{"LMB", groupFight, "Left mouse button: shoot, like Space."},
 	{"RMB", groupFight, "Right mouse button: reload, like R."},
 	{"Wheel", groupFight, "Mouse wheel: the next or previous gun you have."},
-	{"M", groupView, "M: show or hide the minimap."},
-	{"V", groupView, "V: switch the look: half-block, shade, ASCII, mixed."},
-	{"F", groupOther, fmt.Sprintf("F (hold): sprint, %sx speed, while you have stamina.", num(game.SprintMul))},
+	{"m", groupView, "M: show or hide the minimap."},
+	{"v", groupView, "V: switch the look: half-block, shade, ASCII, mixed."},
+	{"f", groupOther, fmt.Sprintf("F (hold): sprint, %sx speed, while you have stamina.", num(game.SprintMul))},
 	{"Esc", groupOther, "Esc: pause; in menus and the guide, go back."},
 	{"Ctrl", groupOther, "Ctrl+C: quit at once, from anywhere."},
-}
-
-// keyCap is one key on the keyboard picture: its cap, and its width in
-// cells (0 = 3).
-type keyCap struct {
-	cap string
-	w   int
-}
-
-// keyboardRows is the keyboard picture, row by row; "" is a gap.
-var keyboardRows = [][]keyCap{
-	{{"Esc", 5}, {"", 1}, {"1", 0}, {"2", 0}, {"3", 0}, {"4", 0}, {"5", 0}, {"6", 0}, {"7", 0}, {"8", 0}, {"9", 0}, {"0", 0}},
-	{{"Tab", 5}, {"Q", 0}, {"W", 0}, {"E", 0}, {"R", 0}, {"T", 0}, {"Y", 0}, {"U", 0}, {"I", 0}, {"O", 0}, {"P", 0}},
-	{{"Caps", 6}, {"A", 0}, {"S", 0}, {"D", 0}, {"F", 0}, {"G", 0}, {"H", 0}, {"J", 0}, {"K", 0}, {"L", 0}},
-	{{"Shift", 8}, {"Z", 0}, {"X", 0}, {"C", 0}, {"V", 0}, {"B", 0}, {"N", 0}, {"M", 0}, {"", 2}, {"", 3}, {"↑", 0}},
-	{{"Ctrl", 6}, {"", 1}, {"Space", 19}, {"", 3}, {"←", 0}, {"↓", 0}, {"→", 0}},
-}
-
-// keyStyle is how a key cap looks: dim if the game doesn't use it, its
-// group's color if it does, and bright text on dark when selected.
-func keyStyle(cap string, sel string) term.Style {
-	for _, k := range guideKeys {
-		if k.cap != cap {
-			continue
-		}
-		if cap == sel {
-			return term.Style{Fg: groupColors[k.group], Bold: true}
-		}
-		return term.Style{Fg: groupColors[k.group], Reverse: true}
-	}
-	return term.Style{Dim: true}
-}
-
-// drawKeys draws the controls page (M18c): the keyboard and mouse with the
-// game's keys colored by group, a legend, what the selected key does, and
-// the page's notes under it.
-func (g *guidePage) drawKeys(a *App, e guideEntry, area rect) {
-	s := a.scr
-	sel := guideKeys[g.keySel].cap
-	for row, caps := range keyboardRows {
-		x := area.x
-		for _, k := range caps {
-			w := k.w
-			if w == 0 {
-				w = 3
-			}
-			if k.cap != "" {
-				pad := w - len([]rune(k.cap))
-				label := strings.Repeat(" ", pad/2) + k.cap + strings.Repeat(" ", pad-pad/2)
-				term.PutStr(s, x, area.y+row, label, keyStyle(k.cap, sel))
-			}
-			x += w + 1
-		}
-	}
-	// The mouse, right of the keyboard: L and R buttons, the wheel between.
-	mx := area.x + 50
-	if mx+11 <= area.x+area.w {
-		mouse := []string{"╭───┬─┬───╮", "│   │ │   │", "├───┴─┴───┤", "│         │", "╰─────────╯"}
-		for i, l := range mouse {
-			term.PutStr(s, mx, area.y+i, l, panelStyle)
-		}
-		term.PutStr(s, mx+1, area.y+1, " L ", keyStyle("LMB", sel))
-		term.PutStr(s, mx+5, area.y+1, "↕", keyStyle("Wheel", sel))
-		term.PutStr(s, mx+7, area.y+1, " R ", keyStyle("RMB", sel))
-	}
-
-	y := area.y + len(keyboardRows) + 1
-	x := area.x
-	for gi, name := range groupNames {
-		term.PutStr(s, x, y, "   ", term.Style{Fg: groupColors[gi], Reverse: true})
-		term.PutStr(s, x+4, y, name, panelStyle)
-		x += 5 + len(name) + 2
-	}
-	term.PutStr(s, x, y, "   ", term.Style{Dim: true})
-	term.PutStr(s, x+4, y, "not used", panelStyle)
-
-	desc := fmt.Sprintf("%d/%d  %s", g.keySel+1, len(guideKeys), guideKeys[g.keySel].desc)
-	term.PutStr(s, area.x, y+2, desc, term.Style{Reverse: true, Bold: true})
-	g.drawText(a, e.lines, rect{x: area.x, y: y + 4, w: area.w, h: area.h - (y + 4 - area.y)})
 }
 
 // hudParts names the parts of the HUD line, by how each part starts.
@@ -426,4 +350,121 @@ func (g *guidePage) drawHUDPage(a *App, e guideEntry, area rect) {
 		term.PutStr(s, area.x+starts[i], area.y+2+2*level, string(label), panelStyle)
 	}
 	g.drawText(a, e.lines, rect{x: area.x, y: area.y + 6, w: area.w, h: area.h - 6})
+}
+
+// keyCap is one key on the keyboard picture: its label and its width in
+// cells, borders included. An empty label is a gap.
+type keyCap struct {
+	cap string
+	w   int
+}
+
+// keyboardWidth is how wide the keyboard picture is: it fits the guide
+// panel at 80 columns exactly.
+const keyboardWidth = 74
+
+// keyboardRows is the keyboard picture (after the user's reference
+// picture, M18c): each key a rounded box 3 lines tall, the arrow keys at
+// the bottom right with up above down, as on a laptop. Every row is
+// keyboardWidth wide.
+var keyboardRows = [][]keyCap{
+	{{"Esc", 5}, {"1", 5}, {"2", 5}, {"3", 5}, {"4", 5}, {"5", 5}, {"6", 5}, {"7", 5}, {"8", 5}, {"9", 5}, {"0", 5}, {"-", 5}, {"=", 5}, {"Bksp", 9}},
+	{{"Tab", 9}, {"q", 5}, {"w", 5}, {"e", 5}, {"r", 5}, {"t", 5}, {"y", 5}, {"u", 5}, {"i", 5}, {"o", 5}, {"p", 5}, {"[", 5}, {"]", 5}, {"\\", 5}},
+	{{"Caps", 10}, {"a", 5}, {"s", 5}, {"d", 5}, {"f", 5}, {"g", 5}, {"h", 5}, {"j", 5}, {"k", 5}, {"l", 5}, {";", 5}, {"'", 5}, {"Enter", 9}},
+	{{"Shift", 12}, {"z", 5}, {"x", 5}, {"c", 5}, {"v", 5}, {"b", 5}, {"n", 5}, {"m", 5}, {",", 5}, {".", 5}, {"/", 5}, {"", 2}, {"↑", 5}, {"", 5}},
+	{{"Ctrl", 6}, {"Alt", 5}, {"Space", 48}, {"←", 5}, {"↓", 5}, {"→", 5}},
+}
+
+// keyLook is how a key cap is drawn: the style of its border and of its
+// label. Unused keys are dim; used ones take their group's color; the
+// selected one is filled with it.
+func keyLook(cap string, sel string) (border, label term.Style) {
+	for _, k := range guideKeys {
+		if k.cap != cap {
+			continue
+		}
+		c := groupColors[k.group]
+		if cap == sel {
+			return term.Style{Fg: c, Bold: true}, term.Style{Fg: c, Reverse: true, Bold: true}
+		}
+		return term.Style{Fg: c}, term.Style{Fg: c, Bold: true}
+	}
+	return term.Style{Dim: true}, term.Style{Dim: true}
+}
+
+// drawKeyCap draws one key as a rounded box at (x, y), w wide, 3 lines tall.
+func drawKeyCap(s term.Screen, x, y, w int, cap, sel string) {
+	border, label := keyLook(cap, sel)
+	inner := w - 2
+	pad := inner - len([]rune(cap))
+	text := strings.Repeat(" ", pad/2) + cap + strings.Repeat(" ", pad-pad/2)
+	term.PutStr(s, x, y, "╭"+strings.Repeat("─", inner)+"╮", border)
+	term.PutStr(s, x, y+1, "│", border)
+	term.PutStr(s, x+1, y+1, text, label)
+	term.PutStr(s, x+w-1, y+1, "│", border)
+	term.PutStr(s, x, y+2, "╰"+strings.Repeat("─", inner)+"╯", border)
+}
+
+// mouseWidth is the boxed mouse picture's width; it goes right of the
+// keyboard when the panel has room (2 cells apart).
+const mouseWidth = 11
+
+// drawKeys draws the controls page (M18c): the keyboard (and mouse) on a
+// dark inset with the game's keys colored by group, a legend, what the
+// selected key does, and the page's notes under it when there's room.
+func (g *guidePage) drawKeys(a *App, e guideEntry, area rect) {
+	s := a.scr
+	sel := guideKeys[g.keySel].cap
+	bigMouse := area.w >= keyboardWidth+2+mouseWidth
+	insetW := keyboardWidth
+	if bigMouse {
+		insetW += 2 + mouseWidth
+	}
+	rows := 3 * len(keyboardRows)
+	for y := area.y; y < area.y+rows; y++ { // the dark inset
+		term.PutStr(s, area.x, y, strings.Repeat(" ", insetW), term.Style{})
+	}
+	for r, caps := range keyboardRows {
+		x := area.x
+		for _, k := range caps {
+			if k.cap != "" {
+				drawKeyCap(s, x, area.y+3*r, k.w, k.cap, sel)
+			}
+			x += k.w
+		}
+	}
+
+	y := area.y + rows + 1
+	x := area.x
+	for gi, name := range groupNames {
+		term.PutStr(s, x, y, "   ", term.Style{Fg: groupColors[gi], Reverse: true})
+		term.PutStr(s, x+4, y, name, panelStyle)
+		x += 5 + len(name) + 1
+	}
+	term.PutStr(s, x, y, "   ", term.Style{Dim: true})
+	term.PutStr(s, x+4, y, "unused", panelStyle)
+	x += 4 + len("unused") + 2 // the small mouse fits after it at 80 columns
+
+	// The mouse: a boxed picture right of the keyboard when there's room,
+	// else small at the end of the legend line.
+	mouseLook := func(cap string) term.Style { _, l := keyLook(cap, sel); return l }
+	if bigMouse {
+		mx := area.x + keyboardWidth + 2
+		pic := []string{"╭───┬─┬───╮", "│   │ │   │", "├───┴─┴───┤", "│         │", "│  mouse  │", "╰─────────╯"}
+		for i, l := range pic {
+			term.PutStr(s, mx, area.y+i, l, term.Style{})
+		}
+		term.PutStr(s, mx+1, area.y+1, " L ", mouseLook("LMB"))
+		term.PutStr(s, mx+5, area.y+1, "↕", mouseLook("Wheel"))
+		term.PutStr(s, mx+7, area.y+1, " R ", mouseLook("RMB"))
+	} else {
+		term.PutStr(s, x, y, "mouse:", panelStyle)
+		term.PutStr(s, x+7, y, " L ", mouseLook("LMB"))
+		term.PutStr(s, x+11, y, "↕", mouseLook("Wheel"))
+		term.PutStr(s, x+13, y, " R ", mouseLook("RMB"))
+	}
+
+	desc := fmt.Sprintf("%d/%d  %s", g.keySel+1, len(guideKeys), guideKeys[g.keySel].desc)
+	term.PutStr(s, area.x, y+2, desc, term.Style{Reverse: true, Bold: true})
+	g.drawText(a, e.lines, rect{x: area.x, y: y + 4, w: area.w, h: area.h - (y + 4 - area.y)})
 }
