@@ -432,8 +432,9 @@ Decided with the user on 2026-10-30 (D49; the guide and release added 2026-10-31
 - **Not met yet:** enemies you haven't met and guns you haven't found show as a dark silhouette and "???" until you meet or find them (remembered across runs).
 - Acceptance: unit tests (panel size and centering up to 100 columns; explored cells saved, merged and drawn, border always drawn; turn only after played; locked maps; every used key has a description and a group; HUD parts labeled; silhouettes until met or found); on screen (user).
 
-### [ ] M19: Balancing and a new demo (batch 3)
+### [~] M19: Balancing and a new demo (batch 3)
 - Was M18. Carried over from P1-18: playtest tiers 3+, the ammo cap, the new pickups, weapons, enemies, hazards and waves; record a new demo.
+- 2026-11-11, the user's playtest: everything feels right except ammo, which runs short; the user is fine with low ammo for now (it keeps the tension), so no numbers changed. Revisit with the public testers' feedback. Still to do: the new demo, from the user's video edit.
 
 ### [ ] M20: Public test release (batch 3, always last)
 - Downloadable builds (Windows and Linux; macOS if it can be tested) on a GitHub Releases page, built by CI.

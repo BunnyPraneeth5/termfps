@@ -301,4 +301,4 @@ Template:
 ## 2026-11-11 (batch 2 and V6-V8 signed off, push)
 - The user signed off batch 2 (M13, M15, M17, M18a, M18b, M18c) and V6-V8; marked done. M19 is the user's own task; M20 comes when the user asks, after M19.
 - Pushed main to GitHub (everything up to the UI redesign).
-
+- M19 in progress: the user's playtest found only ammo short, kept as is for now (revisit with tester feedback); the new demo comes from the user's video edit.
