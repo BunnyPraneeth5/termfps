@@ -60,10 +60,10 @@ func controlsPage() guideEntry {
 
 func hudPage() guideEntry {
 	return guideEntry{name: "HUD", kind: pageHUD, lines: []string{
-		"The parts on the left always show; the ones on the right only when the window is wide enough. STAMINA shows while it isn't full; in waves mode WAVE 3/10 takes the tier's place.",
-		"Notices show just above it: a new tier, a wave, a new map, the hunt.",
+		"Two lines at the bottom. Red is health, blue armor, yellow stamina. In waves mode WAVE 3/10 takes the tier's place, with BREAK and a countdown between waves. FPS and other extras show in the middle of the second line when the window is wide enough.",
+		"Notices show at the top: a new tier, a wave, a new map, the hunt. Between waves a banner counts down to the next one.",
 		"The red edge means you were hit; the red arc around the crosshair points to where the hit came from. Ticks around the crosshair mean your shot hit (red: a kill).",
-		"The minimap (top right): walls, doors, props, green acid, and dots for pickups: yellow ammo, red medkit, blue armor, white gun.",
+		"The minimap (top right) has the map's name in its frame: walls, doors, props, green acid, and dots for pickups: yellow ammo, red medkit, blue armor, white gun.",
 	}}
 }
 

@@ -31,9 +31,9 @@ func WaveSize(n int) int {
 	return waveFirstSize + waveGrowth*(n-1)
 }
 
-// waveTier is the difficulty tier during wave n: one tier every two
+// WaveTier is the difficulty tier during wave n: one tier every two
 // waves, so all enemy kinds and what they learn (M12, M13) show up.
-func waveTier(n int) int {
+func WaveTier(n int) int {
 	return 1 + (max(n, 1)-1)/2
 }
 
@@ -73,7 +73,7 @@ func updateWaves(s *State, dt float64) {
 		s.waveLeft = WaveSize(s.Wave)
 		s.spawnTimer = 0 // the first enemy comes right away
 		s.sinceKill = 0  // a break isn't camping (M13)
-		if t := waveTier(s.Wave); t != s.Tier {
+		if t := WaveTier(s.Wave); t != s.Tier {
 			s.Tier = t
 			s.Events = append(s.Events, EventTierUp)
 		}

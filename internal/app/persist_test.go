@@ -179,8 +179,8 @@ func TestWavesRunWinSaves(t *testing.T) {
 		t.Fatalf("after choosing Waves: mode %v, break %v; want a waves run in its first break", a.state.Play, a.state.InBreak())
 	}
 	press(a, &now)
-	if !screenHas(s, "WAVE 1/10 IN") {
-		t.Error("HUD doesn't count down to wave 1")
+	if !screenHas(s, "WAVE 1/10  BREAK 0:10") || !screenHas(s, "GET READY") || !screenHas(s, "wave 1: 4 enemies · tier 1") {
+		t.Error("the HUD and the banner don't count down to wave 1")
 	}
 	a.state.Wave, a.state.Kills, a.state.Time, a.state.Won = game.NumWaves, 40, 400, true
 	press(a, &now)

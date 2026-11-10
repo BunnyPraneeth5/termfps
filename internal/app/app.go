@@ -167,31 +167,22 @@ type App struct {
 	quit        bool
 
 	// The half-block caution shows once, the first time V switches back
-	// to half-block, until cautionUntil.
+	// to half-block.
 	cautionShown bool
-	cautionUntil time.Time
 
-	// After a tier-up, "TIER n" shows above the HUD until tierUntil.
-	tierUntil time.Time
-
-	// After the hunt starts (M13), a warning shows until huntUntil.
-	huntUntil time.Time
-
-	// A wave started or was cleared (M15): its notice shows until waveUntil.
-	waveUntil time.Time
-	waveText  string
-
-	// After a map unlocks, "New map unlocked" shows until unlockUntil.
-	unlockUntil time.Time
+	// toast is the notice at the top of the game (U4): a new tier, the
+	// hunt, a wave, a new map, the caution.
+	toast toast
 }
 
 // cautionFor is how long the half-block caution stays on screen.
 const cautionFor = 5 * time.Second
 
-// tierNoticeFor is how long the "TIER n" notice shows after a tier-up.
-const tierNoticeFor = 3 * time.Second
+// noticeFor is how long a notice (a new tier, a wave, the hunt, a new map)
+// shows.
+const noticeFor = 3 * time.Second
 
-const caution = "Half-block needs a truecolor terminal and more bandwidth. Use ASCII over slow SSH."
+const caution = "Half-block needs truecolor; use ASCII over slow SSH"
 
 // New sets up the app on an initialized screen at time now, showing the
 // title menu. maps must not be empty.

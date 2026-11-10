@@ -122,7 +122,8 @@ func TestHUDPageLabels(t *testing.T) {
 	a, s := newMenuApp(t)
 	g := &guidePage{back: a.current, section: section(t, a, "Controls and HUD"), index: 1, shown: -1}
 	g.tick(a, t0, 0)
-	for _, want := range []string{"HP  76 ARMOR 50", "└ health, armor", "└ kills", "└ gun: in it / spare", "└ stamina"} {
+	for _, want := range []string{"♥ ▰▰▰▰▰▰▰▰▱▱ 76", "↓ health", "↓ armor", "↓ stamina (F: sprint)", "↓ kills", "PISTOL 18/50",
+		"↑ gun: rounds in it / spare", "↑ rounds left (dark: used)", "↑ guns: 1 2 3", "↑ tier or wave", "↑ time", "TIER 2  TIME 3:07"} {
 		if !screenHas(s, want) {
 			t.Errorf("HUD page doesn't show %q", want)
 		}

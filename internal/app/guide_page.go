@@ -296,32 +296,6 @@ var guideKeys = []guideKey{
 	{"Ctrl", groupOther, "Ctrl+C: quit at once, from anywhere."},
 }
 
-// hudParts names the parts of the HUD line, by how each part starts.
-var hudParts = []struct{ prefix, name string }{
-	{"HP", "health, armor"},
-	{"PISTOL", "gun: in it / spare"}, {"SHOTGUN", "gun: in it / spare"}, {"RIFLE", "gun: in it / spare"},
-	{"KILLS", "kills"},
-	{"TIER", "tier or wave"}, {"WAVE", "tier or wave"},
-	{"STAMINA", "stamina"},
-	{"FPS", "frames per second"},
-}
-
-// hudPartName names one part of the HUD line.
-func hudPartName(part string) string {
-	for _, p := range hudParts {
-		if strings.HasPrefix(part, p.prefix) {
-			return p.name
-		}
-	}
-	switch {
-	case strings.Contains(part, ":") && len(part) <= 6:
-		return "time survived"
-	case strings.Contains(part, "°"):
-		return "facing"
-	}
-	return "render mode"
-}
-
 // guideHUD is the example HUD on the HUD page.
 func guideHUD() render.HUD {
 	p := game.Player{HP: 76, Armor: 50, Guns: game.StartGuns(), Stamina: 0.6}
@@ -329,36 +303,42 @@ func guideHUD() render.HUD {
 	return render.HUD{Player: p, Kills: 23, Tier: 2, Time: 187, FPS: 60, Mode: game.ModeHalfBlock}
 }
 
-// drawHUDPage draws an example HUD line with each part pointed out and
-// named (M18c), then the page's notes.
+// hudLabel names one part of the example HUD: the part's column comes
+// from where the HUD drew it. level 0 is the row next to the HUD, 1 the
+// row beyond it.
+type hudLabel struct {
+	col   int
+	name  string
+	level int
+}
+
+// drawHUDPage draws an example of the two-line HUD (U4) with each part
+// pointed out and named, above the first line and under the second, then
+// the page's notes.
 func (g *guidePage) drawHUDPage(a *App, e guideEntry, area rect) {
-	s := a.scr
-	line := render.HUDLine(guideHUD(), area.w)
-	term.PutStr(s, area.x, area.y, line+strings.Repeat(" ", max(area.w-len([]rune(line)), 0)), term.Style{})
-	parts := strings.Split(line, " | ")
-	starts := make([]int, len(parts))
-	col := 0
-	for i, p := range parts {
-		starts[i] = col
-		col += len([]rune(p)) + 3
+	s, sy := a.scr, ui.Sym()
+	const hudY = 2 // two label rows above the example
+	parts := render.DrawHUDAt(s, guideHUD(), area.x, area.y+hudY, area.w)
+	down, up := sy.Down, sy.Up
+	if sy.Simple {
+		down, up = "v", "^"
 	}
-	// Labels on two levels so neighbors don't overlap: even parts on the
-	// first, odd ones on the second; each stops before the next one on
-	// its level.
-	for i := range parts {
-		level := i % 2
-		end := area.w // an upper label stops at the next part's line down, a lower one at the next lower label
-		if next := i + 1 + level; next < len(parts) {
-			end = starts[next] - 1
-		}
-		for r := 1; r <= 1+2*level; r++ {
-			term.PutStr(s, area.x+starts[i], area.y+r, "│", panelStyle)
-		}
-		label := []rune("└ " + hudPartName(parts[i]))
-		label = label[:min(len(label), max(end-starts[i], 0))]
-		term.PutStr(s, area.x+starts[i], area.y+2+2*level, string(label), panelStyle)
+	above := []hudLabel{{parts.Health, "health", 0}, {parts.Armor, "armor", 0}, {parts.Stamina, "stamina (F: sprint)", 0}, {parts.Kills, "kills", 0}}
+	below := []hudLabel{{parts.Gun, "gun: rounds in it / spare", 1}, {parts.Mag, "rounds left (dark: used)", 0},
+		{parts.Guns, "guns: 1 2 3", 1}, {parts.Stage, "tier or wave", 1}, {parts.Time, "time", 0}}
+	for _, l := range above {
+		ui.Put(s, l.col, area.y+1, down+" "+l.name, ui.StDim)
 	}
-	g.drawText(a, e.lines, rect{x: area.x, y: area.y + 6, w: area.w, h: area.h - 6})
+	for _, l := range below {
+		y := area.y + hudY + render.HUDRows
+		if l.level == 1 {
+			ui.Put(s, l.col, y, sy.Boxes[ui.BoxSingle][5], ui.StDim) // a line down to the second label row
+			y++
+		}
+		ui.Put(s, l.col, y, up+" "+l.name, ui.StDim)
+	}
+	top := hudY + render.HUDRows + 3
+	g.drawText(a, e.lines, rect{x: area.x, y: area.y + top, w: area.w, h: area.h - top})
 }
 
 // keyCap is one key on the keyboard picture: its label and its width in

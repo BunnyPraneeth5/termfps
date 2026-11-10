@@ -2,12 +2,14 @@ package app
 
 import (
 	"fmt"
+	"math"
 	"time"
 
 	"github.com/BunnyPraneeth5/termfps/internal/game"
 	"github.com/BunnyPraneeth5/termfps/internal/input"
 	"github.com/BunnyPraneeth5/termfps/internal/render"
 	"github.com/BunnyPraneeth5/termfps/internal/term"
+	"github.com/BunnyPraneeth5/termfps/internal/ui"
 )
 
 // screen is one mode of the app: the game itself, or a menu (menus.go).
@@ -121,40 +123,27 @@ func (p *playingScreen) tick(a *App, now time.Time, dt float64) {
 	if st.HasEvent(game.EventRenderModeChanged) {
 		a.persist() // V changed a setting
 	}
+	// Notices (U4: a toast at the top). When several come in one frame the
+	// later one here wins: a wave starting says more than its tier.
+	sep := ui.Sym().Sep
 	if st.HasEvent(game.EventRenderModeChanged) && st.Mode == game.ModeHalfBlock && !a.cautionShown {
 		a.cautionShown = true
-		a.cautionUntil = now.Add(cautionFor)
+		a.toast = toast{text: caution, from: now, until: now.Add(cautionFor), halfBlockOnly: true}
 	}
 	if st.HasEvent(game.EventTierUp) {
-		a.tierUntil = now.Add(tierNoticeFor)
+		a.notify(now, tierNotice(st.Tier))
 	}
-	switch { // waves (M15)
-	case st.HasEvent(game.EventWaveStarted):
-		a.waveUntil, a.waveText = now.Add(tierNoticeFor), fmt.Sprintf("WAVE %d of %d: %d enemies.", st.Wave, game.NumWaves, game.WaveSize(st.Wave))
-	case st.HasEvent(game.EventWaveCleared):
-		a.waveUntil, a.waveText = now.Add(tierNoticeFor), fmt.Sprintf("Wave %d cleared. The next one comes in %.0f seconds.", st.Wave, game.WaveBreak)
+	if st.HasEvent(game.EventWaveStarted) { // waves (M15); a cleared wave gets the banner instead
+		a.notify(now, fmt.Sprintf("WAVE %d%s%d enemies%sGO", st.Wave, sep, game.WaveSize(st.Wave), sep))
 	}
 	if st.HasEvent(game.EventHuntStarted) {
-		a.huntUntil = now.Add(tierNoticeFor)
+		a.notify(now, "THE HUNT IS ON"+sep+"kill one to stop it")
 	}
 	n := unlocks(a.progress.UnlockedMaps, a.mapIndex, st.Time, a.builtinMaps(), unlockAfter(a.cfg.UnlockRule))
 	if a.cfg.UnlockRule != "open" && n > a.progress.UnlockedMaps { // with all maps open there is nothing to announce
 		a.progress.UnlockedMaps = n
 		a.persist()
-		a.unlockUntil = now.Add(tierNoticeFor)
-	}
-	notice := ""
-	switch {
-	case now.Before(a.unlockUntil):
-		notice = fmt.Sprintf("New map unlocked: %s (Select map in the main menu).", a.maps[a.progress.UnlockedMaps-1].Name)
-	case now.Before(a.waveUntil):
-		notice = a.waveText
-	case now.Before(a.huntUntil) && st.Hunting():
-		notice = "No kill for a minute: they all know where you are. Kill one to stop the hunt."
-	case now.Before(a.tierUntil):
-		notice = tierNotice(st.Tier)
-	case now.Before(a.cautionUntil) && st.Mode == game.ModeHalfBlock:
-		notice = caution // only while half-block is actually on screen
+		a.notify(now, "NEW MAP UNLOCKED"+sep+a.maps[a.progress.UnlockedMaps-1].Name)
 	}
 
 	t0 := time.Now()
@@ -162,6 +151,8 @@ func (p *playingScreen) tick(a *App, now time.Time, dt float64) {
 	t1 := time.Now()
 	a.present()
 	minimapHidden := st.ShowMinimap && !render.DrawMinimap(a.scr, st, a.cfg.MinimapFog)
+	a.drawWaveBanner()
+	a.drawToast(now, st.ShowMinimap && !minimapHidden)
 	render.DrawHUD(a.scr, render.HUD{
 		FPS:           a.fps.value(),
 		Player:        st.Player,
@@ -171,7 +162,6 @@ func (p *playingScreen) tick(a *App, now time.Time, dt float64) {
 		Keys:          keysLabel(a.cfg.KeyMode, a.focused, a.keys.Releases()),
 		MinimapHidden: minimapHidden,
 		Mode:          st.Mode,
-		Notice:        notice,
 		Kills:         st.Kills,
 		Tier:          st.Tier,
 		Wave:          wave(st),
@@ -226,18 +216,94 @@ func isGunKey(ev term.Key) bool {
 	return ok
 }
 
-// tierNotice is the message for reaching tier: what's new (M12 enemies,
+// tierNotice is the notice for reaching tier: what's new (M12 enemies,
 // M13 what enemies learn), or just that it got harder.
 func tierNotice(tier int) string {
+	sep := ui.Sym().Sep
+	what := "tougher and faster"
 	switch tier {
 	case game.HearTier:
-		return "TIER 2: runners join. Enemies now hear your gunshots and rush to you."
+		what = "runners join" + sep + "enemies hear you"
 	case game.CoverTier:
-		return "TIER 3: tanks join. Shooters now hide after they shoot."
+		what = "tanks join" + sep + "shooters hide"
 	case game.FlankTier:
-		return "TIER 4: exploders join. Zombies now come from your sides and behind."
+		what = "exploders join" + sep + "zombies surround you"
 	}
-	return fmt.Sprintf("TIER %d: enemies are tougher and come faster.", tier)
+	return fmt.Sprintf("TIER %d%s%s", tier, sep, what)
+}
+
+// toast is the notice at the top of the game (U4).
+type toast struct {
+	text        string
+	from, until time.Time
+	// halfBlockOnly hides it as soon as the render mode isn't half-block
+	// (the half-block caution).
+	halfBlockOnly bool
+}
+
+// toastSlide is how long a toast takes to slide in from the top row, with
+// animations on.
+const toastSlide = 100 * time.Millisecond
+
+// notify shows text as the game's notice for noticeFor.
+func (a *App) notify(now time.Time, text string) {
+	a.toast = toast{text: text, from: now, until: now.Add(noticeFor)}
+}
+
+// drawToast draws the notice, if one is showing: centered on the second
+// row (sliding in from the first), in the part of the row the minimap
+// leaves free when it would reach into the minimap.
+func (a *App) drawToast(now time.Time, minimap bool) {
+	t := a.toast
+	if t.text == "" || !now.Before(t.until) || (t.halfBlockOnly && a.state.Mode != game.ModeHalfBlock) {
+		return
+	}
+	y := 1
+	if a.cfg.Animations && now.Sub(t.from) < toastSlide {
+		y = 0
+	}
+	w, h := a.scr.Size()
+	width := ui.RuneLen(t.text) + 4
+	room := w
+	if minimap {
+		if mw := render.MinimapWidth(a.state.Map, w, h); (w+width)/2 > w-mw {
+			room = w - mw // centered, it would cover the minimap: use what's left of it
+		}
+	}
+	ui.Center(a.scr, 0, room, y, "  "+t.text+"  ", term.Style{Fg: ui.ColAmber, Bg: ui.ColToast, Bold: true})
+}
+
+// Wave banner size.
+const (
+	bannerW = 38
+	bannerH = 7
+	bannerY = 3
+)
+
+// drawWaveBanner draws the banner of a waves run's break (U4): the wave
+// just cleared, the countdown to the next one as a number and a bar, and
+// what's coming. Before the first wave it says to get ready.
+func (a *App) drawWaveBanner() {
+	st := a.state
+	if !st.InBreak() || st.Won {
+		return
+	}
+	s, sy := a.scr, ui.Sym()
+	w, _ := s.Size()
+	x := (w - bannerW) / 2
+	card := ui.On(ui.ColText, ui.ColCard)
+	ui.Panel(s, x, bannerY, bannerW, bannerH, ui.BoxRound, ui.On(ui.ColAmber, ui.ColCard), card)
+	title, total := fmt.Sprintf("%s WAVE %d CLEARED", sy.Check, st.Wave), game.WaveBreak
+	if st.Wave == 0 {
+		title, total = "WAVES"+sy.Sep+"GET READY", game.FirstWaveBreak
+	}
+	next := st.Wave + 1
+	ui.Center(s, x, bannerW, bannerY+1, title, ui.Bold(ui.On(ui.ColGreen, ui.ColCard)))
+	ui.Center(s, x, bannerW, bannerY+2, fmt.Sprintf("next wave in %.0f", math.Ceil(st.BreakLeft)), ui.Bold(ui.On(ui.ColBright, ui.ColCard)))
+	const cells = 24
+	ui.Bar(s, x+(bannerW-ui.BarWidth(cells))/2, bannerY+3, cells, st.BreakLeft/total, ui.On(ui.ColAmber, ui.ColCard), ui.On(ui.ColBorder, ui.ColCard))
+	ui.Center(s, x, bannerW, bannerY+4, fmt.Sprintf("wave %d: %d enemies%stier %d", next, game.WaveSize(next), sy.Sep, game.WaveTier(next)), card)
+	ui.Center(s, x, bannerW, bannerY+5, "reload and pick things up", ui.On(ui.ColDim, ui.ColCard))
 }
 
 // wave is the HUD's wave number: 0 in survival (it shows the tier

@@ -218,3 +218,33 @@ func TestMinimapGrowsWithTerminal(t *testing.T) {
 		t.Errorf("bottom-left border = %q, want └ after 16 rows", str)
 	}
 }
+
+// The map's name shows in the minimap's frame, in capitals without "The"
+// (U4); a long name is cut to fit.
+func TestMinimapTitle(t *testing.T) {
+	scr := term.NewFake(80, 24)
+	m, err := world.Parse([]byte("; name: The Warehouse\n" + room))
+	if err != nil {
+		t.Fatalf("Parse: %v", err)
+	}
+	st := game.NewState(m)
+	if !DrawMinimap(scr, st, false) {
+		t.Fatal("DrawMinimap returned false on 80x24")
+	}
+	if MinimapWidth(m, 80, 24) != 12 {
+		t.Errorf("MinimapWidth = %d, want 12 (5 cells and the border)", MinimapWidth(m, 80, 24))
+	}
+	// 12 columns: room for 6 letters.
+	if row := scr.Row(0); !strings.HasSuffix(row, "┌─ WAREHO ─┐") {
+		t.Errorf("minimap top border = %q, want the name cut to fit", strings.TrimSpace(row))
+	}
+	if got := MinimapTitle("The Warehouse", 18); got != "WAREHOUSE" {
+		t.Errorf("MinimapTitle = %q, want WAREHOUSE", got)
+	}
+	if got := MinimapTitle("", 18); got != "" {
+		t.Errorf("no name: title %q", got)
+	}
+	if MinimapWidth(m, 10, 7) != 0 {
+		t.Error("MinimapWidth on a screen too small isn't 0")
+	}
+}

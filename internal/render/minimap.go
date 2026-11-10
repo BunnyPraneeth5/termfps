@@ -1,8 +1,11 @@
 package render
 
 import (
+	"strings"
+
 	"github.com/BunnyPraneeth5/termfps/internal/game"
 	"github.com/BunnyPraneeth5/termfps/internal/term"
+	"github.com/BunnyPraneeth5/termfps/internal/ui"
 	"github.com/BunnyPraneeth5/termfps/internal/world"
 )
 
@@ -52,19 +55,15 @@ const (
 func DrawMinimap(s term.Screen, st *game.State, fog bool) bool {
 	m := st.Map
 	w, h := s.Size()
-	// At most a third of the view rows across and down (M1 follow-up), so
-	// on a normal-size terminal it stays clear of the horizon, where
-	// enemies show up.
-	limit := max(minimapMinCells, (h-1)/3)
-	viewW := min(m.W, minimapMaxW, (w-2)/minimapCellWidth, limit) // the border's two columns
-	viewH := min(m.H, minimapMaxH, h-3, limit)                    // the border's two rows, and the HUD row
-	if viewW < min(m.W, minimapMinCells) || viewH < min(m.H, minimapMinCells) {
+	viewW, viewH, ok := minimapView(m, w, h)
+	if !ok {
 		return false
 	}
 	px, py := int(st.Player.X), int(st.Player.Y)
 	ox, oy := minimapWindow(m.W, m.H, viewW, viewH, px, py)
 	x0 := w - viewW*minimapCellWidth - 1 // the right border takes the last column
 	drawMinimapBorder(s, x0-1, 0, viewW*minimapCellWidth+2, viewH+2)
+	drawMinimapTitle(s, x0-1, viewW*minimapCellWidth+2, m.Name)
 	const y0 = 1 // map rows start under the top border
 
 	for vy := 0; vy < viewH; vy++ {
@@ -122,6 +121,58 @@ func DrawMinimap(s term.Screen, st *game.State, fog bool) bool {
 		s.Put(x0+vx*minimapCellWidth, y0+vy, "●", style)
 	}
 	return true
+}
+
+// minimapView is how many map cells the minimap shows across and down on a
+// w x h screen; ok is false when the screen is too small for it.
+func minimapView(m *world.Map, w, h int) (viewW, viewH int, ok bool) {
+	// At most a third of the view rows across and down (M1 follow-up), so
+	// on a normal-size terminal it stays clear of the horizon, where
+	// enemies show up.
+	limit := max(minimapMinCells, (h-HUDRows)/3)
+	viewW = min(m.W, minimapMaxW, (w-2)/minimapCellWidth, limit) // the border's two columns
+	viewH = min(m.H, minimapMaxH, h-2-HUDRows, limit)            // the border's two rows, and the HUD's rows
+	if viewW < min(m.W, minimapMinCells) || viewH < min(m.H, minimapMinCells) {
+		return 0, 0, false
+	}
+	return viewW, viewH, true
+}
+
+// MinimapWidth is how many screen columns the minimap takes on a w x h
+// screen, its border included; 0 when it doesn't fit. The game keeps its
+// notices clear of it.
+func MinimapWidth(m *world.Map, w, h int) int {
+	viewW, _, ok := minimapView(m, w, h)
+	if !ok {
+		return 0
+	}
+	return viewW*minimapCellWidth + 2
+}
+
+// MinimapTitle is the map's name as shown in the minimap's frame (U4): in
+// capitals, without a leading "The", cut to fit a frame width columns
+// wide. "" when there's no name or no room.
+func MinimapTitle(name string, width int) string {
+	name = strings.ToUpper(strings.TrimPrefix(name, "The "))
+	room := width - 6 // a corner, a line and a space on each side
+	r := []rune(name)
+	if len(r) == 0 || room < 3 {
+		return ""
+	}
+	if len(r) > room {
+		r = r[:room]
+	}
+	return string(r)
+}
+
+// drawMinimapTitle writes the map's name into the top border of the
+// minimap frame at column x, width columns wide: "┌─ WAREHOUSE ─┐".
+func drawMinimapTitle(s term.Screen, x, width int, name string) {
+	title := MinimapTitle(name, width)
+	if title == "" {
+		return
+	}
+	term.PutStr(s, x+2, 0, " "+title+" ", term.Style{Bg: grayColor(0), Fg: ui.ColAmber, Bold: true})
 }
 
 // seen reports whether the player has seen cell (x, y) this run (M8).

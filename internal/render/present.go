@@ -17,7 +17,11 @@ type cellWriter struct {
 
 func newCellWriter(s term.Screen, f *Frame) cellWriter {
 	w, h := s.Size()
-	return cellWriter{s: s, scale: max(f.Scale, 1), w: w, h: h - 1, ox: f.OffsetX, oy: f.OffsetY}
+	rows := h - HUDRows
+	if f.ViewRows > 0 {
+		rows = f.ViewRows
+	}
+	return cellWriter{s: s, scale: max(f.Scale, 1), w: w, h: rows, ox: f.OffsetX, oy: f.OffsetY}
 }
 
 func (c cellWriter) put(x, row int, str string, st term.Style) {

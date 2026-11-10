@@ -8,6 +8,7 @@ import (
 	"github.com/BunnyPraneeth5/termfps/internal/game"
 	"github.com/BunnyPraneeth5/termfps/internal/render"
 	"github.com/BunnyPraneeth5/termfps/internal/term"
+	"github.com/BunnyPraneeth5/termfps/internal/ui"
 	"github.com/BunnyPraneeth5/termfps/internal/world"
 )
 
@@ -50,8 +51,8 @@ func TestStepDrawsGame(t *testing.T) {
 	if quit := a.step(t0.Add(time.Second/30), nil); quit {
 		t.Fatal("step quit without input")
 	}
-	if hud := s.Row(23); !strings.Contains(hud, "FPS") || !strings.Contains(hud, "| ascii") {
-		t.Errorf("HUD row = %q, want FPS and the mode", hud)
+	if hud := s.Row(22) + s.Row(23); !strings.Contains(hud, "KILLS 0") || !strings.Contains(hud, "PISTOL") || !strings.Contains(hud, "FPS") {
+		t.Errorf("HUD rows = %q, want the kills, the gun and the FPS", hud)
 	}
 	if str, _ := s.Get(0, 10); str == " " || str == "" {
 		t.Errorf("view cell (0, 10) = %q, want a wall or floor character", str)
@@ -88,15 +89,15 @@ func TestCautionOnce(t *testing.T) {
 		t.Fatal("caution shown before half-block")
 	}
 	press() // mixed -> half-block
-	if !a.cautionShown || !a.cautionUntil.After(now) {
+	if !a.cautionShown || a.toast.text != caution || !a.toast.until.After(now) {
 		t.Fatal("no caution when switching to half-block")
 	}
-	until := a.cautionUntil
+	until := a.toast.until
 	press()
 	press()
 	press()
 	press() // around again to half-block (4 modes)
-	if a.cautionUntil != until {
+	if a.toast.until != until {
 		t.Error("caution shown a second time")
 	}
 }
@@ -127,8 +128,8 @@ func TestResizeResizesFrame(t *testing.T) {
 	a, s := newTestApp(t)
 	s.SetSize(100, 30)
 	a.step(t0.Add(time.Second/30), []term.Event{term.Resize{W: 100, H: 30}})
-	if a.frame.W != 100 || a.frame.H != 58 {
-		t.Errorf("frame = %dx%d after resize to 100x30, want 100x58", a.frame.W, a.frame.H)
+	if a.frame.W != 100 || a.frame.H != 56 {
+		t.Errorf("frame = %dx%d after resize to 100x30, want 100x56 (two HUD rows)", a.frame.W, a.frame.H)
 	}
 }
 
@@ -237,8 +238,8 @@ func TestSpaceFiresAndRReloads(t *testing.T) {
 	if got := a.state.Player.Weapon().Mag; got != 24 {
 		t.Errorf("magazine = %d after Space, want 24", got)
 	}
-	if hud := s.Row(23); !strings.Contains(hud, "PISTOL 24 / 50") {
-		t.Errorf("HUD %q, want PISTOL 24 / 50", hud)
+	if hud := s.Row(23); !strings.Contains(hud, "PISTOL 24/50") {
+		t.Errorf("HUD %q, want PISTOL 24/50", hud)
 	}
 	a.step(t0.Add(2*time.Second/30), []term.Event{key(term.KeyRune, 'r')})
 	if !a.state.Player.Weapon().Reloading() {
@@ -300,17 +301,17 @@ func TestCautionHiddenOutsideHalfBlock(t *testing.T) {
 	a.state.Mode = game.ModeMixed
 	now := t0.Add(time.Second / 30)
 	a.step(now, []term.Event{key(term.KeyRune, 'v')}) // mixed -> half-block: caution on
-	if !strings.Contains(s.Row(22)+s.Row(21), "Half-block needs") {
+	if !strings.Contains(s.Row(0)+s.Row(1), "Half-block needs") {
 		t.Fatal("caution not shown in half-block")
 	}
 	now = now.Add(time.Second / 30)
 	a.step(now, []term.Event{key(term.KeyRune, 'v')}) // half-block -> shade, within 5 s
-	if strings.Contains(s.Row(22)+s.Row(21), "Half-block needs") {
+	if strings.Contains(s.Row(0)+s.Row(1), "Half-block needs") {
 		t.Error("caution still shown after switching to shade")
 	}
 }
 
-// A tier-up shows "TIER 2" above the HUD.
+// A tier-up shows "TIER 2" as a toast at the top.
 func TestTierNotice(t *testing.T) {
 	a, s := newTestApp(t)
 	a.state.Kills = game.TierKills
@@ -318,8 +319,11 @@ func TestTierNotice(t *testing.T) {
 	if a.state.Tier != 2 {
 		t.Fatalf("tier = %d, want 2", a.state.Tier)
 	}
-	if txt := s.Row(22) + s.Row(21); !strings.Contains(txt, "TIER 2") {
-		t.Errorf("no TIER 2 notice above the HUD, got %q", txt)
+	if txt := s.Row(1); !strings.Contains(txt, "TIER 2 · runners join · enemies hear you") {
+		t.Errorf("no TIER 2 toast on the second row, got %q", txt)
+	}
+	if _, st := s.Get(40, 1); st.Fg != ui.ColAmber || st.Bg != ui.ColToast {
+		t.Errorf("the toast's style is %+v, want amber on the toast ground", st)
 	}
 }
 
@@ -387,10 +391,10 @@ func TestRenderScaleAutoFollowsResize(t *testing.T) {
 	}
 	s.SetSize(200, 50)
 	a.step(t0.Add(time.Second/30), []term.Event{term.Resize{W: 200, H: 50}})
-	if a.frame.Scale != 2 || a.frame.W != 100 || a.frame.H != 2*25 {
-		t.Errorf("200x50: scale %d, frame %dx%d; want 2, 100x50", a.frame.Scale, a.frame.W, a.frame.H)
+	if a.frame.Scale != 2 || a.frame.W != 100 || a.frame.H != 2*24 {
+		t.Errorf("200x50: scale %d, frame %dx%d; want 2, 100x48", a.frame.Scale, a.frame.W, a.frame.H)
 	}
-	if hud := s.Row(49); !strings.Contains(hud, "HP") {
+	if hud := s.Row(48); !strings.Contains(hud, "KILLS") {
 		t.Errorf("HUD row = %q, want the HUD at full resolution", hud)
 	}
 }
@@ -410,8 +414,8 @@ func TestRenderScaleModes(t *testing.T) {
 // tiers only that it got harder.
 func TestTierNoticeText(t *testing.T) {
 	for tier, want := range map[int]string{2: "runners", 3: "tanks", 4: "exploders", 5: "tougher"} {
-		if got := tierNotice(tier); !strings.Contains(got, want) || len([]rune(got)) > 78 {
-			t.Errorf("tierNotice(%d) = %q, want it to mention %q and fit 80 columns", tier, got, want)
+		if got := tierNotice(tier); !strings.Contains(got, want) || len([]rune(got)) > 56 {
+			t.Errorf("tierNotice(%d) = %q, want it to mention %q and fit beside the minimap at 80 columns", tier, got, want)
 		}
 	}
 }

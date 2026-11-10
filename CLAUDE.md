@@ -49,7 +49,7 @@ Append an entry to PROGRESS.md. Log any new decision in DECISIONS.md.
 - Map files may have `\r\n` line endings, a UTF-8 BOM, and trailing newlines on Windows.
 - Go files must have LF line endings, or `gofmt -l` lists every file. `.gitattributes` handles this (T1).
 - Use perpendicular distance, not euclidean, or walls curve (fisheye).
-- The Frame is W x 2*(rows-1) (the last row is the HUD), so Frame pixels are roughly square. Use `pixelAspect` (~1.0) in wall height. Don't apply the 2x terminal cell aspect again on top.
+- The Frame is W x 2*(rows-2) (the last two rows are the HUD since U4, `render.HUDRows`), so Frame pixels are roughly square. Use `pixelAspect` (~1.0) in wall height. Don't apply the 2x terminal cell aspect again on top.
 - Clamp drawStart/drawEnd to the Frame. Up close, wall height can be huge.
 - Half-block: `▀` foreground = top pixel, background = bottom pixel. Getting these swapped flips every cell upside down.
 - Clamp float brightness to 0-255 before converting to `uint8`. Go gives a garbage value (no panic) for out-of-range conversions.

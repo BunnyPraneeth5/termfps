@@ -28,9 +28,12 @@ func newState(t testing.TB, x, y float64) *game.State {
 	return s
 }
 
+// newFrame makes a Frame cols wide with rows-1 view rows. (The tests in
+// this file were written when the HUD took one row; their pixel numbers
+// stay right with the view that size, so it's sized directly.)
 func newFrame(cols, rows int) *Frame {
 	f := Frame{PixelAspect: DefaultPixelAspect, MixedBackground: DefaultMixedBackground}
-	f.Resize(FrameSize(cols, rows))
+	f.Resize(cols, 2*(rows-1))
 	return &f
 }
 
@@ -121,8 +124,8 @@ func TestDrawFrameZeroAspectPanics(t *testing.T) {
 }
 
 func TestFrameSize(t *testing.T) {
-	if w, h := FrameSize(120, 40); w != 120 || h != 78 {
-		t.Errorf("FrameSize(120, 40) = %d x %d, want 120 x 78", w, h)
+	if w, h := FrameSize(120, 40); w != 120 || h != 76 {
+		t.Errorf("FrameSize(120, 40) = %d x %d, want 120 x 76", w, h)
 	}
 }
 
@@ -133,8 +136,8 @@ func TestResizeReusesMemory(t *testing.T) {
 	if &f.Pix[0] != first {
 		t.Error("resizing smaller allocated a new slice, want reuse")
 	}
-	if len(f.Pix) != 80*46 {
-		t.Errorf("len(Pix) = %d, want %d", len(f.Pix), 80*46)
+	if len(f.Pix) != 80*44 {
+		t.Errorf("len(Pix) = %d, want %d", len(f.Pix), 80*44)
 	}
 }
 

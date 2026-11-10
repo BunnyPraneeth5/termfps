@@ -46,6 +46,10 @@ type Frame struct {
 	// when presented (M18a: a picture in the guide). 0, 0 for the 3D view.
 	// Only for Scale 1.
 	OffsetX, OffsetY int
+	// ViewRows is how many screen rows a scaled Frame (Scale above 1) may
+	// cover; 0 means every row but the HUD's. The title's map tour, which
+	// has no HUD under it, sets it to all rows (U4).
+	ViewRows int
 
 	// Set by DrawFrame for the map being drawn (M4), and used by the
 	// sprites after it: the fog factor and the light grid.
@@ -118,7 +122,7 @@ func AutoScale(cols int) int {
 // covers scale x scale screen cells, rounded up so the view is covered.
 func ScaledFrameSize(cols, rows, scale int) (w, h int) {
 	scale = max(scale, 1)
-	viewRows := (rows - 1 + scale - 1) / scale
+	viewRows := (rows - HUDRows + scale - 1) / scale
 	return (cols + scale - 1) / scale, 2 * viewRows
 }
 
@@ -130,9 +134,10 @@ const DefaultMixedBackground = 0.2
 const DefaultPixelAspect = 1.0
 
 // FrameSize returns the Frame size for a terminal of cols x rows.
-// The last row is the HUD, so the view gets rows-1 cells = 2*(rows-1) pixels.
+// The last HUDRows rows are the HUD (two since U4), so the view gets
+// rows-2 cells = 2*(rows-2) pixels.
 func FrameSize(cols, rows int) (w, h int) {
-	return cols, 2 * (rows - 1)
+	return cols, 2 * (rows - HUDRows)
 }
 
 // Resize sets the Frame to w x h. It reuses the existing pixel slice when it

@@ -8,51 +8,81 @@ import (
 
 	"github.com/BunnyPraneeth5/termfps/internal/game"
 	"github.com/BunnyPraneeth5/termfps/internal/term"
+	"github.com/BunnyPraneeth5/termfps/internal/ui"
+	"github.com/BunnyPraneeth5/termfps/internal/world"
 )
 
 func sampleHUD() HUD {
 	return HUD{
 		FPS:     30,
-		Player:  game.Player{X: 12.34, Y: 5.67, Angle: 3 * math.Pi / 2, Stamina: 1}, // facing north
+		Player:  game.Player{X: 12.34, Y: 5.67, Angle: 3 * math.Pi / 2, Stamina: 1, HP: 76, Armor: 50, Guns: game.StartGuns()}, // facing north
 		Draw:    70 * time.Microsecond,
 		Present: 1100 * time.Microsecond,
 		Show:    2 * time.Millisecond,
 		Keys:    "keys async (focused)",
+		Tier:    1,
 	}
 }
 
-func hudLine(t *testing.T, cols int, h HUD) string {
+// hudLines draws the HUD on a cols x 24 screen and returns its two rows.
+func hudLines(t *testing.T, cols int, h HUD) (line1, line2 string) {
 	t.Helper()
 	s := term.NewFake(cols, 24)
 	DrawHUD(s, h)
-	return strings.TrimRight(s.Row(23), " ")
+	return strings.TrimRight(s.Row(22), " "), strings.TrimRight(s.Row(23), " ")
 }
 
-func TestHUDCoreAt80Columns(t *testing.T) {
-	line := hudLine(t, 80, sampleHUD())
-	for _, want := range []string{"HP", "PISTOL", "KILLS 0", "TIER 0", "0:00", "FPS 30.0", "| half-block"} {
-		if !strings.Contains(line, want) {
-			t.Errorf("HUD %q missing %q", line, want)
-		}
-	}
-	// Facing and the timings don't fit after the core part at 80 and are
-	// left out whole.
-	if strings.Contains(line, "270°") || strings.Contains(line, "draw") || strings.Contains(line, "keys") {
-		t.Errorf("HUD %q includes extras that don't fit at 80", line)
-	}
-}
-
-func TestHUDTimingsAt140Columns(t *testing.T) {
-	if line := hudLine(t, 140, sampleHUD()); !strings.Contains(line, "show 2.00 ms") {
-		t.Errorf("HUD %q missing timings at 140 columns", line)
-	}
-}
-
-func TestHUDKillsTierTime(t *testing.T) {
+// The two lines at 80 columns: bars with numbers and the kills; the gun,
+// its magazine strip, the gun numbers, the tier and the time.
+func TestHUDTwoLines(t *testing.T) {
 	h := sampleHUD()
 	h.Kills, h.Tier, h.Time = 23, 2, 187.9
-	if line := hudLine(t, 80, h); !strings.Contains(line, "KILLS 23 | TIER 2 | 3:07 |") {
-		t.Errorf("HUD %q, want KILLS 23 | TIER 2 | 3:07", line)
+	h.Player.Guns[game.Pistol].Mag = 18
+	l1, l2 := hudLines(t, 80, h)
+	if want := " ♥ ▰▰▰▰▰▰▰▰▱▱ 76    ◆ ▰▰▰▰▰▱▱▱▱▱ 50    » ▰▰▰▰▰▰▰▰▰▰"; !strings.HasPrefix(l1, want) {
+		t.Errorf("line 1 = %q, want it to start %q", l1, want)
+	}
+	if !strings.HasSuffix(l1, "KILLS 23") || len([]rune(l1)) != 79 {
+		t.Errorf("line 1 = %q, want KILLS 23 one column in from the right", l1)
+	}
+	if want := " PISTOL 18/50  " + strings.Repeat("❙", 25) + "  1 2 3"; !strings.HasPrefix(l2, want) {
+		t.Errorf("line 2 = %q, want it to start %q", l2, want)
+	}
+	if !strings.HasSuffix(l2, "TIER 2  TIME 3:07") {
+		t.Errorf("line 2 = %q, want it to end TIER 2  TIME 3:07", l2)
+	}
+}
+
+// The bars and the numbers have their colors; used rounds and guns not
+// found yet are dark; the gun in hand is bright.
+func TestHUDColors(t *testing.T) {
+	s := term.NewFake(80, 24)
+	h := sampleHUD()
+	h.Player.Guns[game.Pistol].Mag = 18
+	h.Player.Guns[game.Shotgun].Owned = true
+	p := DrawHUD(s, h)
+	fg := func(x, y int) term.Color { _, st := s.Get(x, y); return st.Fg }
+	bar := p.Health + 2
+	if fg(bar, 22) != ui.ColRed || fg(bar+9, 22) != ui.ColBorder {
+		t.Errorf("health bar: first cell %v, last cell %v; want red, then the empty color", fg(bar, 22), fg(bar+9, 22))
+	}
+	if fg(p.Armor+2, 22) != ui.ColBlue || fg(p.Stamina+2, 22) != ui.ColYellow {
+		t.Error("armor isn't blue or stamina isn't yellow")
+	}
+	if fg(p.Mag+17, 23) != ui.ColAmber || fg(p.Mag+18, 23) != ui.ColBorder {
+		t.Error("the magazine strip doesn't show 18 rounds bright and the used ones dark")
+	}
+	if fg(p.Guns, 23) != ui.ColAmber || fg(p.Guns+2, 23) != ui.ColDim || fg(p.Guns+4, 23) != ui.ColBorder {
+		t.Errorf("gun numbers: %v %v %v; want the pistol bright, the shotgun dim, the rifle dark", fg(p.Guns, 23), fg(p.Guns+2, 23), fg(p.Guns+4, 23))
+	}
+	if _, st := s.Get(0, 22); st.Bg != ui.ColPanel {
+		t.Errorf("HUD background %v, want the panel color", st.Bg)
+	}
+	h.Player.HP = 20
+	s2 := term.NewFake(80, 24)
+	p = DrawHUD(s2, h)
+	if _, st := s2.Get(p.Health+13, 22); st.Fg != ui.ColRed {
+		t.Error("at 20 HP the number isn't red")
 	}
 }
 
@@ -64,167 +94,114 @@ func TestClock(t *testing.T) {
 	}
 }
 
-func TestHUDAmmo(t *testing.T) {
-	h := sampleHUD()
-	h.Player.Guns[game.Pistol] = game.Weapon{Kind: game.Pistol, Owned: true, Mag: 18, Reserve: 50}
-	if line := hudLine(t, 80, h); !strings.Contains(line, "PISTOL 18 / 50 |") {
-		t.Errorf("HUD %q, want PISTOL 18 / 50", line)
+// Extras go in the gap on the second line, whole or not at all: at 80
+// columns the FPS; more as the window gets wider.
+func TestHUDExtras(t *testing.T) {
+	_, l2 := hudLines(t, 80, sampleHUD())
+	if !strings.Contains(l2, "FPS 30.0") || strings.Contains(l2, "draw") || strings.Contains(l2, "270") {
+		t.Errorf("line 2 at 80 = %q, want the FPS and no cut-off extras", l2)
 	}
-}
-
-func TestHUDShowsMode(t *testing.T) {
+	_, l2 = hudLines(t, 110, sampleHUD())
+	if !strings.Contains(l2, "FPS 30.0 · half-block · 270° N") || strings.Contains(l2, "draw") {
+		t.Errorf("line 2 at 110 = %q, want the mode and the facing too", l2)
+	}
+	_, l2 = hudLines(t, 190, sampleHUD())
+	if !strings.Contains(l2, "keys async (focused)") || !strings.Contains(l2, "draw 0.07 present 1.10 show 2.00 ms") || !strings.Contains(l2, "x 12.34 y  5.67") {
+		t.Errorf("line 2 at 190 = %q, want every extra", l2)
+	}
 	h := sampleHUD()
 	h.Mode = game.ModeASCII
-	if line := hudLine(t, 80, h); !strings.Contains(line, "| ascii") {
-		t.Errorf("HUD %q doesn't show the ascii mode", line)
-	}
-}
-
-// The half-block caution (82 characters) wraps into two sentence lines at
-// 80 columns, on the rows just above the HUD.
-func TestHUDNoticeWrapsAbove(t *testing.T) {
-	h := sampleHUD()
-	h.Notice = "Half-block needs a truecolor terminal and more bandwidth. Use ASCII over slow SSH."
-	s := term.NewFake(80, 24)
-	DrawHUD(s, h)
-	if got := strings.TrimSpace(s.Row(21)); got != "Half-block needs a truecolor terminal and more bandwidth." {
-		t.Errorf("row 21 = %q, want the first sentence", got)
-	}
-	if got := strings.TrimSpace(s.Row(22)); got != "Use ASCII over slow SSH." {
-		t.Errorf("row 22 = %q, want the second sentence", got)
-	}
-	if got := strings.TrimSpace(s.Row(20)); got != "" {
-		t.Errorf("row 20 = %q, want untouched", got)
-	}
-}
-
-func TestHUDNoticeOneLineWhenWide(t *testing.T) {
-	h := sampleHUD()
-	h.Notice = "Half-block needs a truecolor terminal and more bandwidth. Use ASCII over slow SSH."
-	s := term.NewFake(120, 24)
-	DrawHUD(s, h)
-	if got := strings.TrimSpace(s.Row(22)); got != h.Notice {
-		t.Errorf("row 22 = %q, want the whole notice on one line", got)
-	}
-	if got := strings.TrimSpace(s.Row(21)); got != "" {
-		t.Errorf("row 21 = %q, want untouched", got)
-	}
-}
-
-// Extras never appear cut off: at 70 columns only the core part shows.
-func TestHUDNoPartialExtras(t *testing.T) {
-	line := hudLine(t, 70, sampleHUD())
-	if strings.Contains(line, "draw") || strings.Contains(line, "|  ") {
-		t.Errorf("HUD %q shows a partial extra at 70 columns", line)
-	}
-	if !strings.HasSuffix(line, "| FPS 30.0") {
-		t.Errorf("HUD %q, want it to end with the last extra that fits whole (FPS)", line)
-	}
-}
-
-func TestHUDWideShowsEverything(t *testing.T) {
-	line := hudLine(t, 170, sampleHUD())
-	if !strings.Contains(line, "keys async (focused)") || !strings.Contains(line, "draw 0.07") {
-		t.Errorf("HUD %q missing extras at 170 columns", line)
-	}
-}
-
-func TestHUDMinimapHidden(t *testing.T) {
-	h := sampleHUD()
 	h.MinimapHidden = true
-	if line := hudLine(t, 120, h); !strings.Contains(line, "minimap hidden") {
-		t.Errorf("HUD %q doesn't say the minimap is hidden", line)
+	if _, l2 = hudLines(t, 130, h); !strings.Contains(l2, "minimap hidden: screen too small · FPS 30.0 · ascii") {
+		t.Errorf("line 2 = %q, want the minimap note first and the ascii mode", l2)
+	}
+	h = sampleHUD()
+	h.Player.Angle = 2*math.Pi - 0.001 // 359.94°, rounds to 360 -> 0
+	if _, l2 = hudLines(t, 110, h); !strings.Contains(l2, "  0° E") {
+		t.Errorf("line 2 = %q, want 0° E", l2)
 	}
 }
 
-// The HUD only writes the last row, so it can't overlap the minimap.
-func TestHUDOnlyLastRow(t *testing.T) {
+// The HUD only writes its two rows, so it can't overlap the minimap.
+func TestHUDOnlyItsRows(t *testing.T) {
 	s := term.NewFake(80, 24)
 	DrawHUD(s, sampleHUD())
-	for row := 0; row < 23; row++ {
+	for row := 0; row < 24-HUDRows; row++ {
 		if txt := strings.TrimSpace(s.Row(row)); txt != "" {
 			t.Fatalf("row %d has %q, want empty", row, txt)
 		}
 	}
 }
 
-func TestHUDAngleWraps(t *testing.T) {
+// The HUD names the gun in hand (M11); a reload shows instead of the
+// magazine strip.
+func TestHUDGunAndReload(t *testing.T) {
 	h := sampleHUD()
-	h.Player.Angle = 2*math.Pi - 0.001 // 359.94°, rounds to 360 -> 0
-	if line := hudLine(t, 100, h); !strings.Contains(line, "  0° E") {
-		t.Errorf("HUD %q, want 0° E", line)
-	}
-}
-
-func TestHUDHealthFirst(t *testing.T) {
-	h := sampleHUD()
-	h.Player.HP = 73
-	if line := hudLine(t, 80, h); !strings.HasPrefix(line, "HP  73 ARMOR 0 | PISTOL") {
-		t.Errorf("HUD %q, want it to start with HP  73 ARMOR 0 | PISTOL", line)
-	}
-}
-
-// DrawMessage centers its lines in a box with swapped colors.
-func TestDrawMessage(t *testing.T) {
-	s := term.NewFake(80, 24)
-	DrawMessage(s, []string{"YOU DIED", "Enter: try again"})
-	found := 0
-	for row := 0; row < 24; row++ {
-		txt := s.Row(row)
-		for _, want := range []string{"YOU DIED", "Enter: try again"} {
-			if i := strings.Index(txt, want); i >= 0 {
-				found++
-				center := i + len(want)/2
-				if center < 36 || center > 44 {
-					t.Errorf("%q centered at column %d, want about 40", want, center)
-				}
-				if _, style := s.Get(i, row); style != noticeStyle {
-					t.Errorf("%q not in the box style", want)
-				}
-			}
-		}
-	}
-	if found != 2 {
-		t.Errorf("found %d of 2 message lines", found)
-	}
-}
-
-func TestHUDArmor(t *testing.T) {
-	h := sampleHUD()
-	h.Player.HP, h.Player.Armor = 64, 50
-	if line := hudLine(t, 80, h); !strings.HasPrefix(line, "HP  64 ARMOR 50 |") {
-		t.Errorf("HUD %q, want it to start with HP  64 ARMOR 50", line)
-	}
-}
-
-// The HUD names the gun in hand (M11).
-func TestHUDGunName(t *testing.T) {
-	h := sampleHUD()
-	h.Player.Guns = game.StartGuns()
 	h.Player.Guns[game.Shotgun] = game.Weapon{Kind: game.Shotgun, Owned: true, Mag: 4, Reserve: 12}
 	h.Player.Gun = game.Shotgun
-	if line := hudLine(t, 80, h); !strings.Contains(line, "| SHOTGUN  4 / 12 |") {
-		t.Errorf("HUD %q, want SHOTGUN  4 / 12", line)
+	if _, l2 := hudLines(t, 80, h); !strings.HasPrefix(l2, " SHOTGUN 4/12  ❙❙❙❙❙❙  1 2 3") {
+		t.Errorf("line 2 = %q, want SHOTGUN 4/12 with a six-round strip", l2)
+	}
+	// A real reload: fire the last round of a state's gun.
+	m, err := world.Parse([]byte("#####\n#P..#\n#####\n"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	st := game.NewState(m)
+	st.Player.Weapon().Mag = 1
+	game.Update(st, game.Input{Fire: true}, 0.01)
+	h.Player = st.Player
+	if _, l2 := hudLines(t, 80, h); !strings.Contains(l2, "PISTOL 0/50  RELOADING") {
+		t.Errorf("line 2 = %q, want RELOADING in place of the strip", l2)
 	}
 }
 
-// Facing (M12: moved to the extras) shows when there's room.
-func TestHUDFacingWhenWide(t *testing.T) {
-	if line := hudLine(t, 100, sampleHUD()); !strings.Contains(line, "| half-block | 270° N") {
-		t.Errorf("HUD %q, want facing after the mode at 100 columns", line)
-	}
-}
-
-// Waves (M15): the HUD shows the wave instead of the tier, and counts down
-// a break.
+// Waves (M15): the HUD shows the wave instead of the tier, and the break's
+// countdown; it still fits 80 columns with the pistol's long strip.
 func TestHUDWaves(t *testing.T) {
 	h := sampleHUD()
-	h.Wave = 3
-	if line := hudLine(t, 80, h); !strings.Contains(line, "| WAVE 3/10 |") || strings.Contains(line, "TIER") {
-		t.Errorf("HUD %q, want WAVE 3/10 and no tier", line)
+	h.Wave, h.Time = 3, 187
+	if _, l2 := hudLines(t, 80, h); !strings.HasSuffix(l2, "WAVE 3/10  TIME 3:07") || strings.Contains(l2, "TIER") {
+		t.Errorf("line 2 = %q, want WAVE 3/10 and no tier", l2)
 	}
-	h.Break = 11.2
-	if line := hudLine(t, 80, h); !strings.Contains(line, "| WAVE 3/10 IN 12 |") {
-		t.Errorf("HUD %q, want WAVE 3/10 IN 12 during the break", line)
+	h.Wave, h.Break, h.Time = 10, 11.2, 607
+	_, l2 := hudLines(t, 80, h)
+	if !strings.Contains(l2, "WAVE 10/10  BREAK 0:12") || !strings.HasSuffix(l2, "10:07") || !strings.Contains(l2, "1 2 3  ") {
+		t.Errorf("line 2 = %q, want the wave, the break and the time, clear of the gun numbers", l2)
+	}
+}
+
+// The simple symbol set draws the HUD in plain ASCII.
+func TestHUDSimple(t *testing.T) {
+	ui.UseSimple(true)
+	defer ui.UseSimple(false)
+	h := sampleHUD()
+	h.Player.Guns[game.Pistol].Mag = 18
+	l1, l2 := hudLines(t, 80, h)
+	if want := " HP [########--] 76    AR [#####-----] 50    ST [##########]"; !strings.HasPrefix(l1, want) {
+		t.Errorf("line 1 = %q, want it to start %q", l1, want)
+	}
+	if want := " PISTOL 18/50  ||||||||||||||||||.......  [1] 2 3"; !strings.HasPrefix(l2, want) {
+		t.Errorf("line 2 = %q, want it to start %q", l2, want)
+	}
+	for _, r := range l1 + l2 {
+		if r > 126 {
+			t.Fatalf("the simple HUD has %q", r)
+		}
+	}
+}
+
+// DrawHUDAt reports where its parts start, in order on each line.
+func TestHUDParts(t *testing.T) {
+	s := term.NewFake(80, 24)
+	p := DrawHUDAt(s, sampleHUD(), 3, 5, 74)
+	if p.Health != 4 || !(p.Health < p.Armor && p.Armor < p.Stamina && p.Stamina < p.Kills) {
+		t.Errorf("line 1 parts out of order: %+v", p)
+	}
+	if p.Gun != 4 || !(p.Gun < p.Mag && p.Mag < p.Guns && p.Guns < p.Stage && p.Stage < p.Time) || p.Time >= 77 {
+		t.Errorf("line 2 parts out of order or outside the 74 columns: %+v", p)
+	}
+	if str, _ := s.Get(p.Kills, 5); str != "K" {
+		t.Errorf("the kills part starts with %q", str)
 	}
 }

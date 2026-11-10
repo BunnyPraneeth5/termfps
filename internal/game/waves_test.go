@@ -46,7 +46,7 @@ func TestWaveSizeAndClear(t *testing.T) {
 
 // Waves grow, tiers follow them, and clearing the last one wins.
 func TestWavesToTheEnd(t *testing.T) {
-	if WaveSize(2) <= WaveSize(1) || waveTier(1) != 1 || waveTier(3) != 2 || waveTier(7) != 4 || waveTier(NumWaves) < FlankTier {
+	if WaveSize(2) <= WaveSize(1) || WaveTier(1) != 1 || WaveTier(3) != 2 || WaveTier(7) != 4 || WaveTier(NumWaves) < FlankTier {
 		t.Fatal("waves don't grow, or tiers don't follow them")
 	}
 	s := wavesState(t)
@@ -57,8 +57,8 @@ func TestWavesToTheEnd(t *testing.T) {
 		s.Enemies = s.Enemies[:0]
 		won += count(s, EventWavesWon)
 	}
-	if !s.Won || won != 1 || s.Wave != NumWaves || s.Tier != waveTier(NumWaves) {
-		t.Fatalf("won %v (%d events) at wave %d, tier %d; want a win at wave %d, tier %d", s.Won, won, s.Wave, s.Tier, NumWaves, waveTier(NumWaves))
+	if !s.Won || won != 1 || s.Wave != NumWaves || s.Tier != WaveTier(NumWaves) {
+		t.Fatalf("won %v (%d events) at wave %d, tier %d; want a win at wave %d, tier %d", s.Won, won, s.Wave, s.Tier, NumWaves, WaveTier(NumWaves))
 	}
 	if run(s, Input{}, 60, EventWaveStarted) != 0 {
 		t.Error("a wave started after the win")

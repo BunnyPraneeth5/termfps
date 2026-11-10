@@ -528,7 +528,7 @@ For every U task: it fits 80x24 (tests check it); mouse clicks still work; `go b
 - **Sound warning** (yellow, one line): "Sound is off: no audio device found. The game runs without it."
 - **Window too small** (below 80 x 24): "WINDOW TOO SMALL", "now 62 × 20, needs 80 × 24", a small picture of the two sizes, "Make the window bigger or the font smaller. The game waits here and carries on by itself."
 
-### [ ] U4: In game
+### [~] U4: In game
 - **HUD, two lines** (background `#111416`; costs 1 row of the 3D view):
   - Line 1: `♥ ▰▰▰▰▰▰▰▱▱▱ 76   ◆ ▰▰▰▰▰▱▱▱▱▱ 50   » ▰▰▰▰▰▰▱▱▱▱` ... `KILLS 23`
   - Line 2: `PISTOL 18/50  ❙❙❙❙(magazine strip, used rounds dim)   1 2 3 (current gun bright)` ... `TIER 2  TIME 3:07` (waves mode: `WAVE 3/10`, and during a break `BREAK 0:12`).

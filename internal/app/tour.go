@@ -199,9 +199,10 @@ func (a *App) drawTour(dt float64) {
 	t.since += dt
 	cols, rows := a.scr.Size()
 	// Half the usual detail, and over every row (there's no HUD here):
-	// ScaledFrameSize leaves the last row out, so ask for one row more.
+	// ScaledFrameSize leaves the HUD's rows out, so ask for that many more.
 	scale := 2 * renderScale(a.cfg.RenderScale, cols)
-	w, h := render.ScaledFrameSize(cols, rows+1, scale)
+	w, h := render.ScaledFrameSize(cols, rows+render.HUDRows, scale)
+	t.frame.ViewRows = rows
 	resized := t.frame.W != w || t.frame.H != h
 	if resized {
 		t.frame.Scale = scale
@@ -220,6 +221,5 @@ func (a *App) drawTour(dt float64) {
 		render.DrawSprites(f, t.st.Player, t.sprites)
 		render.Dim(f)
 	}
-	a.clearScreen() // the scaled picture leaves the last row out
 	a.presentFrame(&t.frame)
 }

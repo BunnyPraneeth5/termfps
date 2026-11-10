@@ -293,17 +293,17 @@ func TestASCIIRamp(t *testing.T) {
 }
 
 // At scale 2 each Frame cell fills a 2x2 block of screen cells, clipped
-// to the view; the HUD row stays untouched (V6).
+// to the view; the HUD's rows stay untouched (V6).
 func TestPresentScaled(t *testing.T) {
 	f := Frame{PixelAspect: DefaultPixelAspect, MixedBackground: DefaultMixedBackground, Scale: 2}
-	f.Resize(ScaledFrameSize(5, 4, 2)) // 3 x 2 cells for a 5-column, 3-view-row screen
+	f.Resize(ScaledFrameSize(5, 5, 2)) // 3 x 2 cells for a 5-column, 3-view-row screen
 	if f.W != 3 || f.H != 4 {
 		t.Fatalf("frame %dx%d, want 3x4", f.W, f.H)
 	}
 	for i := range f.Pix {
 		f.Pix[i] = Pixel{Gray: uint8(40 * (i%f.W + 1))} // each Frame column its own gray
 	}
-	s := term.NewFake(5, 4)
+	s := term.NewFake(5, 5)
 	PresentHalfBlock(s, &f)
 	for y := 0; y < 3; y++ {
 		for x := 0; x < 5; x++ {
@@ -314,8 +314,17 @@ func TestPresentScaled(t *testing.T) {
 			}
 		}
 	}
-	if str, _ := s.Get(0, 3); str != " " {
-		t.Errorf("HUD row = %q, want untouched", str)
+	for y := 3; y < 5; y++ {
+		if str, _ := s.Get(0, y); str != " " {
+			t.Errorf("HUD row %d = %q, want untouched", y, str)
+		}
+	}
+	// With ViewRows set (the title's map tour, U4) it covers those rows too.
+	f.ViewRows = 5
+	f.Resize(3, 6)
+	PresentHalfBlock(s, &f)
+	if str, _ := s.Get(0, 4); str == " " {
+		t.Error("with ViewRows 5 the last row is still untouched")
 	}
 }
 
@@ -325,10 +334,10 @@ func TestAutoScaleAndFrameSize(t *testing.T) {
 			t.Errorf("AutoScale(%d) = %d, want %d", c.cols, got, c.want)
 		}
 	}
-	if w, h := ScaledFrameSize(120, 40, 1); w != 120 || h != 78 {
-		t.Errorf("scale 1: %dx%d, want FrameSize's 120x78", w, h)
+	if w, h := ScaledFrameSize(120, 40, 1); w != 120 || h != 76 {
+		t.Errorf("scale 1: %dx%d, want FrameSize's 120x76", w, h)
 	}
-	if w, h := ScaledFrameSize(321, 81, 2); w != 161 || h != 80 {
+	if w, h := ScaledFrameSize(321, 82, 2); w != 161 || h != 80 {
 		t.Errorf("scale 2: %dx%d, want 161x80 (rounded up)", w, h)
 	}
 }

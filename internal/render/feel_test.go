@@ -136,14 +136,14 @@ func TestDrawHitDirection(t *testing.T) {
 	}
 }
 
-// Stamina shows on the HUD only while it isn't full.
+// Stamina shows on the HUD as a bar (U4): full, then as much as is left.
 func TestHUDStamina(t *testing.T) {
 	h := sampleHUD()
-	if line := hudLine(t, 120, h); strings.Contains(line, "STAMINA") {
-		t.Errorf("HUD %q shows stamina while full", line)
+	if line, _ := hudLines(t, 80, h); !strings.Contains(line, "» ▰▰▰▰▰▰▰▰▰▰") {
+		t.Errorf("HUD %q doesn't show a full stamina bar", line)
 	}
 	h.Player.Stamina = 0.42
-	if line := hudLine(t, 120, h); !strings.Contains(line, "| 0:00 | STAMINA 42% |") {
-		t.Errorf("HUD %q, want STAMINA 42%% after the time", line)
+	if line, _ := hudLines(t, 80, h); !strings.Contains(line, "» ▰▰▰▰▱▱▱▱▱▱") {
+		t.Errorf("HUD %q, want a stamina bar with 4 of 10 cells", line)
 	}
 }
