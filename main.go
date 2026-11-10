@@ -43,9 +43,13 @@ func main() {
 // process exit code. exitCode is a named result so the deferred panic
 // handler can change it.
 func run() (exitCode int) {
-	flagCfg, explicit, mapPath, ok := parseFlags()
+	flagCfg, explicit, mapPath, printVersion, ok := parseFlags()
 	if !ok {
 		return 2
+	}
+	if printVersion { // -version (M20): print it and quit, before the terminal opens
+		fmt.Println(versionLine())
+		return 0
 	}
 	// Saved settings replace the flag defaults; flags given on the command
 	// line win over both. Save problems are shown in the menu, not here.
@@ -119,6 +123,11 @@ func run() (exitCode int) {
 	return app.Run(screen, maps, cfg, saved, snd, restore)
 }
 
+// versionLine is what -version prints, e.g. termfps v0.75 “As*****”.
+func versionLine() string {
+	return "termfps " + app.Version
+}
+
 // loadSave opens the save file in the user's config folder (P1-13). It
 // returns the progress and any problem for the menu, plus the saved
 // settings (nil on a first run or when the file couldn't be used).
@@ -153,7 +162,8 @@ func withFlags(cfg, flagCfg app.Config, explicit map[string]bool) app.Config {
 // parseFlags reads and checks the command-line flags. On a bad value it
 // prints why and returns ok = false. explicit holds the names of the flags
 // given on the command line (not left at their defaults).
-func parseFlags() (cfg app.Config, explicit map[string]bool, mapPath string, ok bool) {
+func parseFlags() (cfg app.Config, explicit map[string]bool, mapPath string, printVersion, ok bool) {
+	showVersion := flag.Bool("version", false, "print the version and quit")
 	targetFPS := flag.Int("fps", 30, "target frames per second (1-240)")
 	mapFile := flag.String("map", "", "a map file of your own to play: it's added to Select map and picked (M9)")
 	// Real key state (async) is the default on Windows, where it exists (D19).
@@ -172,22 +182,22 @@ func parseFlags() (cfg app.Config, explicit map[string]bool, mapPath string, ok 
 
 	if *aspect < 0.5 || *aspect > 2.0 {
 		fmt.Fprintf(os.Stderr, "termfps: -aspect must be between 0.5 and 2.0, got %v\n", *aspect)
-		return cfg, nil, "", false
+		return cfg, nil, "", false, false
 	}
 	if *targetFPS < 1 || *targetFPS > 240 {
 		fmt.Fprintf(os.Stderr, "termfps: -fps must be between 1 and 240, got %d\n", *targetFPS)
-		return cfg, nil, "", false
+		return cfg, nil, "", false, false
 	}
 	switch *keyMode {
 	case "events":
 	case "async":
 		if err := input.AsyncSupported(); err != nil {
 			fmt.Fprintln(os.Stderr, "termfps: -keys async:", err)
-			return cfg, nil, "", false
+			return cfg, nil, "", false, false
 		}
 	default:
 		fmt.Fprintf(os.Stderr, "termfps: -keys must be events or async, got %q\n", *keyMode)
-		return cfg, nil, "", false
+		return cfg, nil, "", false, false
 	}
 
 	return app.Config{
@@ -209,7 +219,7 @@ func parseFlags() (cfg app.Config, explicit map[string]bool, mapPath string, ok 
 		MinimapFog:      true,
 		TitleBackground: true,
 		Animations:      true,
-	}, explicit, *mapFile, true
+	}, explicit, *mapFile, *showVersion, true
 }
 
 // loadMaps parses every maps/*.txt file in fsys, in file name order (the

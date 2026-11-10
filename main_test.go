@@ -156,3 +156,12 @@ func TestEmbeddedMapsFollowDesignRules(t *testing.T) {
 		}
 	}
 }
+
+// -version prints the game's name and version (M20); the release workflow
+// checks that the tag matches it.
+func TestVersionLine(t *testing.T) {
+	got := versionLine()
+	if !strings.HasPrefix(got, "termfps v") || !strings.Contains(got, app.Version) || !strings.Contains(got, "As*****") {
+		t.Errorf("versionLine() = %q, want termfps, the version and the masked codename", got)
+	}
+}

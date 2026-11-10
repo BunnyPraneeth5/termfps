@@ -17,6 +17,24 @@ Current version: **v0.75 “As\*\*\*\*\*”**.
 ▶ [Watch the 27-second demo](docs/termfps-demo.mp4) (MP4, 4.7 MB). It shows
 the first prototype; a new demo of the survival game is planned.
 
+## Download
+
+Get the latest test build from the
+**[Releases page](https://github.com/BunnyPraneeth5/termfps/releases)**: a
+`.zip` for Windows, a `.tar.gz` for Linux (64-bit Intel/AMD or ARM). Unpack
+it and run `termfps.exe` (Windows, in Windows Terminal) or `./termfps`
+(Linux). **Windows first:** that's where the game is made and played; the
+Linux builds pass the same tests but haven't been played much yet. There's
+no macOS build for now; you can build it yourself (below).
+
+> **Windows may warn you about the download.** The exe isn't signed, so
+> SmartScreen can show "Windows protected your PC": click **More info**, then
+> **Run anyway**. Smart App Control may block it outright ("An Application
+> Control policy has blocked this file"); see Troubleshooting below.
+
+Found a bug, or have thoughts on the balance? Please use the
+[feedback form](https://github.com/BunnyPraneeth5/termfps/issues/new?template=feedback.yml).
+
 ## Requirements
 
 - **Go 1.27.1 or newer** to build.
@@ -24,8 +42,8 @@ the first prototype; a new demo of the survival game is planned.
   terminal also works.
 - **At least 80x24 characters.** Smaller windows show "WINDOW TOO SMALL"
   until you resize; the game carries on by itself. About 120x40 looks best.
-- **For sound:** speakers. On Linux, ALSA or PulseAudio. Without them the game
-  runs silently and the menu says why.
+- **For sound:** speakers. On Linux, PulseAudio or PipeWire. Without them the
+  game runs silently and the title screen says why.
 
 > Half-block and mixed modes need a truecolor terminal and more bandwidth
 > than plain text. Press `V` for shade-block or ASCII mode, which use plain
@@ -36,7 +54,8 @@ the first prototype; a new demo of the survival game is planned.
 
 ## Build and run
 
-Windows (PowerShell), from the project folder:
+To build it yourself instead of downloading, on Windows (PowerShell), from
+the project folder:
 
 ```powershell
 go build -o termfps.exe .
@@ -241,17 +260,20 @@ Flags override the saved settings for that launch.
 | `-keys async\|events` | `async` on Windows, `events` elsewhere | `async` reads real key state (Windows only, ignored while the window isn't focused). `events` uses terminal key events. Terminals that report key releases (Windows Terminal, kitty, Ghostty, foot, WezTerm outside Windows) give exact held keys, so moving and turning at the same time works; the HUD then shows `keys events (releases)`. Other terminals only repeat the last key pressed, so moving and turning at the same time may not work, and a quick tap turns and moves a little (about 25 degrees). |
 | `-aspect X` | `1.0` | Pixel height / width (0.5-2.0). Change it if walls look squashed or stretched with your font. |
 | `-textures=false` | on | Flat gray walls instead of brick, stone and metal textures. |
+| `-version` | | Print the version (`termfps v0.75 “As*****”`) and quit. |
 | `-map file.txt` | none | Play a map of your own: it's added to Select map and picked. Maps in a `maps` folder next to your save file (`%AppData%\termfps\maps` on Windows, `~/.config/termfps/maps` on Linux) are added too, always unlocked. The format is in ARCHITECTURE.md ("Map format"); a map without a `; name:` line is named after its file. |
 
 Example: `.\termfps.exe -fps 60 -aspect 0.9`
 
 ## Troubleshooting
 
+- **"Windows protected your PC" (SmartScreen).** The exe isn't signed. Click
+  **More info**, then **Run anyway**.
 - **"An Application Control policy has blocked this file" (Windows).** That's
-  Windows Smart App Control blocking a freshly built, unsigned program, not a
-  bug in the game. Restarting Windows has cleared it; turning Smart App
-  Control off fixes it for good. Note that Windows can't turn Smart App
-  Control back on without a reinstall.
+  Windows Smart App Control blocking an unsigned program (downloaded or
+  freshly built), not a bug in the game. Restarting Windows has cleared it;
+  turning Smart App Control off fixes it for good. Note that Windows can't
+  turn Smart App Control back on without a reinstall.
 - **Grays look banded.** The terminal is reducing colors. Use Windows
   Terminal, or another terminal with 24-bit color, or press `V` for ASCII.
 - **"Sound is off: ..." on the title.** The game couldn't open an audio
@@ -282,7 +304,11 @@ go build ./...; if ($?) { go vet ./... }; if ($?) { gofmt -l . }; if ($?) { go t
 go test -bench . ./internal/render   # DrawFrame and presenter timings
 ```
 
-CI runs the same checks on Windows and Linux for every push.
+CI runs the same checks on Windows and Linux for every push. Pushing a
+version tag (e.g. `v0.75`, which must match `-version`) runs the checks,
+builds the downloads and puts them on a draft GitHub release; its text is
+`.github/release-notes/<tag>.md`. Nothing is public until the draft is
+published on GitHub.
 
 Code layout:
 

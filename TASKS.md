@@ -436,12 +436,13 @@ Decided with the user on 2026-10-30 (D49; the guide and release added 2026-10-31
 - Was M18. Carried over from P1-18: playtest tiers 3+, the ammo cap, the new pickups, weapons, enemies, hazards and waves; record a new demo.
 - 2026-11-11, the user's playtest: everything feels right except ammo, which runs short; the user is fine with low ammo for now (it keeps the tension), so no numbers changed. Revisit with the public testers' feedback. Still to do: the new demo, from the user's video edit.
 
-### [ ] M20: Public test release (batch 3, always last)
+### [~] M20: Public test release (batch 3; done before M19's demo, the user's choice)
 - Downloadable builds (Windows and Linux; macOS if it can be tested) on a GitHub Releases page, built by CI.
 - The README says up front that Windows SmartScreen / Smart App Control may warn about an unsigned exe, and what to do.
 - A version number, shown in the game (title menu) and by `-version`.
 - A GitHub issue template for feedback: version, system, terminal, what happened.
 - Linux (sound needs ALSA or PulseAudio) and macOS tested, or the release says "Windows first".
+- Built 2026-11-11 (D55): `-version`; `.github/workflows/release.yml` (a version tag runs the checks, checks the tag against `-version`, builds windows/amd64, linux/amd64 and linux/arm64 without cgo, and makes a DRAFT pre-release with the files, SHA256SUMS and `.github/release-notes/<tag>.md`); the feedback issue form (`.github/ISSUE_TEMPLATE/feedback.yml`, with an ammo question); README download section and SmartScreen / Smart App Control notes. Windows first: Linux passes CI but is little played; no macOS build (can't be tested). Left for the user: check the draft release and publish it; try a download.
 
 # UI redesign (direction A, "Arcade terminal")
 

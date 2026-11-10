@@ -1,0 +1,70 @@
+name: Feedback or bug report
+description: Tell me how termfps plays for you, or report something that went wrong.
+labels: ["feedback"]
+body:
+  - type: markdown
+    attributes:
+      value: Thanks for playing! Every answer helps balance the game and fix problems.
+  - type: dropdown
+    id: kind
+    attributes:
+      label: What is this about?
+      options:
+        - Something went wrong (a bug or a crash)
+        - How the game plays (balance, fun, difficulty)
+        - An idea
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Version
+      description: "Run `termfps -version`, or see the bottom right of the title screen."
+      placeholder: termfps v0.75
+    validations:
+      required: true
+  - type: dropdown
+    id: system
+    attributes:
+      label: System
+      options:
+        - Windows 11
+        - Windows 10
+        - Linux
+        - Other (say below)
+    validations:
+      required: true
+  - type: input
+    id: terminal
+    attributes:
+      label: Terminal
+      description: The terminal you played in, and its window size if you know it.
+      placeholder: Windows Terminal, 120x40
+    validations:
+      required: true
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened?
+      description: What you did, what you expected, and what happened instead. For a crash, paste the error the game printed.
+    validations:
+      required: true
+  - type: dropdown
+    id: ammo
+    attributes:
+      label: How did the ammo feel?
+      options:
+        - Too little
+        - About right
+        - Too much
+        - Didn't notice
+  - type: textarea
+    id: balance
+    attributes:
+      label: Anything else about the balance?
+      description: An enemy too strong or too weak, a gun you never used, waves too easy or too hard, how far you got...
+  - type: textarea
+    id: screenshots
+    attributes:
+      label: Screenshots or a video
+      description: Drag files here if they help.
