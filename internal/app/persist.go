@@ -44,6 +44,12 @@ func ApplySettings(base Config, s save.Settings) (c Config, note string) {
 	if s.MinimapFog != nil { // missing before M8
 		c.MinimapFog = *s.MinimapFog
 	}
+	if s.TitleBackground != nil { // missing before U2
+		c.TitleBackground = *s.TitleBackground
+	}
+	if s.Animations != nil {
+		c.Animations = *s.Animations
+	}
 	c.SimpleSymbols = s.Symbols == "simple" // "" in files from before U1: fancy
 	if s.KeyMode == "async" && input.AsyncSupported() != nil {
 		note = fmt.Sprintf("The saved key mode async doesn't work here; using %s.", base.KeyMode)
@@ -89,6 +95,8 @@ func (a *App) settings() save.Settings {
 		UnlockRule:      a.cfg.UnlockRule,
 		MinimapFog:      ptr(a.cfg.MinimapFog),
 		Symbols:         symbolChoices[boolIndex(a.cfg.SimpleSymbols)],
+		TitleBackground: ptr(a.cfg.TitleBackground),
+		Animations:      ptr(a.cfg.Animations),
 	}
 }
 

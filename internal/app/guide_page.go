@@ -6,6 +6,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/BunnyPraneeth5/termfps/internal/audio"
 	"github.com/BunnyPraneeth5/termfps/internal/game"
 	"github.com/BunnyPraneeth5/termfps/internal/input"
 	"github.com/BunnyPraneeth5/termfps/internal/render"
@@ -67,6 +68,7 @@ func viewSize(area rect) (cols, rows int) {
 // Up/Down scroll (or pick a key on the controls page), Esc goes back.
 type guidePage struct {
 	back    screen
+	drop    backdrop // what shows behind the panel
 	section guideSection
 	index   int // the page shown
 	scroll  int // first text line shown
@@ -91,6 +93,11 @@ func (g *guidePage) key(a *App, ev term.Key) {
 	}
 	n := len(g.section.entries)
 	keys := g.section.entries[g.index].kind == pageKeys
+	if k == ui.KeyBack {
+		a.menuSound(audio.MenuBack)
+	} else if k != ui.KeyEnter {
+		a.menuSound(audio.MenuTick)
+	}
 	switch {
 	case k == ui.KeyBack:
 		a.switchTo(g.back)
@@ -130,7 +137,7 @@ func guideHints(keys bool) []ui.Hint {
 
 func (g *guidePage) tick(a *App, now time.Time, dt float64) {
 	s := a.scr
-	a.clearScreen()
+	a.drawBackdrop(g.drop, dt)
 	w, h := s.Size()
 	e := g.section.entries[g.index]
 	p := guidePanel(w, h)

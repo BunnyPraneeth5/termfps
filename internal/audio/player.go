@@ -21,6 +21,10 @@ var quieter = map[Effect]float64{
 	EmptyClick:  0.8,
 	Footstep:    0.5, // it plays all the time
 	HitTick:     0.7,
+	MenuTick:    0.5, // it plays on every arrow key
+	MenuClick:   0.7,
+	MenuBack:    0.7,
+	MenuBuzz:    0.7,
 }
 
 // Gain is how loud effect e plays, 0-1, before the volume setting and

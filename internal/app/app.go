@@ -56,6 +56,12 @@ type Config struct {
 	// SimpleSymbols draws with the simple symbol set (U1): only characters
 	// every console font has.
 	SimpleSymbols bool
+	// TitleBackground shows the slow map tour behind the title screen (U2);
+	// off for slow terminals.
+	TitleBackground bool
+	// Animations turns the small UI animations on (U2: the logo shimmer and
+	// the tagline pulse; U4 and U5 add more).
+	Animations bool
 }
 
 // builtinMaps is how many maps are the game's own, which unlock in order.
@@ -122,6 +128,17 @@ type App struct {
 	focused  bool          // terminal has focus (async keys only count then)
 	current  screen        // what's showing: a menu, the game, game over
 
+	// rng is the app's own randomness (the tagline, the title tour); the
+	// game's is in its State. New seeds it with a fixed value so tests
+	// repeat; Run replaces it with a clock-seeded one.
+	rng     *rand.Rand
+	tagline string // the line under the logo, picked at random each start (U2)
+	tour    *tour  // the title background, made when first shown; nil = none yet
+	// lastCue is the last menu sound asked for and cues how many so far
+	// (they're asked for even without an audio device).
+	lastCue audio.Effect
+	cues    int
+
 	// runActive is true from the start of a run until its result is
 	// recorded, so a run never counts twice.
 	runActive bool
@@ -186,7 +203,9 @@ func New(scr term.Screen, maps []*world.Map, cfg Config, now time.Time) *App {
 		focused: true,
 		start:   now,
 		last:    now,
+		rng:     rand.New(rand.NewPCG(3, 4)), // fixed seed: repeatable
 	}
+	a.tagline = taglines[a.rng.IntN(len(taglines))]
 	if cfg.StartMap > 0 && cfg.StartMap < len(maps) {
 		a.mapIndex = cfg.StartMap // -map (M9)
 	}
@@ -268,6 +287,8 @@ func (a *App) switchTo(s screen) {
 // saved is the save file as loaded at startup; snd is the audio player.
 func Run(scr term.Screen, maps []*world.Map, cfg Config, saved Saved, snd Sound, restore func()) (exitCode int) {
 	a := New(scr, maps, cfg, time.Now())
+	a.rng = newRand() // real starts differ: the tagline, the title tour
+	a.tagline = taglines[a.rng.IntN(len(taglines))]
 	a.useSaved(saved)
 	a.sound, a.soundErr = snd.Player, snd.Err
 	a.applySound()

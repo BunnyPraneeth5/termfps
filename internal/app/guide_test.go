@@ -31,7 +31,7 @@ func TestGuideFromTitle(t *testing.T) {
 	a, s := newMenuApp(t)
 	meetAll(a)
 	now := t0
-	press(a, &now, down, down, down, enter) // Guide
+	press(a, &now, down, enter) // Guide
 	press(a, &now)
 	if !screenHas(s, "GUIDE") || !screenHas(s, "Enemies") || !screenHas(s, "Maps") {
 		t.Fatal("Guide on the title menu doesn't show the guide's sections")
@@ -49,7 +49,7 @@ func TestGuideFromTitle(t *testing.T) {
 	}
 	press(a, &now, esc, esc, esc) // page -> enemies -> guide -> title
 	press(a, &now)
-	if !screenHas(s, "TERMFPS") {
+	if !onTitle(a) {
 		t.Error("Esc three times didn't get back to the title menu")
 	}
 }

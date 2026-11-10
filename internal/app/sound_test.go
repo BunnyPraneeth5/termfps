@@ -46,6 +46,9 @@ func TestEveryEffectHasAnEvent(t *testing.T) {
 			used[e] = true
 		}
 	}
+	for _, e := range menuSounds { // U2: played by the menus, not by a game event
+		used[e] = true
+	}
 	for e := audio.Effect(0); e < audio.NumEffects; e++ {
 		if !used[e] {
 			t.Errorf("effect %d is never played", e)

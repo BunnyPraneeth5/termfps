@@ -5,6 +5,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/BunnyPraneeth5/termfps/internal/audio"
 	"github.com/BunnyPraneeth5/termfps/internal/game"
 	"github.com/BunnyPraneeth5/termfps/internal/term"
 	"github.com/BunnyPraneeth5/termfps/internal/world"
@@ -32,6 +33,12 @@ func press(a *App, now *time.Time, evs ...term.Key) bool {
 	return a.step(*now, batch)
 }
 
+// onTitle reports whether the title screen is showing.
+func onTitle(a *App) bool {
+	_, ok := a.current.(*titleScreen)
+	return ok
+}
+
 func screenHas(s *term.Fake, text string) bool {
 	_, h := s.Size()
 	for row := 0; row < h; row++ {
@@ -42,7 +49,14 @@ func screenHas(s *term.Fake, text string) bool {
 	return false
 }
 
+// quitToMenu pauses the game and picks Quit to menu, the pause menu's
+// last item (Up from Resume wraps to it).
+func quitToMenu(a *App, now *time.Time) {
+	press(a, now, esc, up, enter)
+}
+
 var (
+	left  = key(term.KeyLeft, 0)
 	up    = key(term.KeyUp, 0)
 	down  = key(term.KeyDown, 0)
 	right = key(term.KeyRight, 0)
@@ -55,14 +69,14 @@ func TestTitlePlay(t *testing.T) {
 	a, s := newMenuApp(t)
 	now := t0
 	press(a, &now)
-	if !screenHas(s, "TERMFPS") || !screenHas(s, "Select map") {
-		t.Fatal("title menu not shown at start")
+	if !onTitle(a) || !screenHas(s, "PLAY") || !screenHas(s, "SETTINGS") || !screenHas(s, Version) {
+		t.Fatal("title screen not shown at start, with its menu and the version")
 	}
 	press(a, &now, esc)
-	if _, ok := a.current.(*menuScreen); !ok || a.quit {
-		t.Error("Esc on the title menu left it; want nothing to happen")
+	if !onTitle(a) || a.quit {
+		t.Error("Esc on the title screen left it; want nothing to happen")
 	}
-	press(a, &now, enter, enter) // Play, then Survival (M15)
+	press(a, &now, enter, enter) // Play, then Start (U2)
 	if _, ok := a.current.(*playingScreen); !ok {
 		t.Errorf("Enter on Play: screen is %T, want the game", a.current)
 	}
@@ -112,7 +126,7 @@ func TestPauseFreezesGame(t *testing.T) {
 }
 
 func TestPauseRestartAndQuitToMenu(t *testing.T) {
-	a, s := newTestApp(t)
+	a, _ := newTestApp(t)
 	now := t0
 	for range 30 {
 		press(a, &now)
@@ -124,7 +138,7 @@ func TestPauseRestartAndQuitToMenu(t *testing.T) {
 	}
 	press(a, &now, esc, up, enter) // Quit to menu (wraps from Resume)
 	press(a, &now)
-	if !screenHas(s, "TERMFPS") {
+	if !onTitle(a) {
 		t.Error("Quit to menu didn't show the title menu")
 	}
 }
@@ -181,7 +195,7 @@ func TestSettingsApplyRightAway(t *testing.T) {
 	}
 	press(a, &now, esc)
 	press(a, &now)
-	if !screenHas(s, "TERMFPS") {
+	if !onTitle(a) {
 		t.Error("Esc in settings didn't go back to the title menu")
 	}
 	press(a, &now, up, up, enter, enter) // Play (from Settings: up twice), Survival
@@ -210,7 +224,7 @@ func TestMenuClick(t *testing.T) {
 	_, h := s.Size()
 	row := -1
 	for y := 0; y < h; y++ {
-		if strings.Contains(s.Row(y), "Settings") {
+		if strings.Contains(s.Row(y), "SETTINGS") {
 			row = y
 		}
 	}
@@ -222,8 +236,8 @@ func TestMenuClick(t *testing.T) {
 		term.Mouse{X: 40, Y: row, Buttons: term.ButtonLeft},
 		term.Mouse{X: 40, Y: row},
 	})
-	if !screenHas(s, "SETTINGS") {
-		t.Error("clicking Settings didn't open the settings menu")
+	if onTitle(a) || !screenHas(s, "Render mode") {
+		t.Error("clicking Settings didn't open the settings")
 	}
 }
 
@@ -239,7 +253,7 @@ func TestGameOverMainMenu(t *testing.T) {
 	}
 	press(a, &now, down, enter)
 	press(a, &now)
-	if !screenHas(s, "TERMFPS") {
+	if !onTitle(a) {
 		t.Error("Main menu didn't show the title menu")
 	}
 }
@@ -277,25 +291,30 @@ func TestMapUnlockAndSelect(t *testing.T) {
 	}
 	a := New(s, maps, Config{FPS: 30, KeyMode: "events", PixelAspect: 1}, t0)
 	now := t0
-	press(a, &now, down, enter) // Select map
+	press(a, &now, enter) // Play: the Play screen (U2)
 	press(a, &now)
-	if !screenHas(s, "locked: survive 5:00 on First") {
+	if !screenHas(s, "▒ locked") {
 		t.Fatal("second map not shown as locked")
 	}
-	press(a, &now, down) // skips the locked map, lands on Back
-	if a.current.(*menuScreen).menu.Selected != 2 {
-		t.Errorf("selection = %d after Down, want 2 (Back; the locked map is skipped)", a.current.(*menuScreen).menu.Selected)
+	press(a, &now, down) // onto the locked map: it says what opens it
+	press(a, &now)
+	if !screenHas(s, "locked: survive 5:00 on First") {
+		t.Error("the locked map doesn't say what opens it")
 	}
-	press(a, &now, up, enter, enter) // First, Survival
+	press(a, &now, enter) // Start on a locked map: a buzz, nothing else
+	if _, ok := a.current.(*playScreen); !ok || a.lastCue != audio.MenuBuzz {
+		t.Fatalf("Start on a locked map: screen %T, sound %d; want the Play screen and a buzz", a.current, a.lastCue)
+	}
+	press(a, &now, up, enter) // First, Start
 	a.state.Spawning = false
 	a.state.Time = unlockAfter("5:00") - 0.01
 	press(a, &now)
 	if a.progress.UnlockedMaps != 2 || !screenHas(s, "New map unlocked: Second") {
 		t.Fatalf("unlocked = %d after 5:00, want 2 with a notice", a.progress.UnlockedMaps)
 	}
-	press(a, &now, esc, up, enter)     // Pause -> Quit to menu
-	press(a, &now, down, enter)        // Select map
-	press(a, &now, down, enter, enter) // Second, Survival
+	quitToMenu(a, &now)
+	press(a, &now, enter)       // Play
+	press(a, &now, down, enter) // Second, Start
 	if a.mapIndex != 1 || a.state.Map.Name != "Second" {
 		t.Errorf("playing map %d %q, want 1 \"Second\"", a.mapIndex, a.state.Map.Name)
 	}
@@ -305,9 +324,9 @@ func TestMapUnlockAndSelect(t *testing.T) {
 func TestMenuIgnoresReleases(t *testing.T) {
 	a, _ := newMenuApp(t)
 	now := t0
-	sel := a.current.(*menuScreen).menu.Selected
+	sel := a.current.(*titleScreen).sel
 	press(a, &now, release(term.KeyDown, 0))
-	if got := a.current.(*menuScreen).menu.Selected; got != sel {
+	if got := a.current.(*titleScreen).sel; got != sel {
 		t.Errorf("selection %d -> %d after a Down release, want unchanged", sel, got)
 	}
 }

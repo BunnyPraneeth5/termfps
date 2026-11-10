@@ -481,7 +481,7 @@ For every U task: it fits 80x24 (tests check it); mouse clicks still work; `go b
 - Every menu and the guide switch to the new look. The Symbols setting (fancy / simple).
 - Guide panel: dark (`#111416`) with a border, header "GUIDE › SECTION NAME" on the left and page dots "● ○ ○ ○ 1/4" on the right, the page title as an amber label, footer key caps "←→ page ↑↓ scroll esc back". The keyboard picture, map pictures and 3D views stay, recolored.
 
-### [ ] U2: Title and Play screen
+### [~] U2: Title and Play screen
 - **Logo "TERM FPS"**: 5-row block letters, 5 columns each, 2-column gaps, 6-column word gap: 51 columns wide, centered. Rows from amber (top) to orange (bottom). Slow shimmer: every ~6 s a light band passes over the letters, about one letter per 0.2 s.
 - **Random tagline each start** (like Minecraft's splash text), centered under the logo in yellow, gently pulsing. Picked with the injected `*rand.Rand`. The list:
   - a first-person shooter game in your terminal

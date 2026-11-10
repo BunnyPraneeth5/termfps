@@ -347,23 +347,23 @@ func tipsPage() guideEntry {
 	}}
 }
 
-// guideMenu is the guide's first page: its sections. back is the menu to
-// return to (title or pause).
-func (a *App) guideMenu(back *menuScreen) *menuScreen {
+// guideMenu is the guide's first page: its sections. back is the screen to
+// return to (title or pause) and drop what shows behind the guide.
+func (a *App) guideMenu(back screen, drop backdrop) *menuScreen {
 	sections := a.guideSections()
 	items := make([]ui.Item, 0, len(sections)+1)
 	for _, s := range sections {
 		items = append(items, ui.Item{Label: s.name})
 	}
 	items = append(items, ui.Item{Label: "Back"})
-	s := &menuScreen{overGame: back.overGame, menu: ui.New("GUIDE", nil, items)}
+	s := &menuScreen{drop: drop, menu: ui.New("GUIDE", nil, items)}
 	s.act = func(a *App, r ui.Result) {
 		i := s.menu.Selected
 		switch {
 		case r == ui.Back || i == len(sections):
 			a.switchTo(back)
 		case r == ui.Chosen && len(sections[i].entries) == 1:
-			a.switchTo(&guidePage{back: s, section: sections[i], shown: -1})
+			a.switchTo(&guidePage{back: s, drop: drop, section: sections[i], shown: -1})
 		case r == ui.Chosen:
 			a.switchTo(a.guideSectionMenu(s, sections[i]))
 		}
@@ -378,14 +378,14 @@ func (a *App) guideSectionMenu(back *menuScreen, sec guideSection) *menuScreen {
 		items = append(items, ui.Item{Label: e.name})
 	}
 	items = append(items, ui.Item{Label: "Back"})
-	s := &menuScreen{overGame: back.overGame, menu: ui.New("GUIDE: "+strings.ToUpper(sec.name), nil, items)}
+	s := &menuScreen{drop: back.drop, menu: ui.New("GUIDE "+ui.Sym().Arrow+" "+strings.ToUpper(sec.name), nil, items)}
 	s.act = func(a *App, r ui.Result) {
 		i := s.menu.Selected
 		switch {
 		case r == ui.Back || i == len(sec.entries):
 			a.switchTo(back)
 		case r == ui.Chosen:
-			a.switchTo(&guidePage{back: s, section: sec, index: i, shown: -1})
+			a.switchTo(&guidePage{back: s, drop: back.drop, section: sec, index: i, shown: -1})
 		}
 	}
 	return s

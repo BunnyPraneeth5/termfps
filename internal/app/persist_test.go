@@ -178,7 +178,7 @@ func TestSymbolsSetting(t *testing.T) {
 	}
 	a, s := newMenuApp(t)
 	defer ui.UseSimple(false)
-	a.switchTo(a.settingsMenu(a.titleMenu()))
+	a.switchTo(a.settingsMenu(a.titleMenu(), dropNone))
 	now := t0
 	m := a.current.(*menuScreen).menu
 	m.Selected = setSymbols
@@ -203,7 +203,7 @@ func TestWavesRunWinSaves(t *testing.T) {
 	a, s := newMenuApp(t)
 	store := withStore(t, a)
 	now := t0
-	press(a, &now, enter, down, enter) // Play, Waves
+	press(a, &now, enter, right, enter) // Play, Waves, Start
 	if a.state.Play != game.Waves || !a.state.InBreak() {
 		t.Fatalf("after choosing Waves: mode %v, break %v; want a waves run in its first break", a.state.Play, a.state.InBreak())
 	}

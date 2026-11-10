@@ -207,6 +207,8 @@ func parseFlags() (cfg app.Config, explicit map[string]bool, mapPath string, ok 
 		RenderScale:     "auto",
 		UnlockRule:      "5:00",
 		MinimapFog:      true,
+		TitleBackground: true,
+		Animations:      true,
 	}, explicit, *mapFile, true
 }
 

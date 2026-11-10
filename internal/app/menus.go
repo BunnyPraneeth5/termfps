@@ -3,9 +3,9 @@ package app
 import (
 	"fmt"
 	"slices"
-	"strings"
 	"time"
 
+	"github.com/BunnyPraneeth5/termfps/internal/audio"
 	"github.com/BunnyPraneeth5/termfps/internal/game"
 	"github.com/BunnyPraneeth5/termfps/internal/input"
 	"github.com/BunnyPraneeth5/termfps/internal/render"
@@ -22,9 +22,9 @@ type menuScreen struct {
 	// act runs when a key or click did something (r is never ui.None);
 	// menu.Selected is the item it applies to.
 	act func(a *App, r ui.Result)
-	// overGame draws the frozen game, dimmed, behind the menu; otherwise
-	// the background is blank.
-	overGame bool
+	// drop is what's drawn behind the menu: the frozen game, the title's
+	// map tour, or the plain background.
+	drop backdrop
 	// text is the menu's own lines under the title; tick adds the save and
 	// sound problems (if any) after them every frame, so new ones show at once.
 	text []string
@@ -38,7 +38,10 @@ func (m *menuScreen) key(a *App, ev term.Key) {
 	if !ok {
 		return
 	}
-	if r := m.menu.Key(k); r != ui.None {
+	before := m.menu.Selected
+	r := m.menu.Key(k)
+	a.resultSound(r, m.menu.Selected != before)
+	if r != ui.None {
 		m.act(a, r)
 	}
 }
@@ -52,100 +55,23 @@ func (m *menuScreen) mouse(a *App, b mouseButton, down bool, x, y int) {
 	if !ok {
 		return
 	}
-	if r := m.menu.Click(i); r != ui.None {
-		m.act(a, r)
+	r := m.menu.Click(i)
+	if r == ui.None { // a locked item
+		a.menuSound(audio.MenuBuzz)
+		return
 	}
+	a.resultSound(r, false)
+	m.act(a, r)
 }
 
 func (m *menuScreen) tick(a *App, now time.Time, dt float64) {
-	if m.overGame {
-		// No game.Update here: the game is frozen. Redrawing (not reusing
-		// the last frame) keeps it visible after a resize.
-		a.drawScene()
-		render.Dim(&a.frame)
-		a.present()
-	} else {
-		a.clearScreen()
-	}
+	a.drawBackdrop(m.drop, dt)
 	// m.text[:n:n] limits the capacity to n, so append makes a new slice
 	// instead of writing past the end of m.text.
 	n := len(m.text)
 	m.menu.Text = append(m.text[:n:n], a.messages()...)
 	ui.Draw(a.scr, m.menu)
 	a.scr.Show()
-}
-
-// titleMenu is the start menu.
-func (a *App) titleMenu() *menuScreen {
-	const (
-		play = iota // iota numbers the items 0, 1, 2, ...
-		selectMap
-		settings
-		guide
-		quit
-	)
-	s := &menuScreen{text: []string{"Survive as long as you can."}, menu: ui.New("TERMFPS", nil, []ui.Item{
-		{Label: "Play"},
-		{Label: "Select map"},
-		{Label: "Settings"},
-		{Label: "Guide"},
-		{Label: "Quit"},
-	})}
-	s.act = func(a *App, r ui.Result) {
-		if r != ui.Chosen {
-			return // Esc on the title menu does nothing; Quit or Ctrl+C quits
-		}
-		switch s.menu.Selected {
-		case play:
-			a.switchTo(a.modeMenu())
-		case selectMap:
-			a.switchTo(a.mapMenu())
-		case guide:
-			a.switchTo(a.guideMenu(s)) // M18a
-		case settings:
-			a.switchTo(a.settingsMenu(s))
-		case quit:
-			a.quit = true
-		}
-	}
-	return s
-}
-
-// mapMenu lists the maps; picking an open one starts a run on it. Locked
-// maps are shown dimmed with what opens them.
-func (a *App) mapMenu() *menuScreen {
-	items := make([]ui.Item, 0, len(a.maps)+1)
-	for i, m := range a.maps {
-		it := ui.Item{Label: fmt.Sprintf("%-14s %dx%d", m.Name, m.W, m.H)}
-		if b, ok := a.progress.Best[m.Name]; ok { // ok is false if the map has no best yet
-			it.Label += fmt.Sprintf("   best %s, %d kills", render.Clock(b.Time), b.Kills)
-		}
-		if w, ok := a.progress.Waves[m.Name]; ok { // M15
-			it.Label += "   waves: " + wavesBestText(w)
-		}
-		if i >= a.builtinMaps() {
-			it.Label += "   (your map)" // M9
-		}
-		if a.mapLocked(i) {
-			it.Disabled = true
-			it.Label += fmt.Sprintf("   locked: survive %s on %s", render.Clock(unlockAfter(a.cfg.UnlockRule)), a.maps[i-1].Name)
-		}
-		items = append(items, it)
-	}
-	items = append(items, ui.Item{Label: "Back"})
-	s := &menuScreen{menu: ui.New("SELECT MAP", nil, items)}
-	s.menu.Selected = a.mapIndex
-	s.act = func(a *App, r ui.Result) {
-		i := s.menu.Selected
-		switch {
-		case r == ui.Back || i == len(a.maps):
-			a.switchTo(a.titleMenu())
-		case r == ui.Chosen:
-			a.mapIndex = i
-			a.switchTo(a.modeMenu())
-		}
-	}
-	return s
 }
 
 // pauseMenu freezes the game behind a dimmed screen.
@@ -157,7 +83,7 @@ func (a *App) pauseMenu() *menuScreen {
 		guide
 		quitToMenu
 	)
-	s := &menuScreen{overGame: true, menu: ui.New("PAUSED", nil, []ui.Item{
+	s := &menuScreen{drop: dropGame, menu: ui.New("PAUSED", nil, []ui.Item{
 		{Label: "Resume"},
 		{Label: "Settings"},
 		{Label: "Restart"},
@@ -173,11 +99,11 @@ func (a *App) pauseMenu() *menuScreen {
 		case resume:
 			a.resume()
 		case settings:
-			a.switchTo(a.settingsMenu(s))
+			a.switchTo(a.settingsMenu(s, dropGame))
 		case restart:
 			a.newRun()
 		case guide:
-			a.switchTo(a.guideMenu(s)) // M18a
+			a.switchTo(a.guideMenu(s, dropGame)) // M18a
 		case quitToMenu:
 			a.endRun()
 			a.switchTo(a.titleMenu())
@@ -200,7 +126,7 @@ func (a *App) gameOverMenu() *menuScreen {
 		retry = iota
 		mainMenu
 	)
-	s := &menuScreen{overGame: true, text: a.resultText(), menu: ui.New("YOU DIED", nil, []ui.Item{
+	s := &menuScreen{drop: dropGame, text: a.resultText(), menu: ui.New("YOU DIED", nil, []ui.Item{
 		{Label: "Try again"},
 		{Label: "Main menu"},
 	})}
@@ -231,13 +157,14 @@ const (
 	setUnlocks
 	setMinimapFog
 	setSymbols
+	setTitleBackground
 	setBack
 )
 
 // settingsMenu changes the settings; each change applies right away.
-// back is the menu to return to (title or pause), and also decides the
-// background.
-func (a *App) settingsMenu(back *menuScreen) *menuScreen {
+// back is the screen to return to (title or pause) and drop what shows
+// behind the menu.
+func (a *App) settingsMenu(back screen, drop backdrop) *menuScreen {
 	var modes []game.RenderMode
 	for m := game.ModeHalfBlock; ; m = m.Next() { // every mode, in V order
 		modes = append(modes, m)
@@ -297,9 +224,10 @@ func (a *App) settingsMenu(back *menuScreen) *menuScreen {
 		Value: max(slices.Index(unlockRules, a.cfg.UnlockRule), 0)} // "" (unset) shows 5:00
 	items[setMinimapFog] = onOff("Minimap fog of war", a.cfg.MinimapFog)
 	items[setSymbols] = ui.Item{Label: "Symbols", Values: symbolChoices, Value: boolIndex(a.cfg.SimpleSymbols)}
+	items[setTitleBackground] = onOff("Title background", a.cfg.TitleBackground)
 	items[setBack] = ui.Item{Label: "Back"}
 
-	s := &menuScreen{overGame: back.overGame, menu: ui.New("SETTINGS", nil, items)}
+	s := &menuScreen{drop: drop, menu: ui.New("SETTINGS", nil, items)}
 	s.act = func(a *App, r ui.Result) {
 		it := s.menu.Items[s.menu.Selected]
 		switch {
@@ -341,6 +269,8 @@ func (a *App) settingsMenu(back *menuScreen) *menuScreen {
 			}
 		case s.menu.Selected == setMinimapFog:
 			a.cfg.MinimapFog = it.Value == 1
+		case s.menu.Selected == setTitleBackground:
+			a.cfg.TitleBackground = it.Value == 1
 		case s.menu.Selected == setSymbols:
 			a.cfg.SimpleSymbols = it.Value == 1
 			ui.UseSimple(a.cfg.SimpleSymbols)
@@ -426,35 +356,13 @@ func wavesBestText(w save.WavesBest) string {
 	return fmt.Sprintf("wave %d of %d", w.Wave, game.NumWaves)
 }
 
-// modeMenu picks how to play before a run starts (M15): endless survival
-// or waves. It starts on the mode chosen last time.
-func (a *App) modeMenu() *menuScreen {
-	modes := []game.PlayMode{game.Survival, game.Waves}
-	s := &menuScreen{menu: ui.New("PLAY "+strings.ToUpper(a.maps[a.mapIndex].Name), nil, []ui.Item{
-		{Label: "Survival   endless: survive as long as you can"},
-		{Label: fmt.Sprintf("Waves      %d waves with breaks: clear them all to win", game.NumWaves)},
-		{Label: "Back"},
-	})}
-	s.menu.Selected = slices.Index(modes, a.playMode)
-	s.act = func(a *App, r ui.Result) {
-		switch {
-		case r == ui.Back || s.menu.Selected == len(modes):
-			a.switchTo(a.titleMenu())
-		case r == ui.Chosen:
-			a.playMode = modes[s.menu.Selected]
-			a.newRun()
-		}
-	}
-	return s
-}
-
 // winMenu shows a won waves run (M15) over the frozen last frame.
 func (a *App) winMenu() *menuScreen {
 	const (
 		again = iota
 		mainMenu
 	)
-	s := &menuScreen{overGame: true, text: a.resultText(), menu: ui.New("YOU WIN: ALL WAVES CLEARED", nil, []ui.Item{
+	s := &menuScreen{drop: dropGame, text: a.resultText(), menu: ui.New("YOU WIN: ALL WAVES CLEARED", nil, []ui.Item{
 		{Label: "Play again"},
 		{Label: "Main menu"},
 	})}

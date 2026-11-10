@@ -51,6 +51,10 @@ type Settings struct {
 	MinimapFog *bool `json:"minimap_fog,omitempty"`
 	// Symbols is "fancy" or "simple" (U1); "" in older files means fancy.
 	Symbols string `json:"symbols,omitempty"`
+	// TitleBackground (the map tour behind the title) and Animations (U2);
+	// nil in older files: on.
+	TitleBackground *bool `json:"title_background,omitempty"`
+	Animations      *bool `json:"animations,omitempty"`
 }
 
 // Progress is what carries over between runs.

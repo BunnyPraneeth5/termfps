@@ -54,6 +54,10 @@ const (
 	TankDie       // M17
 	ShotgunReload // M17: shells going in, then a pump
 	RifleReload   // M17: a bolt pulled back and pushed home
+	MenuTick      // U2: the menu selection moved
+	MenuClick     // U2: a menu item was chosen
+	MenuBack      // U2: Esc in a menu
+	MenuBuzz      // U2: a locked item
 	NumEffects    // not an effect: how many there are
 )
 
@@ -135,6 +139,22 @@ func Generate(e Effect) []float64 {
 	case ArmorHit: // a dull metal clank
 		s = synth(0.2, func(t float64) float64 {
 			return (0.4*noise()*decay(t, 40) + 0.5*math.Sin(2*math.Pi*420*t)*decay(t, 16) + 0.3*math.Sin(2*math.Pi*1130*t)*decay(t, 25))
+		})
+	case MenuTick: // a soft, very short high tick
+		s = synth(0.03, func(t float64) float64 {
+			return 0.3 * math.Sin(2*math.Pi*1300*t) * decay(t, 130)
+		})
+	case MenuClick: // a firmer click with a little ring
+		s = synth(0.07, func(t float64) float64 {
+			return 0.35*square(900*t)*decay(t, 90) + 0.3*math.Sin(2*math.Pi*1800*t)*decay(t, 70)
+		})
+	case MenuBack: // a soft low note sliding down
+		s = synth(0.14, func(t float64) float64 {
+			return 0.4 * math.Sin(2*math.Pi*sweep(t, 0.14, 320, 170)) * attack(t, 0.005) * decay(t, 28)
+		})
+	case MenuBuzz: // a short low buzz: not allowed
+		s = synth(0.16, func(t float64) float64 {
+			return 0.35 * square(110*t) * attack(t, 0.005) * decay(t, 22)
 		})
 	case ShotgunBlast: // a wide, long noise burst over a deep boom
 		s = synth(0.45, func(t float64) float64 {
