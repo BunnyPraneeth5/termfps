@@ -545,7 +545,7 @@ For every U task: it fits 80x24 (tests check it); mouse clicks still work; `go b
 - **Win** (waves): green "YOU WON", a few amber ✦; "all 10 waves cleared · map · waves mode"; boxes TIME (NEW BEST = fastest win), KILLS ("best 142"), ACCURACY, HP LEFT; the per-kind line; PLAY AGAIN, CHANGE MAP, MAIN MENU.
 - NEW BEST compares with the player's best on that map (bests are already kept per map in save.json).
 
-### [ ] U6: Guide pages as pictures
+### [~] U6: Guide pages as pictures
 Text-only guide pages become pictures (numbers always from the code, as now):
 - **Tiers**: "20 kills or 3:00, whichever first"; progress bars "to next tier 7/20 kills or 1:30/3:00"; a table per tier 1 to 6: enemy HP bar (red), damage bar (orange), speed bar (yellow), new enemy every N s, max alive as dots; "NEW KINDS T1 zombie shooter, T2 runner, T3 tank, T4 exploder"; "keeps rising: speed up to x1.5, at most every 2 s, at most 14 alive".
 - **Enemies learn**: four boxes with top-down pictures: TIER 1 straight at you; TIER 2 they hear you (15 steps, rush 1.4x); TIER 3 shooters hide; TIER 4 they surround you; then a "DON'T CAMP" bar (1:00 without a kill → horn → hunt, 1.2x faster until your next kill).

@@ -22,10 +22,11 @@ import (
 type pageKind int
 
 const (
-	pageText pageKind = iota // text, with a 3D view on the left if it has one
-	pageKeys                 // the keyboard and mouse picture (M18c)
-	pageHUD                  // the labeled HUD example (M18c)
-	pageMap                  // a big top-down map picture, the text under it (M18c)
+	pageText    pageKind = iota // text, with a 3D view on the left if it has one
+	pageKeys                    // the keyboard and mouse picture (M18c)
+	pageHUD                     // the labeled HUD example (M18c)
+	pageMap                     // a big top-down map picture, the text under it (M18c)
+	pagePicture                 // drawn as a picture by the page itself (U6)
 )
 
 // Panel and view box sizes.
@@ -156,6 +157,8 @@ func (g *guidePage) tick(a *App, now time.Time, dt float64) {
 		g.drawHUDPage(a, e, area)
 	case pageMap:
 		g.drawMapPage(a, e, area, dt)
+	case pagePicture:
+		e.draw(g, a, pen{s: s, x: area.x, y: area.y})
 	default:
 		if e.view.kind == viewNone {
 			g.drawText(a, e.lines, area)

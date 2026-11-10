@@ -17,11 +17,15 @@ import (
 
 // guideEntry is one guide page.
 type guideEntry struct {
-	name   string
-	lines  []string  // paragraphs; "" is an empty line
-	view   guideView // shown in 3D (M18b); viewNone = none
-	kind   pageKind  // how the page is laid out (M18c)
-	mapIdx int       // pageMap: index into App.maps
+	name  string
+	lines []string  // paragraphs; "" is an empty line
+	view  guideView // shown in 3D (M18b); viewNone = none
+	kind  pageKind  // how the page is laid out (M18c)
+	// A picture page (U6) draws itself with draw; must returns lines it has
+	// to show (the numbers from the code), which the tests look for.
+	draw   func(g *guidePage, a *App, p pen)
+	must   func() []string
+	mapIdx int // pageMap: index into App.maps
 }
 
 // guideSection is a group of pages, one item in the guide menu.
@@ -233,38 +237,31 @@ func hazardPages() []guideEntry {
 	}
 }
 
+// picturePage is a guide page drawn as a picture (U6).
+func picturePage(name string, must func() []string, draw func(a *App, p pen)) guideEntry {
+	return guideEntry{name: name, kind: pagePicture, must: must,
+		draw: func(_ *guidePage, a *App, p pen) { draw(a, p) }}
+}
+
 func survivalPages() []guideEntry {
-	tiers := []string{
-		fmt.Sprintf("Survival is endless. Every %d kills or %s, whichever comes first, the tier goes up.", game.TierKills, render.Clock(game.TierTime)),
-	}
-	for t := 1; t <= 6; t++ {
-		st := game.TierFor(t)
-		tiers = append(tiers, fmt.Sprintf("Tier %d: enemy HP x%s, damage x%s, speed x%s; a new enemy every %s s, up to %d alive.",
-			t, num(st.HPMul), num(st.DamageMul), num(st.SpeedMul), num(st.SpawnEvery), st.MaxAlive))
-	}
-	tiers = append(tiers, "And so on, up to the limits.")
 	return []guideEntry{
-		{name: "Tiers", lines: tiers},
-		{name: "Enemies learn", lines: []string{
-			"They start simple: every enemy walks the shortest way to you.",
-			fmt.Sprintf("Tier %d: they hear your gunshots within %d steps and rush to you.", game.HearTier, game.HearingSteps),
-			fmt.Sprintf("Tier %d: shooters hide after they shoot.", game.CoverTier),
-			fmt.Sprintf("Tier %d: zombies come from your sides and from behind.", game.FlankTier),
-			fmt.Sprintf("Don't camp: after %s without a kill every enemy comes straight for you, faster, until your next kill. A horn warns you.", render.Clock(game.CampTime)),
-		}},
-		{name: "Waves mode", lines: []string{
-			fmt.Sprintf("Choose Waves after Play: %d waves, a %s s break between them; clear the last one to win.", game.NumWaves, num(game.WaveBreak)),
-			fmt.Sprintf("Wave 1 has %d enemies, wave %d has %d. The tier goes up every two waves, so every enemy kind shows up.",
-				game.WaveSize(1), game.NumWaves, game.WaveSize(game.NumWaves)),
-			"Use the breaks to reload and pick things up. Your best wave and fastest win are kept per map.",
-		}},
-		{name: "Health and stamina", lines: []string{
-			fmt.Sprintf("You have %d HP. After %s s without being hit you heal %s HP per second, up to %d; medkits heal above that.",
-				game.PlayerMaxHP, num(game.RegenDelay), num(game.RegenPerSec), game.RegenMaxHP),
-			fmt.Sprintf("Sprinting (F) is %sx speed. Full stamina lasts %s s and refills in %s s; run out and you wait until it's back to %d%%.",
-				num(game.SprintMul), num(1/game.StaminaDrain), num(1/game.StaminaRegen), int(game.StaminaResume*100)),
-		}},
+		picturePage("Tiers", tiersMust, drawTiers),
+		picturePage("Enemies learn", learnMust, drawLearn),
+		picturePage("Waves mode", wavesMust, drawWaves),
+		picturePage("Health and stamina", healthMust, drawHealth),
 	}
+}
+
+func settingsPage() guideEntry {
+	return guideEntry{name: "Settings", kind: pagePicture, must: settingsMust,
+		draw: func(g *guidePage, a *App, p pen) { g.drawSettingsPicture(a, p) }}
+}
+
+func tipsPage() guideEntry {
+	return picturePage("Tips", func() []string {
+		last := wrap(guideTips[len(guideTips)-1].text, pictureW-9)
+		return []string{last[len(last)-1]}
+	}, drawTips)
 }
 
 // mapTips are short tips for the built-in maps, by name.
@@ -320,31 +317,6 @@ func (a *App) mapPages() []guideEntry {
 		pages = append(pages, guideEntry{name: name, lines: lines, view: view, kind: pageMap, mapIdx: i})
 	}
 	return pages
-}
-
-func settingsPage() guideEntry {
-	return guideEntry{name: "Settings", lines: []string{
-		"Every setting takes effect at once and is saved.",
-		"Render mode: half-block (default), shade, ASCII or mixed. Mixed background: how bright the fill behind mixed-mode characters is.",
-		"Color threshold: reuse a cell's color when the next one is close, so slow terminals get less to draw (off by default).",
-		"Render scale: auto draws the view at most 160 columns wide in big windows; full; half.",
-		"FPS: 30 or 60. Minimap at start. Wall textures. Sound and volume.",
-		"Key mode: async (Windows: real key state, move and turn at once) or events.",
-		"Pixel aspect: tune if walls look too tall or too flat.",
-		"Map unlocks: survive 5:00, survive 2:00, or all maps open. Minimap fog of war: show only what you've seen.",
-	}}
-}
-
-func tipsPage() guideEntry {
-	return guideEntry{name: "Tips", lines: []string{
-		"Keep moving: standing still lets enemies surround you, and camping starts the hunt.",
-		"Walk backwards while you shoot zombies and tanks: they can't catch you.",
-		"Reload in quiet moments; switching guns cancels a reload.",
-		"Save the rifle for tanks and shooters far away, the shotgun for close calls.",
-		"Grab armor when you can: it halves the damage you take.",
-		"Use corners and cover against shooters; listen for where sounds come from.",
-		"Lure groups to red barrels, and shoot exploders before they reach you.",
-	}}
 }
 
 // guideMenu is the guide's first page: its sections. back is the screen to

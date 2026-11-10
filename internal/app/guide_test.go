@@ -103,8 +103,8 @@ func TestGuideNumbersFromCode(t *testing.T) {
 		{textOf(section(t, a, "Weapons").entries[1]), fmt.Sprintf("%d rounds in the gun", game.Shotgun.Stats().Mag)},
 		{textOf(section(t, a, "Pickups").entries[1]), fmt.Sprintf("+%d HP", game.MedkitHeal)},
 		{textOf(section(t, a, "Hazards").entries[0]), fmt.Sprintf("up to %d damage", game.BarrelDamage)},
-		{textOf(section(t, a, "Survival and waves").entries[0]), fmt.Sprintf("a new enemy every %s s", num(game.TierFor(2).SpawnEvery))},
-		{textOf(section(t, a, "Survival and waves").entries[2]), fmt.Sprintf("%d waves", game.NumWaves)},
+		{strings.Join(section(t, a, "Survival and waves").entries[0].must(), "\n"), fmt.Sprintf("every %s s", num(game.TierFor(2).SpawnEvery))},
+		{strings.Join(section(t, a, "Survival and waves").entries[2].must(), "\n"), fmt.Sprintf("%d waves", game.NumWaves)},
 	}
 	for _, c := range checks {
 		if !strings.Contains(c.page, c.want) {
@@ -147,8 +147,8 @@ func TestGuideFits80x24(t *testing.T) {
 			for range 40 {
 				g.key(a, term.Key{Code: term.KeyDown})
 			}
-			if e.kind == pageKeys {
-				continue // the boxed keyboard fills the page at 80x24; its notes show on taller windows (TestKeysNotesWhenTall)
+			if e.kind == pageKeys || e.kind == pagePicture {
+				continue // the keyboard fills the page at 80x24 (TestKeysNotesWhenTall); pictures don't scroll (TestGuidePictures)
 			}
 			g.tick(a, t0, 0)
 			words := strings.Fields(e.lines[len(e.lines)-1])
