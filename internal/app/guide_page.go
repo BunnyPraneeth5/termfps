@@ -14,7 +14,8 @@ import (
 )
 
 // Guide pages (M18a) in a centered panel that looks like the menus (M18c,
-// D53): a light box with the 3D view as a dark window inside it.
+// D53; U1: dark with a border, a header with page dots, the page's name as
+// an amber label, a key-cap footer).
 
 // pageKind is how a guide page is laid out.
 type pageKind int
@@ -34,17 +35,24 @@ const (
 	viewMaxCols = 40 // ...and at most this wide
 )
 
-// panelStyle is the guide panel: reversed, like the menus.
-var panelStyle = term.Style{Reverse: true}
+// panelStyle is the guide panel's text: like the menus (U1).
+var panelStyle = ui.StPanel
 
 // rect is a block of screen cells.
 type rect struct{ x, y, w, h int }
 
 // guidePanel is where the panel goes on a w x h screen: centered, up to
-// guideMaxW x guideMaxH, one cell in from each edge.
+// guideMaxW x guideMaxH, one column in from the left and right edges. It
+// uses every row of a small window (U1: the border and header need them).
 func guidePanel(w, h int) rect {
-	pw, ph := min(w-2, guideMaxW), min(h-2, guideMaxH)
+	pw, ph := min(w-2, guideMaxW), min(h, guideMaxH)
 	return rect{x: (w - pw) / 2, y: (h - ph) / 2, w: pw, h: ph}
+}
+
+// guideArea is the content area inside panel p: under the header and the
+// page's label, above the footer.
+func guideArea(p rect) rect {
+	return rect{x: p.x + 2, y: p.y + 3, w: p.w - 4, h: p.h - 6}
 }
 
 // viewSize is the 3D view box for a text page's content area: about a
@@ -110,30 +118,30 @@ func (g *guidePage) mouse(a *App, b mouseButton, down bool, x, y int) {
 	}
 }
 
-// The key help at the bottom of a guide page.
-const (
-	guideHint     = "Left/Right other pages   Up/Down scroll   Esc back"
-	guideKeysHint = "Left/Right other pages   Up/Down pick a key   Esc back"
-)
+// guideHints is the key help at the bottom of a guide page.
+func guideHints(keys bool) []ui.Hint {
+	upDown := "scroll"
+	if keys {
+		upDown = "pick a key"
+	}
+	sy := ui.Sym()
+	return []ui.Hint{{Keys: sy.LeftRight, Text: "page"}, {Keys: sy.UpDown, Text: upDown}, {Keys: "esc", Text: "back"}}
+}
 
 func (g *guidePage) tick(a *App, now time.Time, dt float64) {
 	s := a.scr
-	s.Clear()
+	a.clearScreen()
 	w, h := s.Size()
 	e := g.section.entries[g.index]
 	p := guidePanel(w, h)
-	for y := p.y; y < p.y+p.h; y++ {
-		term.PutStr(s, p.x, y, strings.Repeat(" ", p.w), panelStyle)
-	}
-	title := fmt.Sprintf("GUIDE: %s: %s (%d/%d)", strings.ToUpper(g.section.name), e.name, g.index+1, len(g.section.entries))
-	putCentered(s, p, p.y, title, term.Style{Reverse: true, Bold: true})
-	hint := guideHint
-	if e.kind == pageKeys {
-		hint = guideKeysHint
-	}
-	putCentered(s, p, p.y+p.h-1, hint, panelStyle)
+	ui.Panel(s, p.x, p.y, p.w, p.h, ui.BoxRound, ui.StBorder, ui.StPanel)
+	x := ui.Put(s, p.x+2, p.y+1, "GUIDE "+ui.Sym().Arrow+" ", ui.StDim)
+	ui.Put(s, x, p.y+1, strings.ToUpper(g.section.name), ui.StBright)
+	ui.PutRight(s, p.x+p.w-2, p.y+1, ui.Dots(g.index, len(g.section.entries)), ui.StDim)
+	ui.Badge(s, p.x+2, p.y+2, e.name, ui.ColBg, ui.ColAmber)
+	ui.Hints(s, p.x+1, p.w-2, p.y+p.h-2, guideHints(e.kind == pageKeys), ui.ColPanel)
 
-	area := rect{x: p.x + 2, y: p.y + 2, w: p.w - 4, h: p.h - 4}
+	area := guideArea(p)
 	switch e.kind {
 	case pageKeys:
 		g.drawKeys(a, e, area)
@@ -151,12 +159,6 @@ func (g *guidePage) tick(a *App, now time.Time, dt float64) {
 		g.drawText(a, e.lines, rect{x: area.x + cols + 2, y: area.y, w: area.w - cols - 2, h: area.h})
 	}
 	s.Show()
-}
-
-// putCentered writes text centered in panel p on row y.
-func putCentered(s term.Screen, p rect, y int, text string, st term.Style) {
-	n := len([]rune(text))
-	term.PutStr(s, p.x+max((p.w-n)/2, 0), y, text, st)
 }
 
 // drawView draws the page's 3D view into box r (M18b), restarting it when
@@ -192,7 +194,7 @@ func (g *guidePage) drawText(a *App, paragraphs []string, r rect) {
 		if g.scroll+rows >= len(lines) {
 			more = "(the end: Up to go back)"
 		}
-		term.PutStr(a.scr, r.x, r.y+r.h-1, more, term.Style{Reverse: true, Dim: true})
+		term.PutStr(a.scr, r.x, r.y+r.h-1, more, ui.StDim)
 	}
 }
 
@@ -247,7 +249,7 @@ const (
 
 // groupColors and groupNames, in group order.
 var (
-	groupColors = [...]term.Color{term.ColorGreen, term.ColorRed, term.ColorBlue, term.ColorYellow}
+	groupColors = [...]term.Color{ui.ColGreen, ui.ColRed, ui.ColBlue, ui.ColYellow}
 	groupNames  = [...]string{"move", "fight", "view", "other"}
 )
 
@@ -385,12 +387,15 @@ func keyLook(cap string, sel string) (border, label term.Style) {
 		}
 		c := groupColors[k.group]
 		if cap == sel {
-			return term.Style{Fg: c, Bold: true}, term.Style{Fg: c, Reverse: true, Bold: true}
+			return term.Style{Fg: c, Bg: ui.ColBg, Bold: true}, term.Style{Fg: ui.ColBg, Bg: c, Bold: true}
 		}
-		return term.Style{Fg: c}, term.Style{Fg: c, Bold: true}
+		return term.Style{Fg: c, Bg: ui.ColBg}, term.Style{Fg: c, Bg: ui.ColBg, Bold: true}
 	}
-	return term.Style{Dim: true}, term.Style{Dim: true}
+	return unusedKey, unusedKey
 }
+
+// unusedKey is a key the game doesn't use: dim on the dark inset.
+var unusedKey = ui.On(ui.ColBorder, ui.ColBg)
 
 // drawKeyCap draws one key as a rounded box at (x, y), w wide, 3 lines tall.
 func drawKeyCap(s term.Screen, x, y, w int, cap, sel string) {
@@ -422,7 +427,7 @@ func (g *guidePage) drawKeys(a *App, e guideEntry, area rect) {
 	}
 	rows := 3 * len(keyboardRows)
 	for y := area.y; y < area.y+rows; y++ { // the dark inset
-		term.PutStr(s, area.x, y, strings.Repeat(" ", insetW), term.Style{})
+		term.PutStr(s, area.x, y, strings.Repeat(" ", insetW), ui.StBg)
 	}
 	for r, caps := range keyboardRows {
 		x := area.x
@@ -437,11 +442,11 @@ func (g *guidePage) drawKeys(a *App, e guideEntry, area rect) {
 	y := area.y + rows + 1
 	x := area.x
 	for gi, name := range groupNames {
-		term.PutStr(s, x, y, "   ", term.Style{Fg: groupColors[gi], Reverse: true})
+		term.PutStr(s, x, y, "   ", term.Style{Bg: groupColors[gi]})
 		term.PutStr(s, x+4, y, name, panelStyle)
 		x += 5 + len(name) + 1
 	}
-	term.PutStr(s, x, y, "   ", term.Style{Dim: true})
+	term.PutStr(s, x, y, "   ", term.Style{Bg: ui.ColBorder})
 	term.PutStr(s, x+4, y, "unused", panelStyle)
 	x += 4 + len("unused") + 2 // the small mouse fits after it at 80 columns
 
@@ -452,7 +457,7 @@ func (g *guidePage) drawKeys(a *App, e guideEntry, area rect) {
 		mx := area.x + keyboardWidth + 2
 		pic := []string{"╭───┬─┬───╮", "│   │ │   │", "├───┴─┴───┤", "│         │", "│  mouse  │", "╰─────────╯"}
 		for i, l := range pic {
-			term.PutStr(s, mx, area.y+i, l, term.Style{})
+			term.PutStr(s, mx, area.y+i, l, ui.On(ui.ColDim, ui.ColBg))
 		}
 		term.PutStr(s, mx+1, area.y+1, " L ", mouseLook("LMB"))
 		term.PutStr(s, mx+5, area.y+1, "↕", mouseLook("Wheel"))
@@ -465,6 +470,6 @@ func (g *guidePage) drawKeys(a *App, e guideEntry, area rect) {
 	}
 
 	desc := fmt.Sprintf("%d/%d  %s", g.keySel+1, len(guideKeys), guideKeys[g.keySel].desc)
-	term.PutStr(s, area.x, y+2, desc, term.Style{Reverse: true, Bold: true})
-	g.drawText(a, e.lines, rect{x: area.x, y: y + 4, w: area.w, h: area.h - (y + 4 - area.y)})
+	term.PutStr(s, area.x, y+1, desc, ui.StBright)
+	g.drawText(a, e.lines, rect{x: area.x, y: y + 3, w: area.w, h: area.h - (y + 3 - area.y)})
 }

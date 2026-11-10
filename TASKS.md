@@ -476,7 +476,7 @@ For every U task: it fits 80x24 (tests check it); mouse clicks still work; `go b
 
 **Screen size:** as it is for now (fits 80x24, centered in bigger windows). Revisit later.
 
-### [ ] U1: Look kit
+### [~] U1: Look kit
 - Shared colors and pieces in internal/ui: boxes, ▶ selection, key-cap footer, bars, switches, tabs, badges, toast, block font, symbol sets.
 - Every menu and the guide switch to the new look. The Symbols setting (fancy / simple).
 - Guide panel: dark (`#111416`) with a border, header "GUIDE › SECTION NAME" on the left and page dots "● ○ ○ ○ 1/4" on the right, the page title as an amber label, footer key caps "←→ page ↑↓ scroll esc back". The keyboard picture, map pictures and 3D views stay, recolored.

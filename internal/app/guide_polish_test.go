@@ -14,14 +14,14 @@ import (
 // view grows with it (M18c).
 func TestGuidePanelSize(t *testing.T) {
 	small, big := guidePanel(80, 24), guidePanel(200, 60)
-	if small.w != 78 || small.x != 1 || small.h != 22 {
-		t.Errorf("panel at 80x24 = %+v, want 78 wide at x 1, 22 tall", small)
+	if small.w != 78 || small.x != 1 || small.h != 24 {
+		t.Errorf("panel at 80x24 = %+v, want 78 wide at x 1, 24 tall (every row, U1)", small)
 	}
 	if big.w != guideMaxW || big.x != (200-guideMaxW)/2 || big.h != guideMaxH {
 		t.Errorf("panel at 200x60 = %+v, want %d wide, centered, %d tall", big, guideMaxW, guideMaxH)
 	}
-	c1, _ := viewSize(rect{w: small.w - 4, h: small.h - 4})
-	c2, r2 := viewSize(rect{w: big.w - 4, h: big.h - 4})
+	c1, _ := viewSize(guideArea(small))
+	c2, r2 := viewSize(guideArea(big))
 	if c1 < viewMinCols || c2 <= c1 || c2 > viewMaxCols || r2 < 10 {
 		t.Errorf("view box %d cols at 80x24, %dx%d in a big window; want it to grow, %d-%d cols", c1, c2, r2, viewMinCols, viewMaxCols)
 	}
@@ -168,7 +168,8 @@ func TestKeyboardRows(t *testing.T) {
 	if col["↑"] != col["↓"] {
 		t.Errorf("up arrow at column %d, down arrow at %d; want one above the other", col["↑"], col["↓"])
 	}
-	if a := guidePanel(80, 24); a.w-4 < keyboardWidth {
-		t.Errorf("panel content at 80x24 is %d wide, the keyboard needs %d", a.w-4, keyboardWidth)
+	if a := guideArea(guidePanel(80, 24)); a.w < keyboardWidth || a.h < 3*len(keyboardRows)+3 {
+		t.Errorf("panel content at 80x24 is %dx%d, the keyboard needs %d wide and %d tall (with its legend and description)",
+			a.w, a.h, keyboardWidth, 3*len(keyboardRows)+3)
 	}
 }

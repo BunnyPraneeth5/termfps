@@ -39,12 +39,12 @@ func TestGuideFromTitle(t *testing.T) {
 	press(a, &now, down, enter) // Enemies
 	press(a, &now, enter)       // Zombie
 	press(a, &now)
-	if !screenHas(s, "Zombie (1/5)") || !screenHas(s, fmt.Sprintf("HP %d.", game.ZombieHP)) {
+	if !screenHas(s, " Zombie ") || !screenHas(s, "1/5") || !screenHas(s, fmt.Sprintf("HP %d.", game.ZombieHP)) {
 		t.Fatal("the zombie page isn't shown")
 	}
 	press(a, &now, right)
 	press(a, &now)
-	if !screenHas(s, "Shooter (2/5)") {
+	if !screenHas(s, " Shooter ") || !screenHas(s, "2/5") {
 		t.Error("Right didn't go to the next page")
 	}
 	press(a, &now, esc, esc, esc) // page -> enemies -> guide -> title
@@ -141,7 +141,7 @@ func TestGuideFits80x24(t *testing.T) {
 		for i, e := range sec.entries {
 			g := &guidePage{back: a.current, section: sec, index: i, shown: -1}
 			g.tick(a, t0, 0)
-			if !screenHas(s, "GUIDE: ") || !screenHas(s, "Esc back") {
+			if !screenHas(s, "GUIDE › "+strings.ToUpper(sec.name)) || !screenHas(s, " esc  back") {
 				t.Fatalf("%s: title or key help missing at 80x24", e.name)
 			}
 			for range 40 {

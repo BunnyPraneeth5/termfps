@@ -9,6 +9,7 @@ import (
 	"github.com/BunnyPraneeth5/termfps/internal/game"
 	"github.com/BunnyPraneeth5/termfps/internal/save"
 	"github.com/BunnyPraneeth5/termfps/internal/term"
+	"github.com/BunnyPraneeth5/termfps/internal/ui"
 )
 
 // withStore makes the app save into a temp folder.
@@ -160,6 +161,32 @@ func TestApplySettingsS3(t *testing.T) {
 	base.RenderScale = "auto"
 	if c, _ := ApplySettings(base, old); c.RenderScale != "auto" {
 		t.Errorf("pre-V6 save: render scale %q, want auto", c.RenderScale)
+	}
+}
+
+// The Symbols setting (U1) is saved and loaded; a file from before U1 means
+// fancy.
+func TestSymbolsSetting(t *testing.T) {
+	base := Config{FPS: 30, KeyMode: "events", PixelAspect: 1}
+	old := save.Settings{RenderMode: "mixed", FPS: 30, KeyMode: "events", PixelAspect: 1}
+	if c, _ := ApplySettings(base, old); c.SimpleSymbols {
+		t.Error("a save file without symbols gives the simple set, want fancy")
+	}
+	old.Symbols = "simple"
+	if c, _ := ApplySettings(base, old); !c.SimpleSymbols {
+		t.Error("symbols: simple in the save file isn't applied")
+	}
+	a, s := newMenuApp(t)
+	defer ui.UseSimple(false)
+	a.switchTo(a.settingsMenu(a.titleMenu()))
+	now := t0
+	m := a.current.(*menuScreen).menu
+	m.Selected = setSymbols
+	press(a, &now, right)
+	press(a, &now)
+	if !a.cfg.SimpleSymbols || !ui.Sym().Simple || a.settings().Symbols != "simple" || !screenHas(s, "< simple >") {
+		t.Errorf("after switching: config %v, set simple %v, saved as %q; want simple everywhere, drawn with < >",
+			a.cfg.SimpleSymbols, ui.Sym().Simple, a.settings().Symbols)
 	}
 }
 

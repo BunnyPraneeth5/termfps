@@ -49,6 +49,8 @@ type Settings struct {
 	UnlockRule string `json:"unlock_rule,omitempty"`
 	// MinimapFog is the minimap's fog of war (M8); nil in older files: on.
 	MinimapFog *bool `json:"minimap_fog,omitempty"`
+	// Symbols is "fancy" or "simple" (U1); "" in older files means fancy.
+	Symbols string `json:"symbols,omitempty"`
 }
 
 // Progress is what carries over between runs.
@@ -190,6 +192,8 @@ func (d *Data) check() error {
 			return fmt.Errorf("color threshold %d out of range 0-255", *s.ColorThreshold)
 		case s.RenderScale != "" && s.RenderScale != "auto" && s.RenderScale != "full" && s.RenderScale != "half":
 			return fmt.Errorf("unknown render scale %q", s.RenderScale)
+		case s.Symbols != "" && s.Symbols != "fancy" && s.Symbols != "simple":
+			return fmt.Errorf("unknown symbols %q", s.Symbols)
 		case s.UnlockRule != "" && s.UnlockRule != "5:00" && s.UnlockRule != "2:00" && s.UnlockRule != "open":
 			return fmt.Errorf("unknown unlock rule %q", s.UnlockRule)
 		}

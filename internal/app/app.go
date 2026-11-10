@@ -16,6 +16,7 @@ import (
 	"github.com/BunnyPraneeth5/termfps/internal/render"
 	"github.com/BunnyPraneeth5/termfps/internal/save"
 	"github.com/BunnyPraneeth5/termfps/internal/term"
+	"github.com/BunnyPraneeth5/termfps/internal/ui"
 	"github.com/BunnyPraneeth5/termfps/internal/world"
 )
 
@@ -52,6 +53,9 @@ type Config struct {
 	BuiltinMaps int
 	// StartMap is the map Play starts on at first (M9: -map picks one).
 	StartMap int
+	// SimpleSymbols draws with the simple symbol set (U1): only characters
+	// every console font has.
+	SimpleSymbols bool
 }
 
 // builtinMaps is how many maps are the game's own, which unlock in order.
@@ -201,6 +205,7 @@ func New(scr term.Screen, maps []*world.Map, cfg Config, now time.Time) *App {
 		scr.EnableFocus()
 	}
 	scr.EnableMouse() // clicks only, no motion (D28)
+	ui.UseSimple(cfg.SimpleSymbols)
 	a.resizeFrame()
 	a.switchTo(a.titleMenu())
 	return a

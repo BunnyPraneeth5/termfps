@@ -2,99 +2,99 @@ package ui
 
 import (
 	"fmt"
-	"strings"
-	"unicode/utf8"
 
 	"github.com/BunnyPraneeth5/termfps/internal/term"
 )
 
-// Menu styles: a reversed box (like the in-game notices), the selected item
-// in normal colors so it stands out, disabled items dim.
-var (
-	boxStyle      = term.Style{Reverse: true}
-	selectedStyle = term.Style{Bold: true}
-	disabledStyle = term.Style{Reverse: true, Dim: true}
-)
-
-// hint is the key help under every menu.
-const hint = "Up/Down select   Left/Right change   Enter choose   Esc back"
-
-// Draw puts the menu in a box centered on the screen and remembers where the
-// items went, so ItemAt can map clicks to items. It only fills the screen's
-// buffer; the caller sends it to the terminal with Show.
-func Draw(s term.Screen, m *Menu) {
-	labels := itemLines(m)
-
-	lines := []string{m.Title, ""}
-	if len(m.Text) > 0 {
-		lines = append(lines, m.Text...)
-		lines = append(lines, "")
-	}
-	firstItem := len(lines)
-	lines = append(lines, labels...)
-	lines = append(lines, "", hint)
-
-	width := 0
-	for _, l := range lines {
-		width = max(width, utf8.RuneCountInString(l))
-	}
-	width += 4 // two spaces of padding on each side
-
-	w, h := s.Size()
-	top := max((h-len(lines)-2)/2, 0)
-	left := max((w-width)/2, 0)
-	term.PutStr(s, left, top, strings.Repeat(" ", width), boxStyle)
-	for i, l := range lines {
-		style := boxStyle
-		row := padCenter(l, width)
-		if i >= firstItem && i < firstItem+len(labels) {
-			item := i - firstItem
-			row = "  " + padRight(l, width-2) // items line up on the left
-			switch {
-			case m.Items[item].Disabled:
-				style = disabledStyle
-			case item == m.Selected:
-				style = selectedStyle
-			}
-		}
-		term.PutStr(s, left, top+1+i, row, style)
-	}
-	term.PutStr(s, left, top+1+len(lines), strings.Repeat(" ", width), boxStyle)
-
-	m.layout = layout{x: left, w: width, top: top + 1 + firstItem, n: len(labels)}
+// MenuHints is the key help under every list menu.
+func MenuHints() []Hint {
+	return []Hint{{sym.UpDown, "select"}, {sym.LeftRight, "change"}, {sym.Enter, "choose"}, {"esc", "back"}}
 }
 
-// itemLines formats each item: settings show "Label   < value >" with the
-// values lined up; selected items get a "> " marker.
+// Draw puts the menu in a bordered panel centered on the screen (U1: dark
+// panel, amber title, the selected item as an amber bar, a key-cap footer)
+// and remembers where the items went, so ItemAt can map clicks to items.
+// It only fills the screen's buffer; the caller sends it to the terminal
+// with Show.
+func Draw(s term.Screen, m *Menu) {
+	labels := itemLines(m)
+	hints := MenuHints()
+
+	width := max(RuneLen(m.Title), hintsWidth(hints))
+	for _, l := range m.Text {
+		width = max(width, RuneLen(l))
+	}
+	for _, l := range labels {
+		width = max(width, RuneLen(l))
+	}
+	width += 6 // the border and two spaces of padding on each side
+
+	rows := 2 + len(labels) + 2 // title, blank, items, blank, hints
+	if len(m.Text) > 0 {
+		rows += len(m.Text) + 1
+	}
+	w, h := s.Size()
+	top := max((h-rows-2)/2, 0)
+	left := max((w-width)/2, 0)
+	Panel(s, left, top, width, rows+2, BoxRound, StBorder, StPanel)
+
+	y := top + 1
+	Center(s, left, width, y, m.Title, StTitle)
+	y += 2
+	if len(m.Text) > 0 {
+		for _, l := range m.Text {
+			Center(s, left, width, y, l, StPanel)
+			y++
+		}
+		y++
+	}
+	firstItem := y
+	for i, l := range labels {
+		st := StPanel
+		switch {
+		case m.Items[i].Disabled:
+			st = StDim
+		case i == m.Selected:
+			st = StSelected
+		}
+		term.PutStr(s, left+1, y, " "+l+pad(width-3-RuneLen(l)), st)
+		y++
+	}
+	Hints(s, left+1, width-2, y+1, hints, ColPanel)
+
+	m.layout = layout{x: left, w: width, top: firstItem, n: len(labels)}
+}
+
+// itemLines formats each item: settings show "Label   ◀ value ▶" with the
+// values lined up (an off/on setting shows a switch); the selected item
+// gets the ▶ marker.
 func itemLines(m *Menu) []string {
 	labelW := 0
 	for _, it := range m.Items {
 		if it.Values != nil {
-			labelW = max(labelW, utf8.RuneCountInString(it.Label))
+			labelW = max(labelW, RuneLen(it.Label))
 		}
 	}
 	out := make([]string, len(m.Items))
 	for i, it := range m.Items {
-		marker := "  "
+		marker := pad(RuneLen(sym.Select)) + " "
 		if i == m.Selected {
-			marker = "> "
+			marker = sym.Select + " "
 		}
 		if it.Values == nil {
 			out[i] = marker + it.Label
 			continue
 		}
-		out[i] = fmt.Sprintf("%s%s   < %s >", marker, padRight(it.Label, labelW), it.Values[it.Value])
+		out[i] = fmt.Sprintf("%s%s   %s", marker, it.Label+pad(labelW-RuneLen(it.Label)), ValueText(it))
 	}
 	return out
 }
 
-// padRight pads s with spaces to n characters.
-func padRight(s string, n int) string {
-	return s + strings.Repeat(" ", max(n-utf8.RuneCountInString(s), 0))
-}
-
-// padCenter centers s in n characters.
-func padCenter(s string, n int) string {
-	pad := max((n-utf8.RuneCountInString(s))/2, 0)
-	return padRight(strings.Repeat(" ", pad)+s, n)
+// ValueText is how a setting's current value is shown: a switch for an
+// off/on setting, else "◀ value ▶".
+func ValueText(it Item) string {
+	if len(it.Values) == 2 && it.Values[0] == "off" && it.Values[1] == "on" {
+		return Switch(it.Value == 1)
+	}
+	return sym.Prev + " " + it.Values[it.Value] + " " + sym.Next
 }

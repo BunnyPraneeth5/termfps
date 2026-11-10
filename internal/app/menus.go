@@ -65,7 +65,7 @@ func (m *menuScreen) tick(a *App, now time.Time, dt float64) {
 		render.Dim(&a.frame)
 		a.present()
 	} else {
-		a.scr.Clear()
+		a.clearScreen()
 	}
 	// m.text[:n:n] limits the capacity to n, so append makes a new slice
 	// instead of writing past the end of m.text.
@@ -230,6 +230,7 @@ const (
 	setAspect
 	setUnlocks
 	setMinimapFog
+	setSymbols
 	setBack
 )
 
@@ -295,6 +296,7 @@ func (a *App) settingsMenu(back *menuScreen) *menuScreen {
 	items[setUnlocks] = ui.Item{Label: "Map unlocks", Values: unlockRuleLabels,
 		Value: max(slices.Index(unlockRules, a.cfg.UnlockRule), 0)} // "" (unset) shows 5:00
 	items[setMinimapFog] = onOff("Minimap fog of war", a.cfg.MinimapFog)
+	items[setSymbols] = ui.Item{Label: "Symbols", Values: symbolChoices, Value: boolIndex(a.cfg.SimpleSymbols)}
 	items[setBack] = ui.Item{Label: "Back"}
 
 	s := &menuScreen{overGame: back.overGame, menu: ui.New("SETTINGS", nil, items)}
@@ -339,6 +341,9 @@ func (a *App) settingsMenu(back *menuScreen) *menuScreen {
 			}
 		case s.menu.Selected == setMinimapFog:
 			a.cfg.MinimapFog = it.Value == 1
+		case s.menu.Selected == setSymbols:
+			a.cfg.SimpleSymbols = it.Value == 1
+			ui.UseSimple(a.cfg.SimpleSymbols)
 		case s.menu.Selected == setUnlocks:
 			a.cfg.UnlockRule = unlockRules[it.Value]
 		case s.menu.Selected == setAspect:
@@ -361,13 +366,27 @@ func thresholdLabel(n int) string {
 	return fmt.Sprint(n)
 }
 
+// symbolChoices are the Symbols setting's values (U1): fancy draws ♥ ▰ ▶
+// and rounded boxes; simple only characters every console font has.
+var symbolChoices = []string{"fancy", "simple"}
+
+// boolIndex is 1 for true and 0 for false: the index of an off/on value.
+func boolIndex(on bool) int {
+	if on {
+		return 1
+	}
+	return 0
+}
+
 // onOff is an off/on setting item.
 func onOff(label string, on bool) ui.Item {
-	v := 0
-	if on {
-		v = 1
-	}
-	return ui.Item{Label: label, Values: []string{"off", "on"}, Value: v}
+	return ui.Item{Label: label, Values: []string{"off", "on"}, Value: boolIndex(on)}
+}
+
+// clearScreen fills the whole screen with the background color (U1).
+func (a *App) clearScreen() {
+	w, h := a.scr.Size()
+	ui.Fill(a.scr, 0, 0, w, h, ui.StBg)
 }
 
 // mapStrings turns each value into its menu text. [T any] makes it a

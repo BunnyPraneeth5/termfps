@@ -111,7 +111,7 @@ func TestDrawAndItemAt(t *testing.T) {
 			t.Errorf("ItemAt(40, %d) = %d, %v; want %d, true", row, got, ok, i)
 		}
 	}
-	if !strings.Contains(s.Text(), "< 30 >") {
+	if !strings.Contains(s.Text(), "◀ 30 ▶") {
 		t.Error("setting value not drawn")
 	}
 	if _, ok := m.ItemAt(0, m.layout.top); ok {
