@@ -306,5 +306,6 @@ Template:
 ## 2026-11-11 (M20: public test release)
 - The user asked for M20 before the video editing. Built: `-version`, the release workflow (draft pre-release from a version tag), release notes for v0.75, the feedback issue form, README download section and Windows warnings (D55).
 - Tests: build, vet, gofmt clean, `go test ./...` passes; the three release targets cross-compile without cgo and the Windows build prints `termfps v0.75 “As*****”`; the YAML files parse; the tag check accepts v0.75 and rejects other tags.
-- Not done: the user checks the draft release on GitHub and publishes it; nobody has played the downloaded builds yet; no license file (the user's choice).
+- Not done: the user checks the draft release on GitHub and publishes it; nobody has played the downloaded builds yet.
+- License: MIT (LICENSE), plus THIRD_PARTY_NOTICES.txt for the libraries, both in every download; the v0.75 draft was rebuilt with them.
 

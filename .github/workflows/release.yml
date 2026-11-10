@@ -63,7 +63,7 @@ jobs:
             mkdir -p "build/$name"
             exe=termfps; [ "$os" = windows ] && exe=termfps.exe
             CGO_ENABLED=0 GOOS="$os" GOARCH="$arch" go build -trimpath -ldflags "-s -w" -o "build/$name/$exe" .
-            cp README.md "build/$name/"
+            cp README.md LICENSE THIRD_PARTY_NOTICES.txt "build/$name/"
             if [ "$os" = windows ]; then
               (cd build && zip -qr "../dist/$name.zip" "$name")
             else

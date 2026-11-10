@@ -338,6 +338,15 @@ Design notes live in [PRD.md](PRD.md), [ARCHITECTURE.md](ARCHITECTURE.md) and
 [DECISIONS.md](DECISIONS.md). Progress is in [TASKS.md](TASKS.md) and
 [PROGRESS.md](PROGRESS.md).
 
+## License
+
+termfps is released under the [MIT License](LICENSE): you may use, change
+and share it, as long as the copyright notice stays with it. The libraries
+it's built with have their own licenses (Apache-2.0, MIT, BSD), collected in
+[THIRD_PARTY_NOTICES.txt](THIRD_PARTY_NOTICES.txt) and included in every
+download. When a dependency changes, regenerate that file from the modules
+`go list -deps` reports for the release targets.
+
 Built with [tcell](https://github.com/gdamore/tcell) and, for sound,
 [oto](https://github.com/ebitengine/oto). The mixed render mode is S0ra's
 idea, from the "Mixed" style in their image-to-ASCII library
