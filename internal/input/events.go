@@ -100,6 +100,8 @@ func MenuKeyFor(ev term.Key) (k ui.Key, ok bool) {
 		return ui.KeyEnter, true
 	case term.KeyEscape:
 		return ui.KeyBack, true
+	case term.KeyTab:
+		return ui.KeyTab, true
 	case term.KeyRune:
 		switch unicode.ToLower(ev.Rune) {
 		case 'w':

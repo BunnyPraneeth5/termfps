@@ -165,7 +165,7 @@ func (g *guidePage) tick(a *App, now time.Time, dt float64) {
 		g.drawView(a, e.view, rect{x: area.x, y: area.y, w: cols, h: rows}, dt)
 		g.drawText(a, e.lines, rect{x: area.x + cols + 2, y: area.y, w: area.w - cols - 2, h: area.h})
 	}
-	s.Show()
+	a.show()
 }
 
 // drawView draws the page's 3D view into box r (M18b), restarting it when

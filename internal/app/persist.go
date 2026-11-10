@@ -13,7 +13,9 @@ import (
 type Saved struct {
 	Store    *save.Store // where to save; nil = don't save (no config folder)
 	Progress save.Progress
-	Message  string // a problem to show in the menus; "" = none
+	Message  string // a problem with the save file, shown in an error box; "" = none
+	// MapProblem names the player's own maps that couldn't be loaded.
+	MapProblem string
 }
 
 // ApplySettings returns base with the saved settings s on top. note says
@@ -62,7 +64,12 @@ func ApplySettings(base Config, s save.Settings) (c Config, note string) {
 // useSaved takes the progress and the load problem from the save file.
 func (a *App) useSaved(s Saved) {
 	a.store = s.Store
-	a.loadMsg = s.Message
+	if s.Message != "" {
+		a.raise(errorBox{title: "PROBLEM WITH THE SAVE FILE", detail: s.Message})
+	}
+	if s.MapProblem != "" {
+		a.raise(errorBox{title: "COULDN'T LOAD SOME OF YOUR MAPS", detail: s.MapProblem, meaning: "The other maps work as usual."})
+	}
 	a.progress = s.Progress
 	if a.progress.Best == nil {
 		a.progress.Best = map[string]save.Best{} // a nil map can't be written to
@@ -104,15 +111,20 @@ func (a *App) settings() save.Settings {
 // for any type.
 func ptr[T any](v T) *T { return &v }
 
-// persist writes settings and progress to the save file. A failure is
-// shown in the menus until a later save works.
+// persist writes settings and progress to the save file. The first
+// failure shows an error box with the real error; after that the title and
+// the pause card keep saying so until a later save works.
 func (a *App) persist() {
 	if a.store == nil {
 		return
 	}
 	s := a.settings()
 	if err := save.Write(*a.store, save.Data{Settings: &s, Progress: a.progress}); err != nil {
-		a.saveErr = "Couldn't save: " + err.Error()
+		if a.saveErr == "" {
+			a.raise(errorBox{title: "COULDN'T SAVE YOUR PROGRESS", detail: err.Error(),
+				meaning: "This still counts until you quit, but it is not saved."})
+		}
+		a.saveErr = "Not saved: " + err.Error()
 		return
 	}
 	a.saveErr = ""
@@ -150,11 +162,11 @@ func (a *App) endRun() {
 	a.persist()
 }
 
-// messages are the save and sound problems for the menus, wrapped to fit
-// the box.
+// messages are the standing save and sound problems (yellow warning lines
+// on the title and the pause card), wrapped.
 func (a *App) messages() []string {
 	var out []string
-	for _, m := range []string{a.loadMsg, a.saveErr, a.soundProblem()} {
+	for _, m := range []string{a.saveErr, a.soundProblem()} {
 		if m != "" {
 			out = append(out, wrap(m, 60)...)
 		}

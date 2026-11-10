@@ -516,7 +516,7 @@ For every U task: it fits 80x24 (tests check it); mouse clicks still work; `go b
   - BEST line for the map: survival (time, kills, tier) and waves (best wave or "won in 7:12").
   - `▶ START` button. Footer: ↑↓ map, ←→ mode, ⏎ start, esc back.
 
-### [ ] U3: Settings, pause, messages
+### [~] U3: Settings, pause, messages
 - **Settings, four tabs.** Tab key or ←→ on the tab row switches tabs. Each setting: label, value, one dim help line under it. "changes apply at once and are saved". Values: `◀ value ▶` for choices, `[■ on ]` switches, `▮▮▮▮▯▯ 40%` bars.
   - VIDEO: Render mode (half-block · shade · ASCII · mixed, also V in game), Render scale (auto keeps big windows smooth), FPS (30 or 60), Wall textures, Mixed background (bar), Symbols (fancy / simple, new), Title background (on/off, new), Animations (on/off, new).
   - AUDIO: Sound (stereo, from where things happen), Volume (bar, ←→ by 10%). Menu sounds follow these too.

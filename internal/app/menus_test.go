@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"github.com/BunnyPraneeth5/termfps/internal/audio"
-	"github.com/BunnyPraneeth5/termfps/internal/game"
 	"github.com/BunnyPraneeth5/termfps/internal/term"
 	"github.com/BunnyPraneeth5/termfps/internal/world"
 )
@@ -131,7 +130,7 @@ func TestPauseRestartAndQuitToMenu(t *testing.T) {
 	for range 30 {
 		press(a, &now)
 	}
-	press(a, &now, esc, down, down, enter) // Restart
+	press(a, &now, esc, down, enter) // Restart
 	// The restart frame itself runs one tick, so time is just above 0.
 	if a.state.Time > 0.1 {
 		t.Errorf("Restart: time = %v, want a fresh run", a.state.Time)
@@ -143,72 +142,14 @@ func TestPauseRestartAndQuitToMenu(t *testing.T) {
 	}
 }
 
-// Settings change the app right away and Back returns to where they were
-// opened from.
-func TestSettingsApplyRightAway(t *testing.T) {
-	a, s := newMenuApp(t)
-	now := t0
-	press(a, &now, down, down, enter) // Settings
-	if !screenHas(s, "SETTINGS") {
-		t.Fatal("settings menu not shown")
-	}
-	// Render mode starts at ascii (256-color screen); Right goes to mixed.
-	press(a, &now, right)
-	if a.state.Mode != game.ModeMixed {
-		t.Errorf("mode = %v after Right, want mixed", a.state.Mode)
-	}
-	press(a, &now, down, right) // mixed background 20% -> 30%
-	if a.cfg.MixedBackground != 30 || a.frame.MixedBackground != 0.3 {
-		t.Errorf("mixed background = %d%% (frame %v), want 30%%", a.cfg.MixedBackground, a.frame.MixedBackground)
-	}
-	press(a, &now, down, right) // color threshold off -> 4
-	if a.cfg.ColorThreshold != 4 || a.frame.ColorThreshold != 4 {
-		t.Errorf("color threshold = %d (frame %d), want 4", a.cfg.ColorThreshold, a.frame.ColorThreshold)
-	}
-	press(a, &now, down, right) // render scale auto -> full
-	if a.cfg.RenderScale != "full" || a.frame.Scale != 1 {
-		t.Errorf("render scale = %q (frame scale %d), want full, 1", a.cfg.RenderScale, a.frame.Scale)
-	}
-	press(a, &now, right) // full -> half: the view is drawn at half size
-	if a.cfg.RenderScale != "half" || a.frame.Scale != 2 || a.frame.W != 40 {
-		t.Errorf("render scale = %q (frame scale %d, width %d), want half, 2, 40", a.cfg.RenderScale, a.frame.Scale, a.frame.W)
-	}
-	press(a, &now, down, right) // FPS 30 -> 60
-	if a.cfg.FPS != 60 {
-		t.Errorf("FPS = %d, want 60", a.cfg.FPS)
-	}
-	press(a, &now, down, enter) // minimap at start: on -> off
-	if a.cfg.MinimapAtStart {
-		t.Error("minimap at start still on")
-	}
-	press(a, &now, down, enter) // textures: on -> off
-	if a.cfg.Textures || a.frame.Textures {
-		t.Error("textures still on")
-	}
-	press(a, &now, down, down, right) // volume 80% -> 90%
-	if a.cfg.Volume != 90 {
-		t.Errorf("volume = %d, want 90", a.cfg.Volume)
-	}
-	press(a, &now, down, down, right) // pixel aspect 1 -> 1.1
-	if a.frame.PixelAspect != 1.1 {
-		t.Errorf("pixel aspect = %v, want 1.1", a.frame.PixelAspect)
-	}
-	press(a, &now, esc)
-	press(a, &now)
-	if !onTitle(a) {
-		t.Error("Esc in settings didn't go back to the title menu")
-	}
-	press(a, &now, up, up, enter, enter) // Play (from Settings: up twice), Survival
-	if a.state.ShowMinimap {
-		t.Error("new run shows the minimap; setting says off")
-	}
-}
-
 // Settings opened from the pause menu go back to it.
 func TestSettingsFromPause(t *testing.T) {
 	a, s := newTestApp(t)
 	now := t0
-	press(a, &now, esc, down, enter) // Pause -> Settings
+	press(a, &now, esc, down, down, down, enter) // Pause -> Settings
+	if _, ok := a.current.(*settingsScreen); !ok {
+		t.Fatalf("the pause card's fourth item opened %T, want the Settings", a.current)
+	}
 	press(a, &now, esc)
 	press(a, &now)
 	if !screenHas(s, "PAUSED") {

@@ -158,6 +158,8 @@ func fromTcellKey(ev *tcell.EventKey) Key {
 		k.Code = KeyEnter
 	case tcell.KeyEscape:
 		k.Code = KeyEscape
+	case tcell.KeyTab:
+		k.Code = KeyTab
 	case tcell.KeyCtrlC: // without advanced keys
 		k.Code = KeyCtrlC
 	}

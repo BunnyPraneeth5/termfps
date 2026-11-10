@@ -266,7 +266,7 @@ func (p *playScreen) tick(a *App, now time.Time, dt float64) {
 	ui.Hints(s, ox, stageW, oy+stageH-2, []ui.Hint{
 		{Keys: sy.UpDown, Text: "map"}, {Keys: sy.LeftRight, Text: "mode"}, {Keys: sy.Enter, Text: "start"}, {Keys: "esc", Text: "back"},
 	}, ui.ColBg)
-	s.Show()
+	a.show()
 }
 
 // lockReason0 is lockReason for a locked map and "" for an open one.

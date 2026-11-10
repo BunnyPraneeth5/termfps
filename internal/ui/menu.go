@@ -13,6 +13,7 @@ const (
 	KeyRight
 	KeyEnter
 	KeyBack
+	KeyTab // the next tab, on screens that have tabs (U3)
 )
 
 // Item is one menu line: an action (Values is nil) or a setting that

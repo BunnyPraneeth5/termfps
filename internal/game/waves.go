@@ -51,6 +51,12 @@ func (s *State) InBreak() bool {
 	return s.Play == Waves && s.BreakLeft > 0
 }
 
+// WaveLeft is how many of the current wave's enemies are still to kill:
+// those alive and those still to come.
+func (s *State) WaveLeft() int {
+	return s.waveLeft + len(s.Enemies)
+}
+
 // updateWaves runs the waves: counts the break down, starts the next wave,
 // and ends a wave once all its enemies are out and dead. It replaces the
 // survival tier rules and spawner timing in a waves run.

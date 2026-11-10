@@ -218,7 +218,7 @@ func (ts *titleScreen) tick(a *App, now time.Time, dt float64) {
 
 	ui.Hints(s, ox, stageW, oy+stageH-2, []ui.Hint{{Keys: sy.UpDown, Text: "select"}, {Keys: sy.Enter, Text: "choose"}}, ui.ColBg)
 	ui.PutRight(s, w-1, h-1, Version, ui.On(ui.ColDim, ui.ColBg))
-	s.Show()
+	a.show()
 }
 
 // drawNotes writes the save and sound problems (if any) as yellow lines,

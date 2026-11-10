@@ -74,7 +74,7 @@ func run() (exitCode int) {
 	if saved.Store != nil {
 		custom, problem := loadCustomMaps(filepath.Join(filepath.Dir(saved.Store.Path), "maps"), taken)
 		maps = append(maps, custom...)
-		saved.Message = strings.TrimSpace(saved.Message + " " + problem)
+		saved.MapProblem = problem
 	}
 	if mapPath != "" {
 		m, err := loadMapFile(mapPath, taken)

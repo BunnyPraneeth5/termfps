@@ -90,6 +90,12 @@ func updateSurvival(s *State, dt float64) {
 	}
 }
 
+// NextTier is how many more kills and how many more seconds the next tier
+// takes, whichever comes first (for the pause card, U3).
+func (s *State) NextTier() (kills int, seconds float64) {
+	return max(TierKills-(s.Kills-s.tierKills), 0), max(TierTime-(s.Time-s.tierStart), 0)
+}
+
 // spawnOne counts the spawn timer down and, when it runs out, adds one
 // enemy for the current tier, if fewer than MaxAlive are alive and a
 // hidden spot is found. It reports whether an enemy was added.

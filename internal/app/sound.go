@@ -183,9 +183,9 @@ func (a *App) applySound() {
 func (a *App) soundProblem() string {
 	switch {
 	case a.soundErr != nil:
-		return "Sound unavailable: " + a.soundErr.Error()
+		return "Sound is off: " + a.soundErr.Error() + ". The game runs without it."
 	case a.sound != nil && a.sound.Err() != nil:
-		return "Sound stopped: " + a.sound.Err().Error()
+		return "Sound stopped: " + a.sound.Err().Error() + ". The game runs without it."
 	}
 	return ""
 }

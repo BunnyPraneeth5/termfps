@@ -179,7 +179,7 @@ func (p *playingScreen) tick(a *App, now time.Time, dt float64) {
 		Time:          st.Time,
 	})
 	t2 := time.Now()
-	a.scr.Show()
+	a.show()
 	a.times.add(frameTimes{draw: t1.Sub(t0), present: t2.Sub(t1), show: time.Since(t2)})
 
 	if st.Player.Dead() {

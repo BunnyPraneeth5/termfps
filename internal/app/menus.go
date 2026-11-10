@@ -2,7 +2,6 @@ package app
 
 import (
 	"fmt"
-	"slices"
 	"time"
 
 	"github.com/BunnyPraneeth5/termfps/internal/audio"
@@ -71,52 +70,7 @@ func (m *menuScreen) tick(a *App, now time.Time, dt float64) {
 	n := len(m.text)
 	m.menu.Text = append(m.text[:n:n], a.messages()...)
 	ui.Draw(a.scr, m.menu)
-	a.scr.Show()
-}
-
-// pauseMenu freezes the game behind a dimmed screen.
-func (a *App) pauseMenu() *menuScreen {
-	const (
-		resume = iota
-		settings
-		restart
-		guide
-		quitToMenu
-	)
-	s := &menuScreen{drop: dropGame, menu: ui.New("PAUSED", nil, []ui.Item{
-		{Label: "Resume"},
-		{Label: "Settings"},
-		{Label: "Restart"},
-		{Label: "Guide"},
-		{Label: "Quit to menu"},
-	})}
-	s.act = func(a *App, r ui.Result) {
-		if r == ui.Back {
-			a.resume()
-			return
-		}
-		switch s.menu.Selected {
-		case resume:
-			a.resume()
-		case settings:
-			a.switchTo(a.settingsMenu(s, dropGame))
-		case restart:
-			a.newRun()
-		case guide:
-			a.switchTo(a.guideMenu(s, dropGame)) // M18a
-		case quitToMenu:
-			a.endRun()
-			a.switchTo(a.titleMenu())
-		}
-	}
-	return s
-}
-
-// resume goes back to the paused game. Keys held before the pause don't
-// count any more.
-func (a *App) resume() {
-	a.keys = input.Tracker{}
-	a.switchTo(&playingScreen{})
+	a.show()
 }
 
 // gameOverMenu shows the run's result over the frozen last frame. R isn't
@@ -139,194 +93,6 @@ func (a *App) gameOverMenu() *menuScreen {
 		}
 	}
 	return s
-}
-
-// Settings items, in menu order.
-const (
-	setMode = iota
-	setMixedBackground
-	setThreshold
-	setScale
-	setFPS
-	setMinimap
-	setTextures
-	setSound
-	setVolume
-	setKeys
-	setAspect
-	setUnlocks
-	setMinimapFog
-	setSymbols
-	setTitleBackground
-	setBack
-)
-
-// settingsMenu changes the settings; each change applies right away.
-// back is the screen to return to (title or pause) and drop what shows
-// behind the menu.
-func (a *App) settingsMenu(back screen, drop backdrop) *menuScreen {
-	var modes []game.RenderMode
-	for m := game.ModeHalfBlock; ; m = m.Next() { // every mode, in V order
-		modes = append(modes, m)
-		if m.Next() == game.ModeHalfBlock {
-			break
-		}
-	}
-	fpsChoices := []int{30, 60}
-	if !slices.Contains(fpsChoices, a.cfg.FPS) {
-		fpsChoices = append(fpsChoices, a.cfg.FPS) // a value from -fps stays choosable
-		slices.Sort(fpsChoices)
-	}
-	keyChoices := []string{"events"}
-	if input.AsyncSupported() == nil {
-		keyChoices = []string{"async", "events"}
-	}
-	backgrounds := []int{0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100}
-	if !slices.Contains(backgrounds, a.cfg.MixedBackground) {
-		backgrounds = append(backgrounds, a.cfg.MixedBackground) // e.g. 25 typed into save.json
-		slices.Sort(backgrounds)
-	}
-	thresholds := []int{0, 4, 8, 16, 32}
-	if !slices.Contains(thresholds, a.cfg.ColorThreshold) {
-		thresholds = append(thresholds, a.cfg.ColorThreshold)
-		slices.Sort(thresholds)
-	}
-	var aspects []float64
-	for tenths := 5; tenths <= 20; tenths++ {
-		aspects = append(aspects, float64(tenths)/10)
-	}
-	if !slices.Contains(aspects, a.cfg.PixelAspect) {
-		aspects = append(aspects, a.cfg.PixelAspect) // e.g. -aspect 1.25
-		slices.Sort(aspects)
-	}
-
-	items := make([]ui.Item, setBack+1)
-	items[setMode] = ui.Item{Label: "Render mode", Values: mapStrings(modes, game.RenderMode.String),
-		Value: slices.Index(modes, a.state.Mode)}
-	items[setMixedBackground] = ui.Item{Label: "Mixed background",
-		Values: mapStrings(backgrounds, func(n int) string { return fmt.Sprintf("%d%%", n) }),
-		Value:  slices.Index(backgrounds, a.cfg.MixedBackground)}
-	items[setThreshold] = ui.Item{Label: "Color threshold", Values: mapStrings(thresholds, thresholdLabel),
-		Value: slices.Index(thresholds, a.cfg.ColorThreshold)}
-	items[setScale] = ui.Item{Label: "Render scale", Values: scaleChoices,
-		Value: max(slices.Index(scaleChoices, a.cfg.RenderScale), 0)} // "" (unset) shows auto
-	items[setFPS] = ui.Item{Label: "FPS", Values: mapStrings(fpsChoices, func(n int) string { return fmt.Sprint(n) }),
-		Value: slices.Index(fpsChoices, a.cfg.FPS)}
-	items[setMinimap] = onOff("Minimap at start", a.cfg.MinimapAtStart)
-	items[setTextures] = onOff("Wall textures", a.cfg.Textures)
-	items[setSound] = onOff("Sound", a.cfg.Sound)
-	items[setVolume] = ui.Item{Label: "Volume", Values: []string{"0%", "10%", "20%", "30%", "40%", "50%", "60%", "70%", "80%", "90%", "100%"},
-		Value: min(max(a.cfg.Volume/10, 0), 10)}
-	items[setKeys] = ui.Item{Label: "Key mode", Values: keyChoices, Value: slices.Index(keyChoices, a.cfg.KeyMode)}
-	items[setAspect] = ui.Item{Label: "Pixel aspect", Values: mapStrings(aspects, func(v float64) string { return fmt.Sprint(v) }),
-		Value: slices.Index(aspects, a.cfg.PixelAspect)}
-	items[setUnlocks] = ui.Item{Label: "Map unlocks", Values: unlockRuleLabels,
-		Value: max(slices.Index(unlockRules, a.cfg.UnlockRule), 0)} // "" (unset) shows 5:00
-	items[setMinimapFog] = onOff("Minimap fog of war", a.cfg.MinimapFog)
-	items[setSymbols] = ui.Item{Label: "Symbols", Values: symbolChoices, Value: boolIndex(a.cfg.SimpleSymbols)}
-	items[setTitleBackground] = onOff("Title background", a.cfg.TitleBackground)
-	items[setBack] = ui.Item{Label: "Back"}
-
-	s := &menuScreen{drop: drop, menu: ui.New("SETTINGS", nil, items)}
-	s.act = func(a *App, r ui.Result) {
-		it := s.menu.Items[s.menu.Selected]
-		switch {
-		case r == ui.Back || s.menu.Selected == setBack:
-			a.switchTo(back)
-			return
-		case r != ui.Changed:
-			return
-		case s.menu.Selected == setMode:
-			a.state.Mode = modes[it.Value]
-		case s.menu.Selected == setMixedBackground:
-			a.cfg.MixedBackground = backgrounds[it.Value]
-			a.frame.MixedBackground = float64(a.cfg.MixedBackground) / 100
-		case s.menu.Selected == setThreshold:
-			a.cfg.ColorThreshold = thresholds[it.Value]
-			a.frame.ColorThreshold = uint8(a.cfg.ColorThreshold)
-		case s.menu.Selected == setScale:
-			a.cfg.RenderScale = scaleChoices[it.Value]
-			a.resizeFrame()
-		case s.menu.Selected == setFPS:
-			a.cfg.FPS = fpsChoices[it.Value] // Run resets its ticker
-		case s.menu.Selected == setMinimap:
-			a.cfg.MinimapAtStart = it.Value == 1
-			a.state.ShowMinimap = a.cfg.MinimapAtStart // the current run too
-		case s.menu.Selected == setTextures:
-			a.cfg.Textures = it.Value == 1
-			a.frame.Textures = a.cfg.Textures
-		case s.menu.Selected == setSound:
-			a.cfg.Sound = it.Value == 1
-			a.applySound()
-		case s.menu.Selected == setVolume:
-			a.cfg.Volume = it.Value * 10
-			a.applySound()
-		case s.menu.Selected == setKeys:
-			a.cfg.KeyMode = keyChoices[it.Value]
-			a.keys.Reset() // keeps what it learned about the terminal (releases)
-			if a.cfg.KeyMode == "async" {
-				a.scr.EnableFocus() // async keys only count while focused
-			}
-		case s.menu.Selected == setMinimapFog:
-			a.cfg.MinimapFog = it.Value == 1
-		case s.menu.Selected == setTitleBackground:
-			a.cfg.TitleBackground = it.Value == 1
-		case s.menu.Selected == setSymbols:
-			a.cfg.SimpleSymbols = it.Value == 1
-			ui.UseSimple(a.cfg.SimpleSymbols)
-		case s.menu.Selected == setUnlocks:
-			a.cfg.UnlockRule = unlockRules[it.Value]
-		case s.menu.Selected == setAspect:
-			a.cfg.PixelAspect = aspects[it.Value]
-			a.frame.PixelAspect = a.cfg.PixelAspect
-		}
-		a.persist() // saved on every change (D25)
-	}
-	return s
-}
-
-// scaleChoices are the render scale settings (V6), in menu order.
-var scaleChoices = []string{"auto", "full", "half"}
-
-// thresholdLabel is the menu text for a color threshold.
-func thresholdLabel(n int) string {
-	if n == 0 {
-		return "off"
-	}
-	return fmt.Sprint(n)
-}
-
-// symbolChoices are the Symbols setting's values (U1): fancy draws ♥ ▰ ▶
-// and rounded boxes; simple only characters every console font has.
-var symbolChoices = []string{"fancy", "simple"}
-
-// boolIndex is 1 for true and 0 for false: the index of an off/on value.
-func boolIndex(on bool) int {
-	if on {
-		return 1
-	}
-	return 0
-}
-
-// onOff is an off/on setting item.
-func onOff(label string, on bool) ui.Item {
-	return ui.Item{Label: label, Values: []string{"off", "on"}, Value: boolIndex(on)}
-}
-
-// clearScreen fills the whole screen with the background color (U1).
-func (a *App) clearScreen() {
-	w, h := a.scr.Size()
-	ui.Fill(a.scr, 0, 0, w, h, ui.StBg)
-}
-
-// mapStrings turns each value into its menu text. [T any] makes it a
-// generic function: it works for a slice of any type T.
-func mapStrings[T any](vs []T, str func(T) string) []string {
-	out := make([]string, len(vs))
-	for i, v := range vs {
-		out[i] = str(v)
-	}
-	return out
 }
 
 // resultText is a finished run's result and the best on its map, for the
@@ -375,4 +141,10 @@ func (a *App) winMenu() *menuScreen {
 		}
 	}
 	return s
+}
+
+// clearScreen fills the whole screen with the background color (U1).
+func (a *App) clearScreen() {
+	w, h := a.scr.Size()
+	ui.Fill(a.scr, 0, 0, w, h, ui.StBg)
 }

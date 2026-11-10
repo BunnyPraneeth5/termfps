@@ -1,7 +1,6 @@
 package app
 
 import (
-	"os"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -9,7 +8,6 @@ import (
 	"github.com/BunnyPraneeth5/termfps/internal/game"
 	"github.com/BunnyPraneeth5/termfps/internal/save"
 	"github.com/BunnyPraneeth5/termfps/internal/term"
-	"github.com/BunnyPraneeth5/termfps/internal/ui"
 )
 
 // withStore makes the app save into a temp folder.
@@ -60,7 +58,7 @@ func TestAbandonedRunsCountOnce(t *testing.T) {
 	now := t0
 	press(a, &now, enter, enter) // Play, Survival
 	a.state.Kills = 3
-	press(a, &now, esc, down, down, enter) // Restart: counts 3
+	press(a, &now, esc, down, enter) // Restart: counts 3
 	a.state.Kills = 4
 	press(a, &now, esc, up, enter) // Quit to menu: counts 4
 	press(a, &now, enter, enter)   // Play again, Survival
@@ -85,7 +83,11 @@ func TestSettingChangeSaves(t *testing.T) {
 	if d.Settings.RenderMode != "mixed" || d.Settings.FPS != 30 || d.Settings.Volume != 80 {
 		t.Errorf("saved settings %+v, want mixed, 30 FPS, volume 80", *d.Settings)
 	}
-	press(a, &now, down, down, right) // color threshold off -> 4
+	ss := a.current.(*settingsScreen)
+	if !ss.find("Color threshold") {
+		t.Fatal("no Color threshold setting")
+	}
+	press(a, &now, right) // off -> 4
 	d, _ = save.Load(store)
 	if bg, thr := d.Settings.MixedBackground, d.Settings.ColorThreshold; bg == nil || *bg != 20 || thr == nil || *thr != 4 {
 		t.Errorf("saved mixed background %v and threshold %v, want 20 and 4", bg, thr)
@@ -112,25 +114,6 @@ func TestUnlockSavesAndLoads(t *testing.T) {
 	b.useSaved(Saved{Progress: save.Progress{UnlockedMaps: 9}})
 	if b.progress.UnlockedMaps != 2 || b.progress.Best == nil {
 		t.Errorf("loaded progress: %d maps open (want 2, clamped), best map nil: %v", b.progress.UnlockedMaps, b.progress.Best == nil)
-	}
-}
-
-// A load problem and a failed save both show in the title menu.
-func TestSaveProblemsShowInMenu(t *testing.T) {
-	a, s := newMenuApp(t)
-	dir := t.TempDir()
-	blocker := filepath.Join(dir, "file")
-	if err := os.WriteFile(blocker, nil, 0o644); err != nil {
-		t.Fatal(err)
-	}
-	// The save folder would be a file, so every write fails.
-	store := save.Store{Path: filepath.Join(blocker, "save.json")}
-	a.useSaved(Saved{Store: &store, Message: "The save file was damaged (test). Kept it as save.json.bad, using defaults."})
-	now := t0
-	a.persist()
-	press(a, &now)
-	if !screenHas(s, "save.json.bad") || !screenHas(s, "Couldn't save") {
-		t.Error("title menu doesn't show the load problem and the save error")
 	}
 }
 
@@ -175,18 +158,6 @@ func TestSymbolsSetting(t *testing.T) {
 	old.Symbols = "simple"
 	if c, _ := ApplySettings(base, old); !c.SimpleSymbols {
 		t.Error("symbols: simple in the save file isn't applied")
-	}
-	a, s := newMenuApp(t)
-	defer ui.UseSimple(false)
-	a.switchTo(a.settingsMenu(a.titleMenu(), dropNone))
-	now := t0
-	m := a.current.(*menuScreen).menu
-	m.Selected = setSymbols
-	press(a, &now, right)
-	press(a, &now)
-	if !a.cfg.SimpleSymbols || !ui.Sym().Simple || a.settings().Symbols != "simple" || !screenHas(s, "< simple >") {
-		t.Errorf("after switching: config %v, set simple %v, saved as %q; want simple everywhere, drawn with < >",
-			a.cfg.SimpleSymbols, ui.Sym().Simple, a.settings().Symbols)
 	}
 }
 

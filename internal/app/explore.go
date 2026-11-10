@@ -65,7 +65,8 @@ func (a *App) mergeExplored() {
 	if e, ok := a.progress.Explored[m.Name]; ok && e.W == m.W && e.H == m.H {
 		old, err := save.UnpackCells(e.Cells, m.W*m.H)
 		if err != nil {
-			a.loadMsg = fmt.Sprintf("The explored part of %s in the save file was damaged and starts over: %v", m.Name, err)
+			a.raise(errorBox{title: "PROBLEM WITH THE SAVE FILE",
+				detail: fmt.Sprintf("The explored part of %s in the save file was damaged and starts over: %v", m.Name, err)})
 		}
 		for i := range old {
 			seen[i] = seen[i] || old[i]

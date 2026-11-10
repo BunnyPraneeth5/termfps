@@ -59,7 +59,7 @@ func TestGuideFromPause(t *testing.T) {
 	a, s := newMenuApp(t)
 	now := t0
 	press(a, &now, enter, enter) // Play, Survival
-	press(a, &now, esc, down, down, down, enter)
+	press(a, &now, esc, down, down, enter)
 	press(a, &now)
 	if !screenHas(s, "GUIDE") {
 		t.Fatal("Guide on the pause menu doesn't open the guide")

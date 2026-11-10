@@ -63,7 +63,7 @@ func TestSoundUnavailableShowsInMenu(t *testing.T) {
 	a.applySound() // no player: must not crash
 	now := t0
 	press(a, &now)
-	if !screenHas(s, "Sound unavailable: no audio device") {
+	if !screenHas(s, "Sound is off: no audio device. The game runs without it.") {
 		t.Error("title menu doesn't say why sound is off")
 	}
 	a.newRun()

@@ -32,6 +32,7 @@ const (
 	KeyEnter
 	KeyEscape
 	KeyCtrlC
+	KeyTab // the next Settings tab (U3)
 )
 
 // Mod is the modifier keys held with a key or click, as bits.

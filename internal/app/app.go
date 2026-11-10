@@ -142,9 +142,12 @@ type App struct {
 	// runActive is true from the start of a run until its result is
 	// recorded, so a run never counts twice.
 	runActive bool
-	// loadMsg is a problem from loading the save file and saveErr the last
-	// failed save; the menus show them.
-	loadMsg, saveErr string
+	// saveErr is the last failed save ("" once a save works again); the
+	// title and the pause card show it.
+	saveErr string
+	// boxes are the error boxes waiting to be read (U3); the first one
+	// shows over the current screen until the player closes it.
+	boxes []errorBox
 
 	// sound plays the effects; nil if it couldn't start (soundErr says why).
 	sound    *audio.Player
@@ -375,12 +378,23 @@ func (a *App) step(now time.Time, events []term.Event) (quit bool) {
 				a.endRun()  // a run quit with Ctrl+C still counts
 				return true // Ctrl+C quits from any screen (D24)
 			}
+			if len(a.boxes) > 0 { // an error box takes the keys until it's closed
+				a.boxKey(ev)
+				continue
+			}
 			a.current.key(a, ev)
 		case term.Mouse:
 			// The screen hears about each button going down or up, not
 			// about every event (holding a button can repeat events).
 			left, right := input.MouseButtons(ev)
 			x, y := ev.X, ev.Y
+			if len(a.boxes) > 0 { // a click anywhere closes the error box
+				if left && !a.leftDown {
+					a.closeBox()
+				}
+				a.leftDown, a.rightDown = left, right
+				continue
+			}
 			if left != a.leftDown {
 				a.current.mouse(a, mouseLeft, left, x, y)
 			}

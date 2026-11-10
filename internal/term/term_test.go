@@ -117,9 +117,10 @@ func TestFromTcell(t *testing.T) {
 		{"right", key(tcell.KeyRight, "", tcell.ModNone), Key{Code: KeyRight}},
 		{"enter", key(tcell.KeyEnter, "", tcell.ModNone), Key{Code: KeyEnter}},
 		{"esc", key(tcell.KeyEscape, "", tcell.ModNone), Key{Code: KeyEscape}},
+		{"tab", key(tcell.KeyTab, "", tcell.ModNone), Key{Code: KeyTab}},
 		{"ctrl+c legacy", key(tcell.KeyCtrlC, "", tcell.ModCtrl), Key{Code: KeyCtrlC, Mod: ModCtrl}},
 		{"meta is alt", key(tcell.KeyRune, "x", tcell.ModMeta), Key{Code: KeyRune, Rune: 'x', Mod: ModAlt}},
-		{"unused key", key(tcell.KeyTab, "", tcell.ModNone), Key{Code: KeyUnknown}},
+		{"unused key", key(tcell.KeyF1, "", tcell.ModNone), Key{Code: KeyUnknown}},
 		{"composed character", key(tcell.KeyRune, "é", tcell.ModNone), Key{Code: KeyUnknown}},
 		// Advanced keys: releases, kitty repeats, Ctrl+C as "c" with Ctrl.
 		{"press", keyEx(tcell.KeyRune, "w", tcell.ModNone, true, 1), Key{Code: KeyRune, Rune: 'w'}},

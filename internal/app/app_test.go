@@ -114,7 +114,7 @@ func TestTooSmallSkipsGame(t *testing.T) {
 	}
 	found := false
 	for row := 0; row < 10; row++ {
-		if strings.Contains(s.Row(row), "too small") {
+		if strings.Contains(s.Row(row), "WINDOW TOO SMALL") {
 			found = true
 		}
 	}
