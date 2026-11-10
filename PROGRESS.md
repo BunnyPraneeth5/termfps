@@ -283,3 +283,17 @@ Template:
 - Next: the user's review, then batch 3 (M19 balancing and demo, M20 public test release).
 - Update (same day): the user tested batch 2 and asked for guide polish; agreed as M18c (D53) and built (commit below): centered panel like the menus, growing up to 100 columns; explored map cells saved across runs, shown on a big top-down picture (unexplored dark, outline always, "Explored: n%"), the 360° turn only after a map is played, locked maps as an outline; controls as a keyboard and mouse picture with colored key groups, a legend and Up/Down stepping; the HUD as a labeled example; unmet enemies and unfound guns as dark "???" silhouettes. Build, vet, gofmt and all tests pass. Not pushed (the user is still testing).
 - Update 2026-11-09: keyboard page redrawn after the user's reference picture (boxed keys on a dark inset, full board, laptop-style arrows; D53 follow-up). Build, vet, gofmt clean; Smart App Control blocked every test binary this time (all packages, not worked around), so the new keyboard tests haven't run: the user runs `go test ./...` after a restart.
+
+## 2026-11-10 (UI redesign: U1-U6, v0.75 "As*****")
+- The user asked for the UI redesign (direction A, "Arcade terminal") in one run. The plan from UI-REDESIGN-TODO.md moved into TASKS.md ("UI redesign", U1-U6) and DECISIONS.md (D54); the temporary file is deleted. Commits:
+  - `1c0b171` docs: the U track and D54.
+  - U1 `68bf273`: look kit in internal/ui (palette, fancy and simple symbol sets, boxes, bars, key caps, tabs, badges, block font with 2/6-column gaps); menus and the guide panel in the new look; Symbols setting.
+  - U2 `0c235da`: title screen (TERM FPS logo with shimmer, random tagline, best run, version v0.75 "As*****"), slow map tour behind it, Play screen (mode and map together, preview, bests), menu sounds; SELECT MAP dropped from the title.
+  - U3 `8271930`: Settings in four tabs (Animations added), pause card, red error box, sound warning line, new window-too-small screen; Tab key.
+  - U4 `47d956e`: two-line HUD with bars, toasts at the top, wave break banner, map name in the minimap frame, guide HUD page.
+  - U5 `d7ce77d`: run stats in game.State; game over and win screens with stat boxes and NEW BEST per map.
+  - U6 `987c1ae`: tiers, enemies learn, waves mode, health and stamina, settings and tips guide pages as pictures.
+- Tests: build, vet, gofmt clean and `go test ./...` passes after every task (Smart App Control didn't block anything).
+- Not done: the user's on-screen review of all six (look in Windows Terminal, crowded text, animations go / no-go); not pushed.
+- Next: the user's review and fixes, then batch 3 (M19, M20) when the user says so.
+
