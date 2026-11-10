@@ -123,6 +123,11 @@ type State struct {
 	Won       bool
 	waveLeft  int // enemies of this wave still to come
 
+	// Stats are the run's numbers for the end screens (U5, stats.go); cause
+	// is what the hit being dealt right now comes from.
+	Stats RunStats
+	cause Cause
+
 	sinceKill float64 // seconds since the last kill: anti-camping (M13)
 	zombies   int     // zombies spawned this run, for their flanking roles (M13)
 

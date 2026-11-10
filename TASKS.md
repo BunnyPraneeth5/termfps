@@ -539,7 +539,7 @@ For every U task: it fits 80x24 (tests check it); mouse clicks still work; `go b
 - Crosshair, hit markers, red hurt edge, gun drawing: unchanged (game art, not UI).
 - The guide's HUD page explains the new HUD.
 
-### [ ] U5: Run stats, game over, win
+### [~] U5: Run stats, game over, win
 - **Run stats to track** (new, in the game package through events; the injected rand untouched): shots fired and hits (accuracy), what killed you (enemy kind, explosion, acid), kills per enemy kind, damage taken, HP left, explored % this run.
 - **Game over**: big red "YOU DIED" (spaced block letters), "killed by a tank · The Warehouse · survival"; stat boxes TIME, KILLS, TIER, ACCURACY with NEW BEST badges (green) or "best 5"; "this run: 4 tanks · 2 exploders · 31 runners · explored 71% of the map"; buttons TRY AGAIN, CHANGE MAP, MAIN MENU (←→ pick).
 - **Win** (waves): green "YOU WON", a few amber ✦; "all 10 waves cleared · map · waves mode"; boxes TIME (NEW BEST = fastest win), KILLS ("best 142"), ACCURACY, HP LEFT; the per-kind line; PLAY AGAIN, CHANGE MAP, MAIN MENU.

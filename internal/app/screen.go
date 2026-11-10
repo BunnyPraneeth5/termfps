@@ -174,11 +174,11 @@ func (p *playingScreen) tick(a *App, now time.Time, dt float64) {
 
 	if st.Player.Dead() {
 		a.endRun() // before the menu, so it shows the updated best
-		a.switchTo(a.gameOverMenu())
+		a.switchTo(a.endMenu(false))
 	}
 	if st.Won { // M15
 		a.endRun()
-		a.switchTo(a.winMenu())
+		a.switchTo(a.endMenu(true))
 	}
 }
 

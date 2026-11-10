@@ -139,7 +139,8 @@ func (a *App) endRun() {
 	a.runActive = false
 	st := a.state
 	name := a.maps[a.mapIndex].Name
-	if st.Play == game.Waves { // waves bests are kept apart (M15)
+	a.prevBest, a.prevWaves = a.progress.Best[name], a.progress.Waves[name] // a missing key gives the zero value
+	if st.Play == game.Waves {                                              // waves bests are kept apart (M15)
 		w := a.progress.Waves[name]
 		w.Wave = max(w.Wave, st.Wave)
 		w.Kills = max(w.Kills, st.Kills)

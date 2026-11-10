@@ -208,7 +208,7 @@ func updateMelee(s *State, e *Enemy, m melee, dt float64) {
 	}
 	if e.attackCD == 0 {
 		base := m.damageMin + s.Rand.IntN(m.damageMax-m.damageMin+1) // IntN(n): 0..n-1
-		hurtPlayerFrom(s, e.damage(base), e.X, e.Y)
+		hurtPlayerFrom(s, e.damage(base), e.X, e.Y, Cause{Kind: CauseEnemy, Enemy: e.Kind})
 		e.attackCD = m.interval
 		emitAt(s, EventEnemyAttack, e.X, e.Y, e.Kind) // its own hit sound (M17)
 		if e.Kind == KindTank {
@@ -265,7 +265,7 @@ func updateShooter(s *State, e *Enemy, dt float64) {
 		e.attackCD = ShooterInterval
 		emitAt(s, EventEnemyShot, e.X, e.Y, e.Kind)
 		if s.Rand.Float64() < ShooterHitChance(dist) {
-			hurtPlayerFrom(s, e.damage(ShooterDamage), e.X, e.Y)
+			hurtPlayerFrom(s, e.damage(ShooterDamage), e.X, e.Y, Cause{Kind: CauseEnemy, Enemy: e.Kind})
 		}
 		if s.Tier >= CoverTier && !s.Hunting() {
 			takeCover(s, e) // M13
@@ -325,6 +325,8 @@ func chase(s *State, e *Enemy, step float64) {
 // lasts.
 func hurtPlayer(s *State, damage int) {
 	p := &s.Player
+	cause := s.cause
+	s.cause = Cause{} // only for this hit
 	if p.HP == 0 || damage <= 0 {
 		return
 	}
@@ -333,7 +335,11 @@ func hurtPlayer(s *State, damage int) {
 		damage -= absorbed
 		s.Events = append(s.Events, EventArmorHit)
 	}
+	s.Stats.DamageTaken += min(damage, p.HP)
 	p.HP = max(p.HP-damage, 0)
+	if p.HP == 0 {
+		s.Stats.Killer = cause
+	}
 	p.hurt = hurtFlashTime
 	p.sinceHurt = 0 // regeneration waits RegenDelay again
 	s.Events = append(s.Events, EventPlayerHurt)
@@ -378,6 +384,7 @@ func damageEnemy(s *State, i, damage int) (killed bool) {
 		addBlast(s, e.X, e.Y, e.damage(ExploderDamage), 0)
 	}
 	emitAt(s, EventEnemyKilled, e.X, e.Y, e.Kind) // before Delete moves e
+	s.Stats.KillsBy[e.Kind]++
 	// After Delete, e points at the next enemy (the slice shifted), so
 	// nothing below may read it.
 	s.Enemies = slices.Delete(s.Enemies, i, i+1) // remove it, keeping the order

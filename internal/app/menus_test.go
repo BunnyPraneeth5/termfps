@@ -184,15 +184,15 @@ func TestMenuClick(t *testing.T) {
 
 // Dying shows the game over menu; Main menu goes to the title.
 func TestGameOverMainMenu(t *testing.T) {
-	a, s := newTestApp(t)
+	a, _ := newTestApp(t)
 	now := t0
 	a.state.Player.HP = 0
 	press(a, &now)
 	press(a, &now)
-	if !screenHas(s, "YOU DIED") {
-		t.Fatal("no game over menu")
+	if es, ok := a.current.(*endScreen); !ok || es.won {
+		t.Fatal("no game over screen")
 	}
-	press(a, &now, down, enter)
+	press(a, &now, right, right, enter) // Try again, Change map, Main menu
 	press(a, &now)
 	if !onTitle(a) {
 		t.Error("Main menu didn't show the title menu")

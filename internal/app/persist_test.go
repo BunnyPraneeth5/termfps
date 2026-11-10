@@ -29,8 +29,8 @@ func TestDeathRecordsAndSaves(t *testing.T) {
 	a.state.Player.HP = 0
 	press(a, &now)
 	press(a, &now)
-	if !screenHas(s, "Best on : 7 kills, 1:35, tier 1") { // the test map has no name
-		t.Error("game over menu doesn't show the best")
+	if !screenHas(s, "1:35") || !screenHas(s, "NEW BEST") {
+		t.Error("game over screen doesn't show the time as a new best")
 	}
 	d, problem := save.Load(store)
 	if problem != "" {
@@ -185,8 +185,8 @@ func TestWavesRunWinSaves(t *testing.T) {
 	a.state.Wave, a.state.Kills, a.state.Time, a.state.Won = game.NumWaves, 40, 400, true
 	press(a, &now)
 	press(a, &now) // the menu draws on the next frame
-	if _, ok := a.current.(*menuScreen); !ok || !screenHas(s, "YOU WIN") || !screenHas(s, "won in 6:40") {
-		t.Fatalf("after winning: screen %T; want the win menu with the time", a.current)
+	if es, ok := a.current.(*endScreen); !ok || !es.won || !screenHas(s, "all 10 waves cleared") || !screenHas(s, "6:40") {
+		t.Fatalf("after winning: screen %T; want the win screen with the time", a.current)
 	}
 	d, problem := save.Load(store)
 	if problem != "" {

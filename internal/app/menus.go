@@ -14,8 +14,8 @@ import (
 )
 
 // menuScreen shows one ui.Menu and hands what the player did to act.
-// Every menu (title, map select, settings, pause, game over) is one of
-// these with its own items and act function.
+// The guide's section lists are these (the other screens have their own
+// layouts since the UI redesign, D54).
 type menuScreen struct {
 	menu *ui.Menu
 	// act runs when a key or click did something (r is never ui.None);
@@ -73,46 +73,6 @@ func (m *menuScreen) tick(a *App, now time.Time, dt float64) {
 	a.show()
 }
 
-// gameOverMenu shows the run's result over the frozen last frame. R isn't
-// a menu key: it's reload, and a held R would pick an item by accident.
-func (a *App) gameOverMenu() *menuScreen {
-	const (
-		retry = iota
-		mainMenu
-	)
-	s := &menuScreen{drop: dropGame, text: a.resultText(), menu: ui.New("YOU DIED", nil, []ui.Item{
-		{Label: "Try again"},
-		{Label: "Main menu"},
-	})}
-	s.act = func(a *App, r ui.Result) {
-		switch {
-		case r == ui.Back || s.menu.Selected == mainMenu:
-			a.switchTo(a.titleMenu())
-		case s.menu.Selected == retry:
-			a.newRun()
-		}
-	}
-	return s
-}
-
-// resultText is a finished run's result and the best on its map, for the
-// game over and win menus. endRun has already counted the run.
-func (a *App) resultText() []string {
-	st := a.state
-	name := a.maps[a.mapIndex].Name
-	if st.Play == game.Waves { // M15
-		return []string{
-			fmt.Sprintf("Wave %d of %d    Kills: %d    Time: %s", st.Wave, game.NumWaves, st.Kills, render.Clock(st.Time)),
-			fmt.Sprintf("Waves best on %s: %s", name, wavesBestText(a.progress.Waves[name])),
-		}
-	}
-	best := a.progress.Best[name]
-	return []string{
-		fmt.Sprintf("Kills: %d    Time: %s    Tier: %d", st.Kills, render.Clock(st.Time), st.Tier),
-		fmt.Sprintf("Best on %s: %d kills, %s, tier %d", name, best.Kills, render.Clock(best.Time), best.Tier),
-	}
-}
-
 // wavesBestText describes a waves best: the fastest win, or the furthest
 // wave reached (M15).
 func wavesBestText(w save.WavesBest) string {
@@ -120,27 +80,6 @@ func wavesBestText(w save.WavesBest) string {
 		return fmt.Sprintf("won in %s", render.Clock(w.WinTime))
 	}
 	return fmt.Sprintf("wave %d of %d", w.Wave, game.NumWaves)
-}
-
-// winMenu shows a won waves run (M15) over the frozen last frame.
-func (a *App) winMenu() *menuScreen {
-	const (
-		again = iota
-		mainMenu
-	)
-	s := &menuScreen{drop: dropGame, text: a.resultText(), menu: ui.New("YOU WIN: ALL WAVES CLEARED", nil, []ui.Item{
-		{Label: "Play again"},
-		{Label: "Main menu"},
-	})}
-	s.act = func(a *App, r ui.Result) {
-		switch {
-		case r == ui.Back || s.menu.Selected == mainMenu:
-			a.switchTo(a.titleMenu())
-		case s.menu.Selected == again:
-			a.newRun()
-		}
-	}
-	return s
 }
 
 // clearScreen fills the whole screen with the background color (U1).

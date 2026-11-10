@@ -22,5 +22,5 @@ func updateAcid(s *State, dt float64) {
 	}
 	s.acidTimer += AcidInterval
 	s.Events = append(s.Events, EventAcidBurn)
-	hurtPlayer(s, AcidDamage)
+	hurtPlayerBy(s, AcidDamage, Cause{Kind: CauseAcid})
 }

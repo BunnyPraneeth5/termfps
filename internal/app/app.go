@@ -142,6 +142,12 @@ type App struct {
 	// runActive is true from the start of a run until its result is
 	// recorded, so a run never counts twice.
 	runActive bool
+	// prevBest and prevWaves are the bests on the run's map as they were
+	// before the run that just ended was counted, so the end screen can
+	// say which numbers are new bests (U5).
+	prevBest  save.Best
+	prevWaves save.WavesBest
+
 	// saveErr is the last failed save ("" once a save works again); the
 	// title and the pause card show it.
 	saveErr string

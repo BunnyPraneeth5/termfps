@@ -278,12 +278,8 @@ func TestZombieKillsPlayerAndRetry(t *testing.T) {
 	}
 	now = now.Add(time.Second / 30)
 	a.step(now, nil) // the Game over screen draws
-	found := false
-	for row := 0; row < 24; row++ {
-		found = found || strings.Contains(s.Row(row), "YOU DIED")
-	}
-	if !found {
-		t.Fatal("no YOU DIED message")
+	if _, ok := a.current.(*endScreen); !ok || !screenHas(s, "killed by a zombie") {
+		t.Fatal("no game over screen saying a zombie did it")
 	}
 
 	now = now.Add(time.Second / 30)

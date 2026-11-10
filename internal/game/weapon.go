@@ -177,13 +177,16 @@ func updateWeapon(s *State, in Input, dt float64) {
 	w.Mag--
 	w.flash = FlashTime
 	s.Events = append(s.Events, EventShotFired)
+	s.Stats.Shots++
 	switch w.Kind {
 	case Shotgun:
 		s.Events = append(s.Events, EventShotgunFired)
 	case Rifle:
 		s.Events = append(s.Events, EventRifleFired)
 	}
-	shoot(s, st)
+	if shoot(s, st) {
+		s.Stats.Hits++
+	}
 	if w.Mag == 0 {
 		startReload(s) // auto-reload (does nothing without spare rounds)
 	}
@@ -208,39 +211,43 @@ func startReload(s *State) {
 
 // shoot fires one shot of a gun with stats st: one bullet along the view
 // direction, or for the shotgun several pellets spread evenly across
-// st.Spread on each side, each nudged a little at random.
-func shoot(s *State, st GunStats) {
+// st.Spread on each side, each nudged a little at random. It reports
+// whether the shot hit an enemy (any pellet of it).
+func shoot(s *State, st GunStats) (hit bool) {
 	if st.Pellets <= 1 {
-		shootRay(s, s.Player.Angle, st.Damage)
-		return
+		return shootRay(s, s.Player.Angle, st.Damage)
 	}
 	step := 2 * st.Spread / float64(st.Pellets-1)
 	for i := range st.Pellets {
 		jitter := (s.Rand.Float64() - 0.5) * step / 2
-		shootRay(s, s.Player.Angle-st.Spread+float64(i)*step+jitter, st.Damage)
+		if shootRay(s, s.Player.Angle-st.Spread+float64(i)*step+jitter, st.Damage) {
+			hit = true
+		}
 	}
+	return hit
 }
 
 // shootRay casts one bullet from the player at angle. The nearest enemy in
 // front of the first solid cell (or prop that blocks shots, M2) takes the
 // damage; otherwise a red barrel there blows up (M14), or a red target
-// block there is destroyed.
-func shootRay(s *State, angle float64, damage int) {
+// block there is destroyed. It reports whether it hit an enemy.
+func shootRay(s *State, angle float64, damage int) (hitEnemy bool) {
 	p := s.Player
 	dirX, dirY := math.Cos(angle), math.Sin(angle)
 	hit := world.CastRay(s.Map, p.X, p.Y, dirX, dirY) // unit dir: PerpDist = distance
 	cover, cx, cy := world.ShotBlocker(s.Map, p.X, p.Y, dirX, dirY, hit.PerpDist)
 	if i := shotHitsEnemy(s, dirX, dirY, math.Min(hit.PerpDist, cover)); i >= 0 {
 		markHit(s, damageEnemy(s, i, damage)) // M16
-		return
+		return true
 	}
 	if cx >= 0 && s.Map.At(cx, cy) == world.ExplosiveBarrel {
 		blowBarrel(s, cx, cy, 0) // M14
-		return
+		return false
 	}
 	if hit.Cell == world.Target && cover > hit.PerpDist {
 		s.Map.Set(hit.MapX, hit.MapY, world.Empty)
 		s.distCell = -1 // the map opened up: enemies need a fresh distance field
 		s.Events = append(s.Events, EventTargetDestroyed)
 	}
+	return false
 }

@@ -99,11 +99,11 @@ func shakeView(s *State) {
 
 // hurtPlayerFrom is hurtPlayer for a hit coming from (x, y): the HUD shows
 // a marker pointing there (M16).
-func hurtPlayerFrom(s *State, damage int, x, y float64) {
+func hurtPlayerFrom(s *State, damage int, x, y float64, c Cause) {
 	if s.Player.Dead() || damage <= 0 {
 		return
 	}
-	hurtPlayer(s, damage)
+	hurtPlayerBy(s, damage, c)
 	p := &s.Player
 	p.hitFrom = math.Atan2(y-p.Y, x-p.X)
 	p.hitDir = HitDirTime
