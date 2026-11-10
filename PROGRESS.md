@@ -296,4 +296,4 @@ Template:
 - Tests: build, vet, gofmt clean and `go test ./...` passes after every task (Smart App Control didn't block anything).
 - Not done: the user's on-screen review of all six (look in Windows Terminal, crowded text, animations go / no-go); not pushed.
 - Next: the user's review and fixes, then batch 3 (M19, M20) when the user says so.
-
+- Update 2026-11-11: the user checked U1-U6 on screen ("everything is perfectly fine now"); U1-U6 marked done, animations stay on.

@@ -476,12 +476,12 @@ For every U task: it fits 80x24 (tests check it); mouse clicks still work; `go b
 
 **Screen size:** as it is for now (fits 80x24, centered in bigger windows). Revisit later.
 
-### [~] U1: Look kit
+### [x] U1: Look kit
 - Shared colors and pieces in internal/ui: boxes, ▶ selection, key-cap footer, bars, switches, tabs, badges, toast, block font, symbol sets.
 - Every menu and the guide switch to the new look. The Symbols setting (fancy / simple).
 - Guide panel: dark (`#111416`) with a border, header "GUIDE › SECTION NAME" on the left and page dots "● ○ ○ ○ 1/4" on the right, the page title as an amber label, footer key caps "←→ page ↑↓ scroll esc back". The keyboard picture, map pictures and 3D views stay, recolored.
 
-### [~] U2: Title and Play screen
+### [x] U2: Title and Play screen
 - **Logo "TERM FPS"**: 5-row block letters, 5 columns each, 2-column gaps, 6-column word gap: 51 columns wide, centered. Rows from amber (top) to orange (bottom). Slow shimmer: every ~6 s a light band passes over the letters, about one letter per 0.2 s.
 - **Random tagline each start** (like Minecraft's splash text), centered under the logo in yellow, gently pulsing. Picked with the injected `*rand.Rand`. The list:
   - a first-person shooter game in your terminal
@@ -516,7 +516,7 @@ For every U task: it fits 80x24 (tests check it); mouse clicks still work; `go b
   - BEST line for the map: survival (time, kills, tier) and waves (best wave or "won in 7:12").
   - `▶ START` button. Footer: ↑↓ map, ←→ mode, ⏎ start, esc back.
 
-### [~] U3: Settings, pause, messages
+### [x] U3: Settings, pause, messages
 - **Settings, four tabs.** Tab key or ←→ on the tab row switches tabs. Each setting: label, value, one dim help line under it. "changes apply at once and are saved". Values: `◀ value ▶` for choices, `[■ on ]` switches, `▮▮▮▮▯▯ 40%` bars.
   - VIDEO: Render mode (half-block · shade · ASCII · mixed, also V in game), Render scale (auto keeps big windows smooth), FPS (30 or 60), Wall textures, Mixed background (bar), Symbols (fancy / simple, new), Title background (on/off, new), Animations (on/off, new).
   - AUDIO: Sound (stereo, from where things happen), Volume (bar, ←→ by 10%). Menu sounds follow these too.
@@ -528,7 +528,7 @@ For every U task: it fits 80x24 (tests check it); mouse clicks still work; `go b
 - **Sound warning** (yellow, one line): "Sound is off: no audio device found. The game runs without it."
 - **Window too small** (below 80 x 24): "WINDOW TOO SMALL", "now 62 × 20, needs 80 × 24", a small picture of the two sizes, "Make the window bigger or the font smaller. The game waits here and carries on by itself."
 
-### [~] U4: In game
+### [x] U4: In game
 - **HUD, two lines** (background `#111416`; costs 1 row of the 3D view):
   - Line 1: `♥ ▰▰▰▰▰▰▰▱▱▱ 76   ◆ ▰▰▰▰▰▱▱▱▱▱ 50   » ▰▰▰▰▰▰▱▱▱▱` ... `KILLS 23`
   - Line 2: `PISTOL 18/50  ❙❙❙❙(magazine strip, used rounds dim)   1 2 3 (current gun bright)` ... `TIER 2  TIME 3:07` (waves mode: `WAVE 3/10`, and during a break `BREAK 0:12`).
@@ -539,13 +539,13 @@ For every U task: it fits 80x24 (tests check it); mouse clicks still work; `go b
 - Crosshair, hit markers, red hurt edge, gun drawing: unchanged (game art, not UI).
 - The guide's HUD page explains the new HUD.
 
-### [~] U5: Run stats, game over, win
+### [x] U5: Run stats, game over, win
 - **Run stats to track** (new, in the game package through events; the injected rand untouched): shots fired and hits (accuracy), what killed you (enemy kind, explosion, acid), kills per enemy kind, damage taken, HP left, explored % this run.
 - **Game over**: big red "YOU DIED" (spaced block letters), "killed by a tank · The Warehouse · survival"; stat boxes TIME, KILLS, TIER, ACCURACY with NEW BEST badges (green) or "best 5"; "this run: 4 tanks · 2 exploders · 31 runners · explored 71% of the map"; buttons TRY AGAIN, CHANGE MAP, MAIN MENU (←→ pick).
 - **Win** (waves): green "YOU WON", a few amber ✦; "all 10 waves cleared · map · waves mode"; boxes TIME (NEW BEST = fastest win), KILLS ("best 142"), ACCURACY, HP LEFT; the per-kind line; PLAY AGAIN, CHANGE MAP, MAIN MENU.
 - NEW BEST compares with the player's best on that map (bests are already kept per map in save.json).
 
-### [~] U6: Guide pages as pictures
+### [x] U6: Guide pages as pictures
 Text-only guide pages become pictures (numbers always from the code, as now):
 - **Tiers**: "20 kills or 3:00, whichever first"; progress bars "to next tier 7/20 kills or 1:30/3:00"; a table per tier 1 to 6: enemy HP bar (red), damage bar (orange), speed bar (yellow), new enemy every N s, max alive as dots; "NEW KINDS T1 zombie shooter, T2 runner, T3 tank, T4 exploder"; "keeps rising: speed up to x1.5, at most every 2 s, at most 14 alive".
 - **Enemies learn**: four boxes with top-down pictures: TIER 1 straight at you; TIER 2 they hear you (15 steps, rush 1.4x); TIER 3 shooters hide; TIER 4 they surround you; then a "DON'T CAMP" bar (1:00 without a kill → horn → hunt, 1.2x faster until your next kill).
