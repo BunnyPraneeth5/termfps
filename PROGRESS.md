@@ -308,4 +308,4 @@ Template:
 - Tests: build, vet, gofmt clean, `go test ./...` passes; the three release targets cross-compile without cgo and the Windows build prints `termfps v0.75 “As*****”`; the YAML files parse; the tag check accepts v0.75 and rejects other tags.
 - Not done: the user checks the draft release on GitHub and publishes it; nobody has played the downloaded builds yet.
 - License: MIT (LICENSE), plus THIRD_PARTY_NOTICES.txt for the libraries, both in every download; the v0.75 draft was rebuilt with them.
-
+- README: the demo video removed (README link and docs/termfps-demo.mp4) at the user's request; docs/screenshot.png is now the user's screenshot of the v0.75 title screen. The v0.75 draft was rebuilt so the README inside the downloads matches.

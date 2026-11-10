@@ -12,10 +12,7 @@ best scores. Multiplayer is planned later.
 
 Current version: **v0.75 “As\*\*\*\*\*”**.
 
-[![termfps running in Windows Terminal](docs/screenshot.png)](docs/termfps-demo.mp4)
-
-▶ [Watch the 27-second demo](docs/termfps-demo.mp4) (MP4, 4.7 MB). It shows
-the first prototype; a new demo of the survival game is planned.
+![The termfps title screen in Windows Terminal](docs/screenshot.png)
 
 ## Download
 
@@ -290,7 +287,7 @@ The prototype (P0), the single-player survival game (P1), the maps and
 gameplay update and the UI redesign are built. Planned next (details in
 [PRD.md](PRD.md) and [TASKS.md](TASKS.md)):
 
-1. **Balancing and a new demo.**
+1. **Balancing**, with feedback from the test release.
 2. **A public test release:** downloadable builds for v0.75.
 3. **Server / client split** inside the game, needed for the next two.
 4. **You vs an AI agent:** play against Claude Code, Codex, opencode or another CLI agent, in modes like hide and seek or a face-to-face duel.

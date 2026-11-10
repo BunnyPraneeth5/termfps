@@ -434,7 +434,8 @@ Decided with the user on 2026-10-30 (D49; the guide and release added 2026-10-31
 
 ### [~] M19: Balancing and a new demo (batch 3)
 - Was M18. Carried over from P1-18: playtest tiers 3+, the ammo cap, the new pickups, weapons, enemies, hazards and waves; record a new demo.
-- 2026-11-11, the user's playtest: everything feels right except ammo, which runs short; the user is fine with low ammo for now (it keeps the tension), so no numbers changed. Revisit with the public testers' feedback. Still to do: the new demo, from the user's video edit.
+- 2026-11-11, the user's playtest: everything feels right except ammo, which runs short; the user is fine with low ammo for now (it keeps the tension), so no numbers changed. Revisit with the public testers' feedback.
+- 2026-11-11: the user removed the demo video from the README and the repo; the README shows a screenshot of the new title screen instead, so M19 needs no README demo any more (the user's social media videos are separate). What's left of M19: balancing from the testers' feedback.
 
 ### [~] M20: Public test release (batch 3; done before M19's demo, the user's choice)
 - Downloadable builds (Windows and Linux; macOS if it can be tested) on a GitHub Releases page, built by CI.
