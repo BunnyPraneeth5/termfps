@@ -5,9 +5,12 @@ draws the walls with half-block pixels (`▀`, two pixels per character cell),
 so you get a retro 3D view with no GPU and no game client, from one small
 binary.
 
-It's a **single-player survival game**: four arenas, zombies and shooters
-that keep coming and get tougher, limited ammo, sound, and saved best scores.
-Multiplayer is planned later.
+It's a **single-player survival game**: six maps, five kinds of enemies that
+keep coming and get smarter, three guns, pickups, hazards, an endless
+survival mode and a 10-wave mode, stereo sound, an in-game guide, and saved
+best scores. Multiplayer is planned later.
+
+Current version: **v0.75 “As\*\*\*\*\*”**.
 
 [![termfps running in Windows Terminal](docs/screenshot.png)](docs/termfps-demo.mp4)
 
@@ -19,8 +22,8 @@ the first prototype; a new demo of the survival game is planned.
 - **Go 1.27.1 or newer** to build.
 - **A truecolor terminal.** Windows Terminal is the main target. VS Code's
   terminal also works.
-- **At least 80x24 characters.** Smaller windows show a "Terminal too small"
-  message until you resize. About 120x40 looks best.
+- **At least 80x24 characters.** Smaller windows show "WINDOW TOO SMALL"
+  until you resize; the game carries on by itself. About 120x40 looks best.
 - **For sound:** speakers. On Linux, ALSA or PulseAudio. Without them the game
   runs silently and the menu says why.
 
@@ -65,8 +68,9 @@ In the game:
 | `Ctrl+C` | Quit right away, from anywhere |
 
 In menus: `↑` / `↓` (or `W` / `S`) to select, `←` / `→` (or `A` / `D`) to
-change a setting, `Enter` to choose, `Esc` to go back. You can also click
-an item. There's no mouse-look: terminals can't capture the mouse. While the
+change a setting, `Enter` to choose, `Esc` to go back, `Tab` for the next
+Settings tab. You can also click an item. Every screen shows its keys at
+the bottom. There's no mouse-look: terminals can't capture the mouse. While the
 game runs, the mouse belongs to the game, so selecting text in the terminal
 needs Shift+drag in most terminals.
 
@@ -75,34 +79,45 @@ mode). See `-keys` below for other systems.
 
 ## Menus
 
-- **Start:** Play, Select map, Settings, Guide, Quit. After Play (or picking a
-  map) you choose the mode: **Survival** (endless) or **Waves** (10 waves
-  with 15-second breaks; clear them all to win). Bests are kept per mode.
-- **Pause** (`Esc` in the game; the game freezes, dimmed behind the menu):
-  Resume, Settings, Restart, Guide, Quit to menu.
-- **Guide** (from the start or pause menu), in a centered panel that grows
-  with the window up to 100 columns: the controls as a keyboard and mouse
-  picture (keys colored by what they do; Up/Down step through them), the HUD
-  with each part pointed out, every enemy, weapon, pickup and hazard, tiers,
-  what enemies learn, waves, health and stamina, every map, the settings,
-  and tips. Enemies, weapons, pickups and hazards are shown in 3D: they stand
-  in a small room while the camera circles them (weapons also fire in your
-  hand). Enemies you haven't met and guns you haven't found are dark
-  "???" until you do. Each map shows a top-down picture of what you've
-  explored so far (over all runs; the rest stays dark, the outline always
-  shows) and how much, plus a full turn from its start once you've played
-  it. Locked maps show only their outline. The numbers come straight from
-  the game, so they're always right. Left/Right turn the pages.
-- **Settings** take effect right away: render mode, mixed background
-  brightness (0-100%, default 20%), color threshold (off by default), render
-  scale (auto draws the 3D view at most 160 columns wide in big windows;
-  full; half), FPS
-  (30 or 60), minimap at start, wall textures, sound on/off, volume, key
-  mode, pixel aspect, map unlocks (survive 5:00, survive 2:00, or all
-  maps open), minimap fog of war (on: the minimap shows only what you've
-  seen).
-- **Game over:** your kills, time and tier, your best on that map, then Try
-  again or Main menu.
+- **Title:** the TERM FPS logo, a random tagline each start, and PLAY, GUIDE,
+  SETTINGS, QUIT, with your best run and the version. Behind it the camera
+  slowly wanders through one of your unlocked maps (Settings > Title
+  background turns that off for slow terminals).
+- **Play:** pick the mode and the map on one screen. **Survival** is
+  endless; **Waves** is 10 waves with breaks between them (clear them all to
+  win). The map list shows each map's size and how much of it you've
+  explored, with a top-down picture of what you've seen, its doors and red
+  barrels, and your bests there. Locked maps say what opens them.
+- **Pause** (`Esc` in the game): a card over the frozen game with your time,
+  kills, tier and HP and how far the next tier is (in waves mode, the wave),
+  then Resume, Restart, Guide, Settings, Quit to menu (the run still counts).
+- **Guide** (from the title or the pause card), in a panel that grows with
+  the window up to 100 columns: the controls as a keyboard and mouse picture
+  (keys colored by what they do; Up/Down step through them), the HUD with
+  each part pointed out, every enemy, weapon, pickup and hazard in 3D (they
+  stand in a small room while the camera circles them; weapons also fire in
+  your hand), tiers, what enemies learn, waves, health and stamina as
+  pictures and charts, every map, the settings (the same wall in all four
+  render modes) and tips. Enemies you haven't met and guns you haven't found
+  are dark "???" until you do. Each map shows what you've explored so far
+  (over all runs; the outline always shows) and a full turn from its start
+  once you've played it. The numbers come straight from the game, so
+  they're always right. Left/Right turn the pages.
+- **Settings**, in four tabs; every change applies at once and is saved:
+  - Video: render mode, render scale (auto draws the 3D view at most 160
+    columns wide in big windows; full; half), FPS (30 or 60), wall textures,
+    mixed background (0-100%, default 20%), symbols (fancy, or simple if you
+    see `?` or empty boxes), title background, animations.
+  - Audio: sound on/off, volume.
+  - Controls: key mode, pixel aspect, minimap at start.
+  - Gameplay: map unlocks (survive 5:00, survive 2:00, or all maps open),
+    minimap fog of war (the minimap shows only what you've seen), color
+    threshold (off by default).
+- **Game over:** YOU DIED, what killed you, your time, kills, tier and
+  accuracy (with NEW BEST against your best on that map), what you killed,
+  how much of the map you explored, then Try again, Change map or Main menu.
+  Winning waves mode shows YOU WON with your time, kills, accuracy and HP
+  left.
 
 ## Saving
 
@@ -113,7 +128,9 @@ die, restart, quit to the menu, or press `Ctrl+C`. There are no mid-game
 saves.
 
 If the save file is damaged, the game keeps it as `save.json.bad`, starts
-with defaults, and says so in the menu.
+with defaults, and says so in a red box with the real error. A save that
+fails (for example a folder you can't write to) shows the same box, then a
+"Not saved" line on the title and the pause card until a save works.
 
 ## Maps
 
@@ -122,10 +139,12 @@ with defaults, and says so in the menu.
 | The Arena | 16x16 | Small rooms and corridors; the first map |
 | The Warehouse | 32x32 | Rows of metal shelves with aisles between them |
 | The Yard | 64x32 | Open ground, stone blocks, containers, one building with two doors |
-| The Tunnel | 16x64 | A long zigzag corridor |
+| The Tunnel | 16x64 | A long zigzag corridor with acid puddles |
+| The Office | 32x24 | Many rooms and doors |
+| The Subway | 48x20 | Two platforms and the tracks: acid on the track bed, red barrels on the platforms |
 
 The first map is open. Survive **5 minutes** on the newest open map to unlock
-the next one. On maps bigger than the screen allows, the minimap shows the
+the next one (Settings can make it 2 minutes, or open every map). On maps bigger than the screen allows, the minimap shows the
 area around you and scrolls as you move.
 
 ## Playing
@@ -154,8 +173,9 @@ area around you and scrolls as you move.
 - **Waves mode:** wave 1 sends 4 enemies, each next wave 2 more (22 in wave
   10). A wave ends when all its enemies are dead; then you get 15 seconds
   to reload and pick things up. The tier rises every two waves, so every
-  enemy kind and trick shows up. The HUD shows `WAVE 3/10` (with a
-  countdown during a break) instead of the tier.
+  enemy kind and trick shows up. The HUD shows `WAVE 3/10` (and `BREAK`
+  with a countdown between waves) instead of the tier, and a banner counts
+  down to the next wave.
 - **Guns:** you start with the **pistol** (25 rounds, 3 shots per second).
   The **shotgun** (8 pellets in a spread: deadly up close, weak far away, 6
   shells) shows up on the map after 0:30, the **rifle** (accurate, 100
@@ -200,12 +220,16 @@ area around you and scrolls as you move.
   Four looks, switched with `V` or in Settings: half-block pixels (the
   default), shade blocks (`█▓▒░`), ASCII (`@%#&8*o+=~-:,.`), and mixed: ASCII
   characters in color on a dim fill of the same color.
-- **Minimap** (top right): walls, floor, red blocks, pickups, and an arrow
-  showing where you are and which way you face.
-- **HUD** (bottom line): health, armor, the gun in hand and its ammo, kills,
-  tier, time survived, and stamina while it isn't full.
-  If the window is wide enough, it also shows FPS, render mode, facing angle
-  and compass direction, frame timings, position and the input mode.
+- **Minimap** (top right, the map's name in its frame): walls, floor, doors,
+  props, acid, red blocks, pickups, and an arrow showing where you are and
+  which way you face.
+- **HUD** (the bottom two lines): health, armor and stamina as bars, and your
+  kills; the gun in hand with its rounds and spare ammo, the magazine as a
+  strip (used rounds dark), your guns (1 2 3, the one in hand bright), the
+  tier (or the wave) and the time. If the window is wide enough, the middle
+  of the second line also shows FPS, render mode, facing, frame timings,
+  position and the input mode.
+- **Notices** (a new tier, a wave, the hunt, a new map) show at the top.
 
 ## Options
 
@@ -230,22 +254,26 @@ Example: `.\termfps.exe -fps 60 -aspect 0.9`
   Control back on without a reinstall.
 - **Grays look banded.** The terminal is reducing colors. Use Windows
   Terminal, or another terminal with 24-bit color, or press `V` for ASCII.
-- **"Sound unavailable" in the menu.** The game couldn't open an audio
+- **"Sound is off: ..." on the title.** The game couldn't open an audio
   device; the message says why. Everything else works.
+- **`?` or empty boxes in the menus or the HUD.** Your font or console
+  doesn't have those symbols: set Settings > Video > Symbols to simple.
 - **The terminal looks broken after a crash.** It shouldn't: the game
   restores the terminal on exit and on crashes. If you ever see it, please
   open an issue with the printed error.
 
 ## Roadmap
 
-The prototype (P0) and the single-player survival game (P1) are built.
-Planned next (details in [PRD.md](PRD.md) and [TASKS.md](TASKS.md)):
+The prototype (P0), the single-player survival game (P1), the maps and
+gameplay update and the UI redesign are built. Planned next (details in
+[PRD.md](PRD.md) and [TASKS.md](TASKS.md)):
 
-1. **Maps and gameplay update:** better, more realistic maps and more to do
-   in them (being discussed).
-2. **Server / client split** inside the game, needed for the next two.
-3. **You vs an AI agent:** play against Claude Code, Codex, opencode or another CLI agent, in modes like hide and seek or a face-to-face duel.
-4. **Multiplayer:** team deathmatch over LAN, then over SSH.
+1. **Balancing and a new demo.**
+2. **A public test release:** downloadable builds for v0.75.
+3. **Server / client split** inside the game, needed for the next two.
+4. **You vs an AI agent:** play against Claude Code, Codex, opencode or another CLI agent, in modes like hide and seek or a face-to-face duel.
+5. **Multiplayer:** team deathmatch over LAN, then over SSH. A browser
+   version is being discussed.
 
 ## Development
 
@@ -261,16 +289,16 @@ Code layout:
 | Path | What's there |
 |---|---|
 | `main.go` | Startup: flags, maps, save file, audio, terminal restore and crash handling |
-| `internal/app` | Game loop, screens (menus, game, game over), saving and sound wiring |
-| `internal/ui` | Menu model and drawing |
+| `internal/app` | Game loop and screens (title, Play, Settings, pause, game, end screens, guide), saving and sound wiring |
+| `internal/ui` | Menu model, and the look: colors, symbol sets, boxes, bars, key caps, block letters |
 | `internal/world` | Map parsing, raycasting (DDA), collision, paths for enemies |
-| `internal/game` | Player, weapon, enemies, spawner and tiers, pickups (no terminal code) |
+| `internal/game` | Player, weapons, enemies and what they learn, spawner, tiers and waves, pickups, hazards, run stats (no terminal code) |
 | `internal/input` | Keys and mouse to game input, real key state on Windows |
 | `internal/render` | Pixel frame, shading, textures, sprites, presenters (half-block, shade, ASCII, mixed), minimap, HUD |
 | `internal/save` | `save.json` read and atomic write |
 | `internal/audio` | Generated sound effects, played with oto |
 | `internal/assets` | Pixel art (gun, sprites) and wall textures as text files |
-| `maps/*.txt` | The four maps, built into the binary |
+| `maps/*.txt` | The six maps, built into the binary |
 
 Map files start with a `; name: The Arena` line, then the grid: `#`
 (brick), `%` (stone) and `&` (metal) for walls, `.` for floor, exactly one
