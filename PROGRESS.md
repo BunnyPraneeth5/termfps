@@ -297,3 +297,8 @@ Template:
 - Not done: the user's on-screen review of all six (look in Windows Terminal, crowded text, animations go / no-go); not pushed.
 - Next: the user's review and fixes, then batch 3 (M19, M20) when the user says so.
 - Update 2026-11-11: the user checked U1-U6 on screen ("everything is perfectly fine now"); U1-U6 marked done, animations stay on.
+
+## 2026-11-11 (batch 2 and V6-V8 signed off, push)
+- The user signed off batch 2 (M13, M15, M17, M18a, M18b, M18c) and V6-V8; marked done. M19 is the user's own task; M20 comes when the user asks, after M19.
+- Pushed main to GitHub (everything up to the UI redesign).
+

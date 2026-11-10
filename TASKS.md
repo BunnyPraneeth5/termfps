@@ -313,17 +313,17 @@ A separate track (D44): the user asked for better visuals. Five tasks in two run
 - A longer brightness ramp for the ASCII and mixed modes, so shading has more steps.
 - Acceptance: unit tests (ramp order, full range used); on screen (user).
 
-### [~] V6: Render scale for big windows
+### [x] V6: Render scale for big windows
 - Settings "Render scale": auto (default), full, half. Auto draws the 3D view at most 160 columns wide (2x2 screen cells per view cell from 161 columns, 3x3 from 321, ...) so neighboring cells share colors and the terminal gets far fewer color codes; full is today's behavior; half always uses 2x2. HUD, minimap and menus stay at full resolution. Saved in save.json (older files: auto).
 - Why: the user found big windows (zoomed out) lag in Windows Terminal: bytes per frame grow with the cell count (D45).
 - Acceptance: unit tests (scaled presenting, frame size, auto choice, setting saved); bytes per frame at a big size with and without; on screen (user): a zoomed-out window stays smooth.
 - Result (D46): only 4-12% fewer bytes at 320x90; the user chose to keep it.
 
-### [~] V7: Stronger texture and floor contrast
+### [x] V7: Stronger texture and floor contrast
 - Texture detail stands out more (the darkest texture pixel keeps 30% of the shade, was 45%) and the floor is a little brighter (base 140, was 120), so brick lines, stone gaps and floor tiles read clearly.
 - Acceptance: tests updated; on screen (user).
 
-### [~] V8: Faster drawing
+### [x] V8: Faster drawing
 - From the user's Take 4 recording: zoomed out at 60 FPS the HUD showed draw 5-9 ms. DrawFrame now works out per-row floor values once per frame, walks each column in row ranges (only the two wall edge rows compute coverage), looks wall texture shades up in a per-column table, and toGray uses plain comparisons. Same picture.
 - Acceptance: all render tests pass unchanged; benchmarks faster; on screen (user): smoother when zoomed out.
 
@@ -391,7 +391,7 @@ Decided with the user on 2026-10-30 (D49; the guide and release added 2026-10-31
 - Runner (fast, weak) from tier 2, tank (slow, tough, hits hard) from tier 3, exploder (runs at you, blows up near you or when shot) from tier 4; see the tier table.
 - Own sprites and sounds.
 
-### [~] M13: Smarter enemies (batch 2)
+### [x] M13: Smarter enemies (batch 2)
 - Enemies start dumb (as now) and learn by tier (table above): tier 2 they hear gunshots and come to the sound; tier 3 shooters take cover behind props; tier 4 zombies come from several sides.
 - Anti-camping: after 60 seconds without a kill, every enemy hunts the player directly (heads straight for them), until the next kill.
 
@@ -400,30 +400,30 @@ Decided with the user on 2026-10-30 (D49; the guide and release added 2026-10-31
 - Acid floor: a new green map character that hurts while you stand on it; placed on a few maps.
 - Explosion sound.
 
-### [~] M15: Waves (batch 2)
+### [x] M15: Waves (batch 2)
 - A second mode next to endless survival, chosen when you press Play: 10 waves with a 15-second break between them (reload, pick things up); you win after wave 10. Bests kept per mode.
 
 ### [x] M16: Game feel (batch 1)
 - Sprint while F is held, with stamina (drains while sprinting, refills when not); the HUD shows it.
 - A marker showing which way a hit came from; a hit marker on the crosshair when you hit; screen shake on big hits (explosions, tank hits); footstep sounds while walking.
 
-### [~] M17: 3D sound (batch 2)
+### [x] M17: 3D sound (batch 2)
 - Louder when close, quieter far away, and panned left/right toward the source, so you hear where enemies are. Needs stereo playback (oto supports it).
 - Missing sounds found after the batch 1 review (2026-10-31): each enemy kind makes its own sound near the player (e.g. a runner screeches when it starts chasing you), not only when it arrives; zombie and runner hits get their own sound (only the tank's hit has one now); a death sound per enemy kind; the shotgun and rifle get their own reload sounds (now all three use the pistol's).
 
-### [~] M18a: In-game guide (batch 2)
+### [x] M18a: In-game guide (batch 2)
 - A **Guide** item in the title menu and the pause menu (so it can be read mid-run). A list of pages, moved through with the arrows or W/S, Enter, Esc; pages scroll so they fit from 80x24 up.
 - Pages: controls and HUD; enemies (picture, HP, speed, damage, the tier it arrives in, how to beat it); weapons and ammo (picture, damage, magazine, fire rate, when it appears, when to use it); pickups; hazards (red barrels, acid, explosions); tiers (what changes, 20 kills or 3 minutes); maps (name, size, hazards, a tip); settings; tips for surviving longer.
 - Numbers come straight from the game code (TierFor, the gun table, the enemy constants), not typed in, so balancing (M19) can't make the guide wrong.
 - Pictures are the game's own sprites. Locked maps show only their name and "locked" until unlocked (a surprise, the user's choice).
 - Acceptance: unit tests (every enemy kind, gun, pickup kind and map has a page; numbers match the code; locked maps hidden; fits 80x24; both menus open it); on screen (user).
 
-### [~] M18b: Guide 3D views (batch 2)
+### [x] M18b: Guide 3D views (batch 2)
 - Every guide entry gets a live 3D view drawn by the game's own renderer: enemies, gun pickups, ammo, medkit, armor, red barrel and acid each stand in a small lit display room, and the camera slowly circles them (360°). Weapons also show the gun in hand, firing now and then. Maps show a top-down picture and a view where the camera stands in the map and slowly turns all the way around.
 - The objects are flat pictures that always face the camera (like Doom), so circling shows the room turning around them, not their sides. Drawing every object from 8 angles for a true turntable is a separate, bigger idea (not planned).
 - Acceptance: unit tests (each entry has a view; the camera goes all the way around; locked maps get no view); on screen (user).
 
-### [~] M18c: Guide polish (batch 2, after the user's test of M18a/M18b)
+### [x] M18c: Guide polish (batch 2, after the user's test of M18a/M18b)
 - Decided with the user on 2026-10-31 (D53).
 - **Panel:** guide pages sit in a centered panel that looks like the menus (light box, dark text), with the 3D view as a dark window inside it. The panel grows with the window up to 100 columns wide, then stops and stays centered; the 3D view grows with it.
 - **Explored maps:** the cells you've seen on each map are remembered across runs (save.json). A map page shows a big top-down picture (most of the panel width, the text under it): explored parts normal, unexplored parts dark, the map's outer border always drawn, and "Explored: n%". The 360° turn shows only after you've played that map once. Locked maps: the name and the full border, dark inside.
