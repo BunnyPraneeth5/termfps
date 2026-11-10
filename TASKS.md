@@ -441,3 +441,115 @@ Decided with the user on 2026-10-30 (D49; the guide and release added 2026-10-31
 - A version number, shown in the game (title menu) and by `-version`.
 - A GitHub issue template for feedback: version, system, terminal, what happened.
 - Linux (sound needs ALSA or PulseAudio) and macOS tested, or the release says "Windows first".
+
+# UI redesign (direction A, "Arcade terminal")
+
+Decided with the user on 2026-11-10 (D54) from mockups on a design canvas (private, only the user can open it: https://claude.ai/artifact/TLTTTMFedGYf166nu3AjAy; where the canvas and this file differ, this file wins). Built in one run, U1 to U6 back to back, one commit per task, one review of everything at the end. It comes before M19 and M20. Nothing is pushed until the user asks.
+
+For every U task: it fits 80x24 (tests check it); mouse clicks still work; `go build`, `go vet`, `gofmt -l`, `go test` pass; the user signs off what's on screen. Project rules stay: world and game never import tcell or audio; game emits events; movement uses dt; beginner comments for Go concepts.
+
+## Shared rules for U1-U6
+
+**Palette** (truecolor, `term.RGB`):
+
+| Use | Color |
+|---|---|
+| Background | `#0b0d0e` |
+| Panels, HUD background | `#111416`, cards `#15181a` |
+| Borders, empty bar cells | `#3a3f42`; lines inside panels `#2a2f33` |
+| Normal text | `#c9ccce`; bright/bold text `#f2f2f2` |
+| Dim text (help lines, labels) | `#8a9196` (readable on the dark ground; `#5b6266` on the early boards was too dark) |
+| Accent (selection bar, titles, highlights) | amber `#ffb000`; logo gradient `#ffc533` → `#ffb000` → `#ff9a1f` → `#ff8a3d` → `#e8702e` |
+| Health | red `#ff5c5c` |
+| Armor | blue `#6aa9ff` |
+| Stamina, tagline, warnings | yellow `#ffe066` |
+| Good news (NEW BEST, wave cleared, win) | green `#5ee27a` |
+| Key-cap chips | `#2a2f33` background, `#e8e8e8` text |
+
+**Symbols:** fancy by default (♥ ◆ » ▰▱ ❙ ╭╮ ╔╗ ▶ ✓ ✦, key caps ↑↓ ⏎ esc), plus a "Symbols: fancy / simple" setting. Simple: `HP [#######---]`, `AR [#####-----]`, `ST [######----]`, magazine `||||||....`, current gun `[1] 2 3`, boxes `+--+`, keys `Up/Down Enter Esc`. Why: Windows Terminal draws the fancy ones; old console windows and some fonts show `?` or empty boxes instead.
+
+**Crowded text (must fix):** the block letters touched each other on the first boards ("TERMFPS": R ran into M; "YOU DIED", "YOU WON" too). At least 2 empty columns between letters, at least 6 between words. Check in the real terminal (Windows Terminal), not only on the canvas. The small two-row logo at the top of the Play and Settings screens says "TERM FPS" as two words too. The user knows of no other crowded text so far; keep an eye out.
+
+**Version:** v0.75, codename "As*****". The masking is the joke: write it exactly like that everywhere (title screen, release notes, commits, docs), never spelled out. Shown bottom right on the title screen as `v0.75 “As*****”`, and used for the M20 public test release. Everyone who plays the public test sees the codename.
+
+**Animations (only if they don't slow the game):** the screen is already redrawn 30 to 60 times a second; a small animation only changes a few characters in frames that are drawn anyway. The 3D view (thousands of cells) is what costs time, and animations don't touch it. Keep them short (a few frames), never inside the 3D drawing, measure with the FPS display and a benchmark, add "Animations: on / off", and drop any that measurably slow things. Candidates: logo shimmer and tagline pulse (title only); selection bar moving smoothly; toasts sliding in from the top; "YOU DIED" / "YOU WON" appearing row by row; game-over numbers counting up; NEW BEST blinking a few times.
+
+**Screen size:** as it is for now (fits 80x24, centered in bigger windows). Revisit later.
+
+### [ ] U1: Look kit
+- Shared colors and pieces in internal/ui: boxes, ▶ selection, key-cap footer, bars, switches, tabs, badges, toast, block font, symbol sets.
+- Every menu and the guide switch to the new look. The Symbols setting (fancy / simple).
+- Guide panel: dark (`#111416`) with a border, header "GUIDE › SECTION NAME" on the left and page dots "● ○ ○ ○ 1/4" on the right, the page title as an amber label, footer key caps "←→ page ↑↓ scroll esc back". The keyboard picture, map pictures and 3D views stay, recolored.
+
+### [ ] U2: Title and Play screen
+- **Logo "TERM FPS"**: 5-row block letters, 5 columns each, 2-column gaps, 6-column word gap: 51 columns wide, centered. Rows from amber (top) to orange (bottom). Slow shimmer: every ~6 s a light band passes over the letters, about one letter per 0.2 s.
+- **Random tagline each start** (like Minecraft's splash text), centered under the logo in yellow, gently pulsing. Picked with the injected `*rand.Rand`. The list:
+  - a first-person shooter game in your terminal
+  - the shooter that lives in your terminal
+  - survive the horde, one character at a time
+  - how long can you last?
+  - keep moving. keep shooting.
+  - made of text, full of teeth
+  - mind the red barrels
+  - now with exploders
+  - don't camp
+  - no mouse-look required
+  - rendered one character at a time
+  - the walls are ASCII, the danger is real
+- **Menu** in a double-line box: PLAY (survival or waves), SELECT MAP (6 maps · 2 locked), GUIDE (how to play), SETTINGS, QUIT. ▶ on the selected item; a description line under the box ("› Pick a mode and a map, then go."). SELECT MAP may go away because the Play screen already picks the map; decide when building (keep the item only if it adds something, e.g. bests and explored % per map).
+- **Best run** line ("best on The Arena 12:31 · 142 kills · tier 5"), key-cap footer, version bottom right.
+- **Moving map background** (slow motion only):
+  - Map: random among the maps the player has unlocked (locked maps stay a surprise). Injected rand.
+  - Camera only, no game simulation: no enemies, no pickups, no sounds. Doors treated as open.
+  - Walk at about 30 to 40% of walking speed along a route through open cells (world path / distance field, never through walls). Smooth turns (limited degrees per second). At some waypoints it stops and slowly looks around (90 to 180 degrees), then walks on. Speeds use dt.
+  - Drawn with the normal renderer, dimmed so the menu stays readable; the logo and menu on top.
+  - Keeps moving slowly behind Settings and the Guide opened from the title.
+  - Cost: lower frame rate and/or half render scale while on the title. Memory stays flat (the Frame is reused, nothing new per frame); the cost is CPU, which the lower frame rate keeps down.
+  - Setting "Title background: on / off" for slow terminals.
+  - Tests: the route never enters a wall; movement follows dt; the same seed gives the same tour.
+- **Menu sounds**: a soft tick when the selection moves, a click on choose, a soft low sound on back (Esc), a short buzz on a locked item. Synthesized in internal/audio like the other effects; they follow Sound on/off and Volume. Played by the app's menus (game never calls audio).
+- **Play screen** (the mode and map menus merged):
+  - Small "TERM FPS" logo top left, screen name "PLAY" top right.
+  - MODE: `SURVIVAL` / `WAVES` toggle (←→), with a one-line explanation ("endless · tier up every 20 kills or 3:00", or "10 waves with breaks, clear them all to win").
+  - MAP list box: name, size, explored % per map; locked maps dim with "▒ locked"; "+ your maps (maps folder)".
+  - Preview box titled with the map's name: top-down picture (explored parts lit, the rest dark with the border visible, like the guide's map pages), plus "explored 64% · 3 doors · 4 red barrels".
+  - BEST line for the map: survival (time, kills, tier) and waves (best wave or "won in 7:12").
+  - `▶ START` button. Footer: ↑↓ map, ←→ mode, ⏎ start, esc back.
+
+### [ ] U3: Settings, pause, messages
+- **Settings, four tabs.** Tab key or ←→ on the tab row switches tabs. Each setting: label, value, one dim help line under it. "changes apply at once and are saved". Values: `◀ value ▶` for choices, `[■ on ]` switches, `▮▮▮▮▯▯ 40%` bars.
+  - VIDEO: Render mode (half-block · shade · ASCII · mixed, also V in game), Render scale (auto keeps big windows smooth), FPS (30 or 60), Wall textures, Mixed background (bar), Symbols (fancy / simple, new), Title background (on/off, new), Animations (on/off, new).
+  - AUDIO: Sound (stereo, from where things happen), Volume (bar, ←→ by 10%). Menu sounds follow these too.
+  - CONTROLS: Key mode (Windows: move and turn at once), Pixel aspect (if walls look too tall or too flat), Minimap at start (M shows or hides it).
+  - GAMEPLAY: Map unlocks (survive 5:00 · survive 2:00 · all open), Minimap fog of war, Color threshold (fewer color codes for slow terminals).
+  - Check when building: every current setting has a tab (render mode, mixed background, color threshold, render scale, FPS, minimap at start, wall textures, sound, volume, key mode, pixel aspect, map unlocks, minimap fog).
+- **Pause**: a card over the dimmed 3D view: "II PAUSED", map name and mode; TIME, KILLS, TIER, HP; "next tier in 0:53 or 17 kills" (waves mode: wave progress instead); RESUME, RESTART, GUIDE, SETTINGS, QUIT TO MENU ("this run still counts"). Footer: ↑↓ pick, ⏎ choose, esc resume.
+- **Error box** over any screen: red border, "! COULDN'T SAVE YOUR PROGRESS", the real error text ("open save.json: Access is denied."), what it means ("This run was played, but it is not saved."), an OK button. The same box for map load errors. No silent fallbacks.
+- **Sound warning** (yellow, one line): "Sound is off: no audio device found. The game runs without it."
+- **Window too small** (below 80 x 24): "WINDOW TOO SMALL", "now 62 × 20, needs 80 × 24", a small picture of the two sizes, "Make the window bigger or the font smaller. The game waits here and carries on by itself."
+
+### [ ] U4: In game
+- **HUD, two lines** (background `#111416`; costs 1 row of the 3D view):
+  - Line 1: `♥ ▰▰▰▰▰▰▰▱▱▱ 76   ◆ ▰▰▰▰▰▱▱▱▱▱ 50   » ▰▰▰▰▰▰▱▱▱▱` ... `KILLS 23`
+  - Line 2: `PISTOL 18/50  ❙❙❙❙(magazine strip, used rounds dim)   1 2 3 (current gun bright)` ... `TIER 2  TIME 3:07` (waves mode: `WAVE 3/10`, and during a break `BREAK 0:12`).
+  - FPS / mode / facing / timings / position stay available as the optional extras line (as today).
+- **Notices** (tier up, hunt, new map, waves): a toast at the top center, amber on `#1d2124`, e.g. "TIER 2 · runners join · enemies hear you".
+- **Minimap**: box top right with the map name in the frame ("┌─ WAREHOUSE ─┐").
+- **Wave cleared**: a centered banner with an amber border: "✓ WAVE 3 CLEARED", "next wave in 12", a countdown bar, "wave 4: 10 enemies · tier 2", "reload and pick things up". When the break ends: a toast "WAVE 4 · 10 enemies · GO".
+- Crosshair, hit markers, red hurt edge, gun drawing: unchanged (game art, not UI).
+- The guide's HUD page explains the new HUD.
+
+### [ ] U5: Run stats, game over, win
+- **Run stats to track** (new, in the game package through events; the injected rand untouched): shots fired and hits (accuracy), what killed you (enemy kind, explosion, acid), kills per enemy kind, damage taken, HP left, explored % this run.
+- **Game over**: big red "YOU DIED" (spaced block letters), "killed by a tank · The Warehouse · survival"; stat boxes TIME, KILLS, TIER, ACCURACY with NEW BEST badges (green) or "best 5"; "this run: 4 tanks · 2 exploders · 31 runners · explored 71% of the map"; buttons TRY AGAIN, CHANGE MAP, MAIN MENU (←→ pick).
+- **Win** (waves): green "YOU WON", a few amber ✦; "all 10 waves cleared · map · waves mode"; boxes TIME (NEW BEST = fastest win), KILLS ("best 142"), ACCURACY, HP LEFT; the per-kind line; PLAY AGAIN, CHANGE MAP, MAIN MENU.
+- NEW BEST compares with the player's best on that map (bests are already kept per map in save.json).
+
+### [ ] U6: Guide pages as pictures
+Text-only guide pages become pictures (numbers always from the code, as now):
+- **Tiers**: "20 kills or 3:00, whichever first"; progress bars "to next tier 7/20 kills or 1:30/3:00"; a table per tier 1 to 6: enemy HP bar (red), damage bar (orange), speed bar (yellow), new enemy every N s, max alive as dots; "NEW KINDS T1 zombie shooter, T2 runner, T3 tank, T4 exploder"; "keeps rising: speed up to x1.5, at most every 2 s, at most 14 alive".
+- **Enemies learn**: four boxes with top-down pictures: TIER 1 straight at you; TIER 2 they hear you (15 steps, rush 1.4x); TIER 3 shooters hide; TIER 4 they surround you; then a "DON'T CAMP" bar (1:00 without a kill → horn → hunt, 1.2x faster until your next kill).
+- **Waves mode**: a bar chart of enemies per wave (4, 6, ... 22) colored by tier (T1 to T5), labels W1 to W10; a timeline "WAVE 1 ─ 15 s break ─ WAVE 2 ─ ... ─ WAVE 10 ─ ★ WIN"; first break 10 s; bests per map.
+- **Health and stamina**: a 100 HP bar with the 75 line (heals by itself up to 75, medkits go higher); "hit → wait 4 s → +5 HP every second, up to 75"; armor halves damage; stamina: F to sprint at 1.6x; full lasts 4 s; refills in 5 s; empty → no sprint until back to 30%.
+- **Settings**: the same wall in half-block, shade, ASCII and mixed side by side; a small preview per other setting.
+- **Tips**: a small picture beside each of the 7 tips.

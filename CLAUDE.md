@@ -16,7 +16,7 @@ Go (latest stable) + tcell v3 (v3.6.0 since S2, D42), pinned version. `github.co
 - Built in P1 (ARCHITECTURE "P1 design"): internal/app (loop + screens), internal/ui (menus), internal/save (save.json), internal/audio (oto), internal/assets (pixel art, textures). world and game never import tcell or audio.
 
 ## Rules
-- Stay in scope (PRD Roadmap, TASKS.md: P1, the "S0ra follow-ups" S1-Sn, then "Maps and gameplay update" M1-M20). If a task needs something out of scope, stop and ask.
+- Stay in scope (PRD Roadmap, TASKS.md: P1, the "S0ra follow-ups" S1-Sn, then "Maps and gameplay update" M1-M20, and the "UI redesign" U1-U6, D54). If a task needs something out of scope, stop and ask.
 - No new dependencies without asking. Approved: tcell v3 (was v2), oto v3.
 - Only touch files the current task needs.
 - world and game packages must never import tcell.
@@ -61,4 +61,4 @@ Append an entry to PROGRESS.md. Log any new decision in DECISIONS.md.
 - Windows Smart App Control (on, on the user's machine) sometimes blocks a freshly built `termfps.exe` ("An Application Control policy has blocked this file"). Not a code problem; a restart has cleared it. Rebuild only when code changed. Agents can't run the exe here either. It can block `go test` binaries too (seen in S2 after the tcell v3 / x/sys update); don't try to get around it (e.g. by changing build flags): report it and let the user run the tests or use CI.
 
 ## Current focus
-P1-01 to P1-17 done; the "S0ra follow-ups" track (S1-S3) is done and pushed. "Visual quality" track V1-V5 (D44, D45) done and pushed; the ceiling is flat near-black by the user's choice. P1-18 (docs update) waiting for the user to read the README. "Maps and gameplay update": M1-M9 built and pushed (D47, D48), waiting for the user's on-screen review. M10-M20 planned (D49, D51, TASKS.md "Gameplay"). Batch 1 (M10, M11, M12, M14, M16) done and pushed (D50). Batch 2 (M13, M15, M17, M18a, M18b, and M18c guide polish, D53) built and committed (D52), not pushed, the user is still testing; batch 3 (M19, M20) starts only when the user says so.
+P1-01 to P1-17 done; the "S0ra follow-ups" track (S1-S3) is done and pushed. "Visual quality" track V1-V5 (D44, D45) done and pushed; the ceiling is flat near-black by the user's choice. P1-18 (docs update) waiting for the user to read the README. "Maps and gameplay update": M1-M9 built and pushed (D47, D48), waiting for the user's on-screen review. M10-M20 planned (D49, D51, TASKS.md "Gameplay"). Batch 1 (M10, M11, M12, M14, M16) done and pushed (D50). Batch 2 (M13, M15, M17, M18a, M18b, and M18c guide polish, D53) built and committed (D52), not pushed, the user is still testing; batch 3 (M19, M20) starts only when the user says so. "UI redesign" (U1-U6, D54, TASKS.md "UI redesign"; version v0.75 "As*****") is built in one run before batch 3.

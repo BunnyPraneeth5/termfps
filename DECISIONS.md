@@ -353,3 +353,37 @@ Format: what, why, trade-off, revisit when.
 - Choices made in discussion: panel style A (light, like the menus) over a dark one, since the dark 3D view then stands out; option C for the keyboard (legend plus stepping) over stepping alone; map pages give the picture the width and put the text under it, since big maps lose detail in a small box. Up/Down (not Left/Right) step through keys, because Left/Right already turn the pages.
 - Revisit when: the user's on-screen review of M18c.
 - Follow-up (2026-11-09): the keyboard redrawn after the user's reference picture: every key a rounded box 3 lines tall on a dark inset, the full board (Esc and the number row, Backspace, Enter, Shift, Ctrl, Alt) with lowercase letters, arrow keys at the bottom right with up above down; used keys' borders and labels in their group color, the selected key filled with it. The board is 74 columns, exactly the panel's content at 80 columns (keys touch, no gaps); the mouse is boxed to the right on wider windows and small in the legend line at 80 columns.
+
+## D54: UI redesign, direction A "Arcade terminal"; version v0.75 "As*****" (2026-11-10)
+- What: a new look for every screen, agreed with the user from mockups on a private design canvas (https://claude.ai/artifact/TLTTTMFedGYf166nu3AjAy; boards for the title, Play, Settings, in-game HUD, pause, game over, win, wave banner, errors and too-small, the guide pages, the two symbol sets, and the rejected directions). Built as the "U" track, U1 to U6 (TASKS.md "UI redesign" has every screen's content, the palette and the shared rules). Order: the user finishes testing batch 2; then U1 to U6 in one run; then M19 and M20. Nothing is pushed until the user asks.
+- Decisions, and who made them:
+
+| Topic | Decision | Who |
+|---|---|---|
+| Direction | A, "Arcade terminal" (B "Tactical" and C "Clean" rejected; they stay on the canvas for comparison) | user |
+| One run | all U tasks in one run, one commit per task (so one part can be undone alone), one review at the end | user |
+| HUD | two lines with bars (costs 1 row of the 3D view) | Claude (the user left it to Claude) |
+| Colors | the palette in TASKS.md | Claude (the user left it to Claude) |
+| Logo text | two words: TERM FPS | user |
+| Logo letters | 5-row block letters, spaced; the user judges on screen | Claude (the user left it to Claude) |
+| Logo motion | slow shimmer | user |
+| Tagline | no fixed one: a random one each start, like Minecraft's splash text | user |
+| Taglines list | the 5 approved plus all 7 candidates (12 in TASKS.md U2). Rejected: "3D in your terminal. Monsters included.", "every pixel is a character", "no graphics card required" | user |
+| Title background | a map moving behind the title menu, slow motion only: a slow walk through the map and slow turning on the spot | user |
+| Behind Settings/Guide opened from the title | it keeps moving, slowly | user ("slightly moving, slow motion") |
+| Menu sounds | yes | user |
+| Animations | only if they don't slow the game; an on/off setting; go / no-go after measuring | user, with the condition |
+| Run stats on game over / win | all of them, with NEW BEST badges | user |
+| NEW BEST | compared with the player's best on that map | user agreed to Claude's suggestion |
+| Symbols | fancy by default, plus a "Symbols: fancy / simple" setting | Claude (the user left it to Claude) |
+| Screen size | as it is for now (fits 80x24, centered in bigger windows); to be discussed later | user |
+| Mockups first | on the canvas before building | user |
+| Play screen | the mode and map menus merged into one screen | user (approved plan) |
+| Guide text pages | turned into pictures | user |
+| Crowded block letters | fixed: 2 columns between letters, 6 between words | user |
+
+- Version: **v0.75**, codename **"As*****"**, always written masked like that (title screen, release notes, commits, docs), never spelled out; the masking is the joke. 0.75 is from Interstellar (TARS' humor setting is 75%). Shown bottom right on the title screen and used for the M20 public test release; everyone who plays the public test sees the codename. The canvas title board still shows an old placeholder ("v0.88 “Great Scott”"). Options considered: the user didn't like the first list (v0.88, v0.42, v0.1138, v0.007, v0.2001); the second list, from the user's favorites, was v0.75 "TARS", v0.115 "Element 115" (Call of Duty Zombies), v0.64 "Full Stack" (Minecraft: a full stack is 64), v0.100 "Chicken Dinner" (PUBG: 100 players), v0.1899 "Outlaws" (Red Dead Redemption 2 is set in 1899), v0.10191 "The Spice" (Dune is set in the year 10191), or a codename with a normal number (e.g. v0.7): "HESOYAM" (the GTA San Andreas health-and-armor cheat), "Why So Serious" (The Dark Knight), "Booyah" (Free Fire), "Removed Herobrine" (the Minecraft changelog joke, for the release notes). Idea: every later update gets a codename from another favorite.
+- Why: the menus were plain reversed boxes and the HUD one line of text; the user wanted the game to look like a game before the public test, and to see the look before it was built.
+- Trade-off: the HUD takes one more row from the 3D view. The moving title background costs CPU on the title screen (kept down with a lower frame rate and/or half render scale there; a setting turns it off). Fancy symbols don't draw in old console windows and some fonts (hence the simple set). The palette needs truecolor to look as designed.
+- Open when written: (1) keep SELECT MAP on the title, or drop it because the Play screen picks the map; (2) animations go / no-go after measuring; (3) screen size and resolution, to be discussed later.
+- Revisit when: the user's on-screen review of U1-U6.
