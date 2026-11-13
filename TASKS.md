@@ -437,13 +437,13 @@ Decided with the user on 2026-10-30 (D49; the guide and release added 2026-10-31
 - 2026-11-11, the user's playtest: everything feels right except ammo, which runs short; the user is fine with low ammo for now (it keeps the tension), so no numbers changed. Revisit with the public testers' feedback.
 - 2026-11-11: the user removed the demo video from the README and the repo; the README shows a screenshot of the new title screen instead, so M19 needs no README demo any more (the user's social media videos are separate). What's left of M19: balancing from the testers' feedback.
 
-### [~] M20: Public test release (batch 3; done before M19's demo, the user's choice)
+### [x] M20: Public test release (batch 3; done before M19's demo, the user's choice)
 - Downloadable builds (Windows and Linux; macOS if it can be tested) on a GitHub Releases page, built by CI.
 - The README says up front that Windows SmartScreen / Smart App Control may warn about an unsigned exe, and what to do.
 - A version number, shown in the game (title menu) and by `-version`.
 - A GitHub issue template for feedback: version, system, terminal, what happened.
 - Linux (sound needs ALSA or PulseAudio) and macOS tested, or the release says "Windows first".
-- Built 2026-11-11 (D55): `-version`; `.github/workflows/release.yml` (a version tag runs the checks, checks the tag against `-version`, builds windows/amd64, linux/amd64 and linux/arm64 without cgo, and makes a DRAFT pre-release with the files, SHA256SUMS and `.github/release-notes/<tag>.md`); the feedback issue form (`.github/ISSUE_TEMPLATE/feedback.yml`, with an ammo question); README download section and SmartScreen / Smart App Control notes. Windows first: Linux passes CI but is little played; no macOS build (can't be tested). Published 2026-11-13 as a pre-release: https://github.com/BunnyPraneeth5/termfps/releases/tag/v0.75 (it had stayed a draft, so links shared earlier pointed at a private draft page). Left for the user: try a download.
+- Built 2026-11-11 (D55): `-version`; `.github/workflows/release.yml` (a version tag runs the checks, checks the tag against `-version`, builds windows/amd64, linux/amd64 and linux/arm64 without cgo, and makes a DRAFT pre-release with the files, SHA256SUMS and `.github/release-notes/<tag>.md`); the feedback issue form (`.github/ISSUE_TEMPLATE/feedback.yml`, with an ammo question); README download section and SmartScreen / Smart App Control notes. Windows first: Linux passes CI but is little played; no macOS build (can't be tested). Published 2026-11-13 as a pre-release: https://github.com/BunnyPraneeth5/termfps/releases/tag/v0.75 (it had stayed a draft, so links shared earlier pointed at a private draft page). The user downloaded and played the Windows build (while it was still a draft); M20 done.
 
 # UI redesign (direction A, "Arcade terminal")
 

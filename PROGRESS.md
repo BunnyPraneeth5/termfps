@@ -312,4 +312,4 @@ Template:
 
 ## 2026-11-13 (v0.75 published)
 - The v0.75 release was still a draft (its private "untagged-..." link didn't work for the people the user had shared it with). Published at the user's request as a pre-release: https://github.com/BunnyPraneeth5/termfps/releases/tag/v0.75. The public page and the Windows zip download answer 200.
-
+- The user had downloaded and played the Windows build from the draft: M20 done. M19 stays open (balancing from testers' feedback).
