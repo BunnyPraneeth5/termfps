@@ -309,3 +309,7 @@ Template:
 - Not done: the user checks the draft release on GitHub and publishes it; nobody has played the downloaded builds yet.
 - License: MIT (LICENSE), plus THIRD_PARTY_NOTICES.txt for the libraries, both in every download; the v0.75 draft was rebuilt with them.
 - README: the demo video removed (README link and docs/termfps-demo.mp4) at the user's request; docs/screenshot.png is now the user's screenshot of the v0.75 title screen. The v0.75 draft was rebuilt so the README inside the downloads matches.
+
+## 2026-11-13 (v0.75 published)
+- The v0.75 release was still a draft (its private "untagged-..." link didn't work for the people the user had shared it with). Published at the user's request as a pre-release: https://github.com/BunnyPraneeth5/termfps/releases/tag/v0.75. The public page and the Windows zip download answer 200.
+
